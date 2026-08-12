@@ -1,0 +1,138 @@
+import { Link, useRouterState } from "@tanstack/react-router";
+import { type ReactNode, useEffect, useState } from "react";
+import { useOnline, useStore } from "@/lib/store";
+import { Sheet, Field, Action } from "./primitives";
+
+const SPACES = [
+  { id: "home", to: "/", label: "Home", glyph: "⌂" },
+  { id: "deen", to: "/deen", label: "Deen", glyph: "☾" },
+  { id: "budget", to: "/budget", label: "Budget", glyph: "◈" },
+  { id: "me", to: "/me", label: "Me", glyph: "❋" },
+] as const;
+
+function useTheme() {
+  const [theme, setTheme] = useStore<"light" | "dark">("theme", "light");
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
+  return [theme, setTheme] as const;
+}
+
+export function Shell({
+  space,
+  children,
+}: {
+  space: "home" | "deen" | "budget" | "me";
+  children: ReactNode;
+}) {
+  const online = useOnline();
+  const [settings, setSettings] = useState(false);
+  const [theme, setTheme] = useTheme();
+  const [profile, setProfile] = useStore("profile", { name: "", city: "Kozhikode" });
+  const [account] = useStore<{ email: string } | null>("account", null);
+  const path = useRouterState({ select: (s) => s.location.pathname });
+
+  return (
+    <div data-space={space} className="relative z-[1] min-h-dvh">
+      <header className="border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
+          <Link to="/" className="flex items-baseline gap-2">
+            <span className="font-display text-[1.15rem] font-medium tracking-tight">
+              Veedu
+            </span>
+            <span className="bg-space size-[5px] rounded-full" />
+          </Link>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="text-ink-faint flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.7rem]"
+              title={online ? "Synced with Veedu Cloud" : "Saved on this device"}
+            >
+              <span
+                className="size-[6px] rounded-full"
+                style={{ background: online ? "var(--leaf)" : "var(--brass)" }}
+              />
+              {online ? "Synced" : "On device"}
+            </span>
+            <button
+              onClick={() => setSettings(true)}
+              aria-label="Settings"
+              className="press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
+            >
+              <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" strokeLinecap="round" />
+              </svg>
+            </button>
+            <Link
+              to="/auth"
+              aria-label="Account"
+              className="press border-border grid size-9 place-items-center rounded-full border text-[0.7rem] font-semibold"
+            >
+              {(account?.email?.[0] ?? profile.name?.[0] ?? "G").toUpperCase()}
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-3xl px-5 pt-6 pb-32">{children}</main>
+
+      <nav
+        aria-label="Veedu spaces"
+        className="fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      >
+        <div className="border-border/70 bg-background/90 flex gap-1 rounded-full border p-1.5 shadow-[var(--shadow-float)] backdrop-blur-xl">
+          {SPACES.map((s) => {
+            const active = s.to === "/" ? path === "/" : path.startsWith(s.to);
+            return (
+              <Link
+                key={s.id}
+                to={s.to}
+                data-space={s.id}
+                aria-current={active ? "page" : undefined}
+                className="press relative flex min-w-[68px] flex-col items-center gap-0.5 rounded-full px-3 py-1.5"
+                style={
+                  active
+                    ? { background: "var(--space-accent-soft)", color: "var(--foreground)" }
+                    : { color: "var(--ink-faint)" }
+                }
+              >
+                <span className="text-[15px] leading-none">{s.glyph}</span>
+                <span className="text-[0.66rem] font-medium tracking-wide">{s.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      <Sheet open={settings} onClose={() => setSettings(false)} title="Settings">
+        <div className="space-y-5">
+          <Field
+            label="Your name"
+            value={profile.name}
+            placeholder="How should Veedu greet you?"
+            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+          />
+          <Field
+            label="City"
+            value={profile.city}
+            onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+          />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="title-md">Appearance</p>
+              <p className="text-muted-foreground text-xs">Paper by day, ink by night.</p>
+            </div>
+            <Action onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+              {theme === "dark" ? "Night" : "Day"}
+            </Action>
+          </div>
+          <div className="rule-line" />
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Everything you write lives on this device first. When you're online it quietly
+            syncs — nothing is ever lost while you wait.
+          </p>
+        </div>
+      </Sheet>
+    </div>
+  );
+}
