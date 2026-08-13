@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { supabase } from "./supabase";
 
 /** Offline-first local store. Every module reads/writes through this. */
 
@@ -27,6 +28,55 @@ export function writeStore<T>(key: string, value: T) {
     /* quota — keep working in memory */
   }
   emit(key);
+  
+  // Push to cloud if logged in
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session?.user) {
+      supabase.from("user_data").upsert({
+        user_id: session.user.id,
+        key: key,
+        value: value,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id, key" }).then(({ error }) => {
+        if (error) console.error("Sync error:", error);
+      });
+    }
+  });
+}
+
+export async function syncFromCloud() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session?.user) return;
+
+  const { data, error } = await supabase
+    .from("user_data")
+    .select("key, value");
+
+  if (error || !data) {
+    console.error("Failed to sync from cloud", error);
+    return;
+  }
+
+  let changed = false;
+  data.forEach((row) => {
+    const current = window.localStorage.getItem(PREFIX + row.key);
+    const incoming = JSON.stringify(row.value);
+    if (current !== incoming) {
+      window.localStorage.setItem(PREFIX + row.key, incoming);
+      emit(row.key);
+      changed = true;
+    }
+  });
+}
+
+if (typeof window !== "undefined") {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      if (session) {
+        syncFromCloud();
+      }
+    }
+  });
 }
 
 /** Hydration-safe persisted state. */
