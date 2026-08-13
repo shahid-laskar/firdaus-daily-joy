@@ -24,7 +24,7 @@ export function QuickEntry() {
   const [limits] = useLimits();
   const categories = [...new Set([...DEFAULT_CATEGORIES, ...Object.keys(limits)])];
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState(categories[0]);
+  const [category, setCategory] = useState(categories[0] ?? "Other");
   const [note, setNote] = useState("");
 
   const recent = expenses.filter((e) => e.date.startsWith(month()));
