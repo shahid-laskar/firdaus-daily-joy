@@ -17,7 +17,7 @@ export function useSalah() {
 }
 
 function minutes(t: string) {
-  const [h, m] = t.split(":").map(Number);
+  const [h = 0, m = 0] = t.split(":").map(Number);
   return h * 60 + m;
 }
 
@@ -26,7 +26,7 @@ export function useNextPrayer() {
   return useMemo(() => {
     if (!now) return null;
     const cur = now.getHours() * 60 + now.getMinutes();
-    const next = PRAYERS.find((p) => minutes(p.time) > cur) ?? PRAYERS[0];
+    const next = PRAYERS.find((p) => minutes(p.time) > cur) ?? PRAYERS[0]!;
     let diff = minutes(next.time) - cur;
     if (diff < 0) diff += 24 * 60;
     return { next, hours: Math.floor(diff / 60), mins: diff % 60 };
@@ -88,7 +88,7 @@ const VERSES = [
 ];
 
 export function DailyVerse() {
-  const verse = VERSES[new Date().getDate() % VERSES.length];
+  const verse = VERSES[new Date().getDate() % VERSES.length]!;
   const [copied, setCopied] = useState(false);
   return (
     <section className="rise border-border/70 border-y py-8">
