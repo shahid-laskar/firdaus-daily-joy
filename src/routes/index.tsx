@@ -154,10 +154,10 @@ function ThreadItem({
 }: {
   label: string;
   value: string;
-  detail?: string;
-  active?: boolean;
-  done?: boolean;
-  to?: string;
+  detail?: string | undefined;
+  active?: boolean | undefined;
+  done?: boolean | undefined;
+  to?: string | undefined;
 }) {
   const body = (
     <div className="py-3">
