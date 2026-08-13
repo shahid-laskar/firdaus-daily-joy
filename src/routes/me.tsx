@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { Shell } from "@/components/veedu/shell";
 import { SubTabs } from "@/components/veedu/primitives";
 import { Cycle, Habits, Health, Journal, SelfCare } from "@/components/me/modules";
+import { Trends } from "@/components/me/trends";
+import { useTab } from "@/lib/use-tab";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/me")({
@@ -31,12 +32,13 @@ const TABS = [
   { id: "habits", label: "Habits" },
   { id: "journal", label: "Journal" },
   { id: "health", label: "Health" },
+  { id: "trends", label: "Trends" },
   { id: "cycle", label: "Cycle" },
 ];
 
 function MePage() {
   const [profile] = useStore("profile", { name: "", city: "Kozhikode", gender: "" });
-  const [tab, setTab] = useState("care");
+  const [tab, setTab] = useTab("care");
   
   const availableTabs = TABS.filter((t) => t.id !== "cycle" || profile.gender === "female");
   return (
@@ -48,6 +50,7 @@ function MePage() {
       {tab === "habits" && <Habits />}
       {tab === "journal" && <Journal />}
       {tab === "health" && <Health />}
+      {tab === "trends" && <Trends />}
       {tab === "cycle" && <Cycle />}
     </Shell>
   );

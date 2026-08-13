@@ -11,6 +11,9 @@ const SPACES = [
 ] as const;
 
 import { ThemeSwitcher } from "./theme-switcher";
+import { exportAllData } from "@/lib/prototype-data";
+import { useNudges } from "@/components/home/reminders";
+
 export function Shell({
   space,
   children,
@@ -19,6 +22,7 @@ export function Shell({
   children: ReactNode;
 }) {
   const online = useOnline();
+  useNudges();
   const [settings, setSettings] = useState(false);
   const [profile, setProfile] = useStore("profile", { 
     name: "", 
@@ -164,6 +168,14 @@ export function Shell({
             </select>
           </div>
           <div className="rule-line" />
+          <div className="rule-line" />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="title-md">Data Backup</p>
+              <p className="text-muted-foreground text-xs">Export all your data as a JSON file.</p>
+            </div>
+            <Action onClick={exportAllData}>Export</Action>
+          </div>
           <div className="rule-line" />
           <ThemeSwitcher />
           <div className="rule-line" />

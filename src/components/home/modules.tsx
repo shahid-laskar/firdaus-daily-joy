@@ -1,9 +1,25 @@
 import { useMemo, useState } from "react";
 import { Action, EmptyState, Field, Meter, Section, Tick } from "@/components/veedu/primitives";
+import { RecurrenceField, RepeatChip } from "@/components/veedu/recurrence-field";
+import { type Recurrence, isRepeating, nextOccurrence, occursOn } from "@/lib/recurrence";
 import { todayKey, uid, useStore } from "@/lib/store";
 
-type Task = { id: string; title: string; list: string; time?: string; done: boolean; date: string };
+export type Task = {
+  id: string;
+  title: string;
+  list: string;
+  time?: string;
+  done: boolean;
+  date: string;
+  recur?: Recurrence;
+  completions?: string[];
+};
 const LISTS = ["General", "Shopping", "Work", "Home"];
+
+/** A repeating task is "done" only for the day you're looking at. */
+export function isTaskDone(t: Task, iso = todayKey()) {
+  return isRepeating(t.recur) ? (t.completions ?? []).includes(iso) : t.done;
+}
 
 export function Tasks() {
   const [tasks, setTasks] = useStore<Task[]>("tasks", []);
@@ -11,12 +27,30 @@ export function Tasks() {
   const [filter, setFilter] = useState<"all" | "today" | "done">("all");
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("");
+  const [recur, setRecur] = useState<Recurrence>({ freq: "none", start: todayKey() });
+  const today = todayKey();
 
-  const visible = tasks.filter(
-    (t) =>
-      t.list === list &&
-      (filter === "all" ? true : filter === "done" ? t.done : t.date === todayKey() && !t.done),
-  );
+  const visible = tasks.filter((t) => {
+    if (t.list !== list) return false;
+    const done = isTaskDone(t, today);
+    if (filter === "done") return done;
+    if (filter === "today") return !done && (isRepeating(t.recur) ? occursOn(t.recur, today) : t.date <= today);
+    return true;
+  });
+
+  function toggle(t: Task) {
+    setTasks(
+      tasks.map((x) => {
+        if (x.id !== t.id) return x;
+        if (!isRepeating(x.recur)) return { ...x, done: !x.done };
+        const days = x.completions ?? [];
+        return {
+          ...x,
+          completions: days.includes(today) ? days.filter((d) => d !== today) : [...days, today],
+        };
+      }),
+    );
+  }
 
   return (
     <Section eyebrow="Household" title="Tasks">
@@ -51,32 +85,45 @@ export function Tasks() {
           e.preventDefault();
           if (!title.trim()) return;
           setTasks([
-            { id: uid(), title: title.trim(), list, time, done: false, date: todayKey() },
+            {
+              id: uid(),
+              title: title.trim(),
+              list,
+              time,
+              done: false,
+              date: today,
+              recur: { ...recur },
+              completions: [],
+            },
             ...tasks,
           ]);
           setTitle("");
           setTime("");
+          setRecur({ freq: "none", start: today });
         }}
-        className="mb-6 flex items-end gap-2"
+        className="mb-6 space-y-3"
       >
-        <div className="flex-1">
-          <Field
-            label="Add to this list"
-            value={title}
-            placeholder="Something to take care of…"
-            onChange={(e) => setTitle(e.target.value)}
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Field
+              label="Add to this list"
+              value={title}
+              placeholder="Something to take care of…"
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <input
+            type="time"
+            aria-label="Due time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="border-border/80 numeric h-[42px] rounded-xl border bg-transparent px-2.5 text-sm"
           />
+          <Action type="submit" variant="solid" className="h-[42px]">
+            Add
+          </Action>
         </div>
-        <input
-          type="time"
-          aria-label="Due time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          className="border-border/80 numeric h-[42px] rounded-xl border bg-transparent px-2.5 text-sm"
-        />
-        <Action type="submit" variant="solid" className="h-[42px]">
-          Add
-        </Action>
+        <RecurrenceField value={recur} onChange={setRecur} compact />
       </form>
 
       {visible.length === 0 ? (
@@ -87,34 +134,31 @@ export function Tasks() {
         />
       ) : (
         <ul className="thread space-y-1">
-          {visible.map((t) => (
-            <li
-              key={t.id}
-              data-done={t.done}
-              className="thread-node group flex items-start gap-3 py-2.5"
-            >
-              <Tick
-                done={t.done}
-                label={t.title}
-                onToggle={() =>
-                  setTasks(tasks.map((x) => (x.id === t.id ? { ...x, done: !x.done } : x)))
-                }
-              />
-              <div className="min-w-0 flex-1">
-                <p className={`text-[0.95rem] ${t.done ? "text-ink-faint line-through" : ""}`}>
-                  {t.title}
-                </p>
-                {t.time && <p className="text-ink-faint numeric text-xs">{t.time}</p>}
-              </div>
-              <button
-                onClick={() => setTasks(tasks.filter((x) => x.id !== t.id))}
-                aria-label={`Remove ${t.title}`}
-                className="text-ink-faint hover:text-destructive text-xs opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
-              >
-                Remove
-              </button>
-            </li>
-          ))}
+          {visible.map((t) => {
+            const done = isTaskDone(t, today);
+            const next = isRepeating(t.recur) ? nextOccurrence(t.recur, today) : null;
+            return (
+              <li key={t.id} data-done={done} className="thread-node group flex items-start gap-3 py-2.5">
+                <Tick done={done} label={t.title} onToggle={() => toggle(t)} />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>{t.title}</p>
+                  <p className="text-ink-faint numeric text-xs">
+                    {[t.time, next && next !== today ? `next ${next}` : null].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <RepeatChip recur={t.recur} />
+                  <button
+                    onClick={() => setTasks(tasks.filter((x) => x.id !== t.id))}
+                    aria-label={`Remove ${t.title}`}
+                    className="text-ink-faint hover:text-destructive text-xs opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Section>
@@ -127,6 +171,7 @@ type Plan = Record<string, string>;
 
 export function Meals() {
   const [plan, setPlan] = useStore<Plan>("meals", {});
+  const [lastPlan, setLastPlan] = useStore<Plan>("lastMeals", {});
   const [recipes, setRecipes] = useStore<{ id: string; name: string; items: string }[]>("recipes", []);
   const [name, setName] = useState("");
   const [items, setItems] = useState("");
@@ -136,7 +181,16 @@ export function Meals() {
       <Section 
         eyebrow="This week" 
         title="Meal plan"
-        aside={Object.keys(plan).length > 0 ? <button onClick={() => { if(confirm("Clear the entire week?")) setPlan({}) }} className="text-xs text-ink-faint hover:text-destructive transition">Clear week</button> : undefined}
+        aside={
+          <div className="flex items-center gap-3">
+            {Object.keys(lastPlan).length > 0 && Object.keys(plan).length === 0 && (
+              <button onClick={() => setPlan(lastPlan)} className="text-xs text-space hover:text-space-dark transition">Copy last week</button>
+            )}
+            {Object.keys(plan).length > 0 && (
+              <button onClick={() => { if(confirm("Clear the entire week?")) { setLastPlan(plan); setPlan({}); } }} className="text-xs text-ink-faint hover:text-destructive transition">Clear week</button>
+            )}
+          </div>
+        }
       >
         <datalist id="saved-recipes">
           {recipes.map(r => <option key={r.id} value={r.name} />)}
@@ -317,7 +371,11 @@ export function GroceryList() {
   );
 }
 
-type Kid = { id: string; name: string; age: string; chores: { id: string; title: string; done: boolean }[] };
+type Kid = { id: string; name: string; age: string; chores: { id: string; title: string; done: boolean; recur?: Recurrence; completions?: string[] }[] };
+
+export function isChoreDone(c: Kid["chores"][0], iso = todayKey()) {
+  return isRepeating(c.recur) ? (c.completions ?? []).includes(iso) : c.done;
+}
 
 export function Kids() {
   const [kids, setKids] = useStore<Kid[]>("kids", []);
@@ -379,23 +437,45 @@ export function Kids() {
 
 function ChoreList({ kid, onChange }: { kid: Kid; onChange: (c: Kid["chores"]) => void }) {
   const [draft, setDraft] = useState("");
+  const today = todayKey();
   return (
     <div className="thread">
-      {kid.chores.map((c) => (
-        <div key={c.id} data-done={c.done} className="thread-node flex items-center gap-3 py-2">
-          <Tick
-            done={c.done}
-            label={c.title}
-            onToggle={() => onChange(kid.chores.map((x) => (x.id === c.id ? { ...x, done: !x.done } : x)))}
-          />
-          <span className={`text-[0.95rem] ${c.done ? "text-ink-faint line-through" : ""}`}>{c.title}</span>
-        </div>
-      ))}
+      {kid.chores.map((c) => {
+        const done = isChoreDone(c, today);
+        return (
+          <div key={c.id} data-done={done} className="thread-node flex items-center gap-3 py-2 group">
+            <Tick
+              done={done}
+              label={c.title}
+              onToggle={() =>
+                onChange(
+                  kid.chores.map((x) => {
+                    if (x.id !== c.id) return x;
+                    if (!isRepeating(x.recur)) return { ...x, done: !x.done };
+                    const days = x.completions ?? [];
+                    return {
+                      ...x,
+                      completions: days.includes(today) ? days.filter((d) => d !== today) : [...days, today],
+                    };
+                  })
+                )
+              }
+            />
+            <span className={`flex-1 text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>{c.title}</span>
+            <button
+              onClick={() => onChange(kid.chores.filter((x) => x.id !== c.id))}
+              className="text-ink-faint hover:text-destructive text-xs opacity-0 transition group-hover:opacity-100"
+            >
+              Remove
+            </button>
+          </div>
+        );
+      })}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           if (!draft.trim()) return;
-          onChange([...kid.chores, { id: uid(), title: draft.trim(), done: false }]);
+          onChange([...kid.chores, { id: uid(), title: draft.trim(), done: false, recur: { freq: "daily", start: todayKey() }, completions: [] }]);
           setDraft("");
         }}
         className="thread-node py-2"
@@ -455,68 +535,7 @@ export function Deeds() {
   );
 }
 
-export function FamilyCalendar() {
-  const [events, setEvents] = useStore<{ id: string; title: string; date: string }[]>("events", []);
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(todayKey());
-  const sorted = useMemo(() => [...events].sort((a, b) => a.date.localeCompare(b.date)), [events]);
-
-  return (
-    <Section eyebrow="Shared" title="Calendar">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!title.trim()) return;
-          setEvents([...events, { id: uid(), title: title.trim(), date }]);
-          setTitle("");
-        }}
-        className="mb-6 grid gap-2 sm:grid-cols-[1fr_150px_auto] sm:items-end"
-      >
-        <Field label="Event" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Field label="Date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        <Action type="submit" variant="solid" className="h-[42px]">
-          Add
-        </Action>
-      </form>
-      {sorted.length === 0 ? (
-        <EmptyState glyph="◇" headline="An open week" body="Nothing scheduled. Add birthdays, visits and appointments so nobody has to remember." />
-      ) : (
-        <ul className="thread">
-          {sorted.map((e) => (
-            <li key={e.id} data-active={e.date === todayKey()} className="thread-node group flex items-baseline justify-between py-3">
-              <div>
-                <p className="text-[0.95rem]">{e.title}</p>
-                <p className="text-ink-faint numeric text-xs">{e.date}</p>
-              </div>
-              <button
-                onClick={() => setEvents(events.filter((x) => x.id !== e.id))}
-                className="text-ink-faint hover:text-destructive text-xs opacity-0 group-hover:opacity-100"
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Section>
-  );
-}
-
-export function Notes() {
-  const [note, setNote] = useStore("notes", "");
-  return (
-    <Section eyebrow="Shared" title="Notes">
-      <textarea
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="The family scratchpad — codes, reminders, the thing you'll forget by evening."
-        rows={14}
-        className="focus:border-space/60 w-full resize-none rounded-2xl border border-transparent bg-[linear-gradient(transparent_calc(2rem_-_1px),var(--rule)_calc(2rem_-_1px))] bg-[size:100%_2rem] p-4 text-[0.95rem] leading-8 outline-none"
-      />
-      <p className="text-ink-faint mt-2 text-xs">Saved on this device as you type.</p>
-    </Section>
-  );
-}
+/* Calendar and Notes now live in ./calendar.tsx and ./notes.tsx — richer versions of both. */
 
 export function TodayGlance() {
   const [tasks] = useStore<Task[]>("tasks", []);

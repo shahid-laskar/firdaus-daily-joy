@@ -15,6 +15,7 @@ import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as DeenRouteImport } from './routes/deen'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ReviewRouteImport } from './routes/review'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/deen': typeof DeenRoute
   '/me': typeof MeRoute
   '/onboarding': typeof OnboardingRoute
+  '/review': typeof ReviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/deen': typeof DeenRoute
   '/me': typeof MeRoute
   '/onboarding': typeof OnboardingRoute
+  '/review': typeof ReviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,13 +79,23 @@ export interface FileRoutesById {
   '/deen': typeof DeenRoute
   '/me': typeof MeRoute
   '/onboarding': typeof OnboardingRoute
+  '/review': typeof ReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/budget' | '/deen' | '/me' | '/onboarding'
+  fullPaths:
+    '/' | '/auth' | '/budget' | '/deen' | '/me' | '/onboarding' | '/review'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/budget' | '/deen' | '/me' | '/onboarding'
-  id: '__root__' | '/' | '/auth' | '/budget' | '/deen' | '/me' | '/onboarding'
+  to: '/' | '/auth' | '/budget' | '/deen' | '/me' | '/onboarding' | '/review'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/budget'
+    | '/deen'
+    | '/me'
+    | '/onboarding'
+    | '/review'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,6 +105,7 @@ export interface RootRouteChildren {
   DeenRoute: typeof DeenRoute
   MeRoute: typeof MeRoute
   OnboardingRoute: typeof OnboardingRoute
+  ReviewRoute: typeof ReviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -133,6 +152,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -143,6 +169,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeenRoute: DeenRoute,
   MeRoute: MeRoute,
   OnboardingRoute: OnboardingRoute,
+  ReviewRoute: ReviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

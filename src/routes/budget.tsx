@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { Shell } from "@/components/veedu/shell";
 import { SubTabs } from "@/components/veedu/primitives";
 import { Overview, QuickEntry, Zakat } from "@/components/budget/modules";
+import { History } from "@/components/budget/history";
+import { useTab } from "@/lib/use-tab";
 
 export const Route = createFileRoute("/budget")({
   head: () => ({
@@ -28,11 +29,12 @@ export const Route = createFileRoute("/budget")({
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "entry", label: "Quick entry" },
+  { id: "history", label: "History" },
   { id: "zakat", label: "Zakat" },
 ];
 
 function BudgetPage() {
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useTab("overview");
   return (
     <Shell space="budget">
       <div className="mb-8">
@@ -40,6 +42,7 @@ function BudgetPage() {
       </div>
       {tab === "overview" && <Overview />}
       {tab === "entry" && <QuickEntry />}
+      {tab === "history" && <History />}
       {tab === "zakat" && <Zakat />}
     </Shell>
   );

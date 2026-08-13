@@ -1,17 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { Shell } from "@/components/veedu/shell";
 import { SubTabs, Section, Meter } from "@/components/veedu/primitives";
-import {
-  Deeds,
-  FamilyCalendar,
-  GroceryList,
-  Kids,
-  Meals,
-  Notes,
-  Tasks,
-} from "@/components/home/modules";
+import { Deeds, GroceryList, Kids, Meals, Tasks, isTaskDone, type Task } from "@/components/home/modules";
+import { Notes } from "@/components/home/notes";
+import { UnifiedCalendar, eventsOn, type CalEvent } from "@/components/home/calendar";
+import { Reminders } from "@/components/home/reminders";
 import { useNextPrayer, useSalah } from "@/components/deen/modules";
+import { isRepeating, occursOn } from "@/lib/recurrence";
+import { useTab } from "@/lib/use-tab";
 import { todayKey, useNow, useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
@@ -45,6 +41,7 @@ const TABS = [
   { id: "deeds", label: "Deeds" },
   { id: "calendar", label: "Calendar" },
   { id: "notes", label: "Notes" },
+  { id: "reminders", label: "Reminders" },
 ];
 
 function greeting(h: number) {
@@ -58,21 +55,29 @@ function greeting(h: number) {
 function Today() {
   const now = useNow(60_000);
   const [profile] = useStore("profile", { name: "", city: "Kozhikode" });
-  const [tasks] = useStore<{ id: string; title: string; done: boolean; time?: string; date: string }[]>("tasks", []);
+  const [tasks] = useStore<Task[]>("tasks", []);
   const [grocery] = useStore<{ id: string; got: boolean }[]>("grocery", []);
-  const [events] = useStore<{ id: string; title: string; date: string }[]>("events", []);
+  const [events] = useStore<CalEvent[]>("events", []);
   const [meals] = useStore<Record<string, string>>("meals", {});
+  const [habits] = useStore<{ id: string; name: string; days: string[] }[]>("habits", []);
+  const [health] = useStore<Record<string, { water: number; weight: string; sleep: string }>>("health", {});
   const [salah] = useSalah();
   const countdown = useNextPrayer();
 
   const hour = now?.getHours() ?? 8;
-  const open = tasks.filter((t) => !t.done);
-  const doneCount = tasks.length - open.length;
-  const todayEvents = events.filter((e) => e.date === todayKey());
+  // Repeating tasks only count on the days they actually fall on.
+  const dueToday = tasks.filter((t) => (isRepeating(t.recur) ? occursOn(t.recur, todayKey()) : !t.done));
+  const open = dueToday.filter((t) => !isTaskDone(t));
+  const doneCount = dueToday.length - open.length;
+  const todayEvents = eventsOn(events, todayKey());
   const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][now?.getDay() ?? 1];
   const dinner = meals[`${dayName}-Dinner`];
   const prayed = Object.keys(salah[todayKey()] ?? {}).length;
   const leftToBuy = grocery.filter((g) => !g.got).length;
+
+  const todayHabits = habits.slice(0, 3);
+  const doneHabits = todayHabits.filter(h => h.days.includes(todayKey()));
+  const todayHealth = health[todayKey()];
 
   return (
     <div className="space-y-12">
@@ -109,6 +114,12 @@ function Today() {
           <ThreadItem key={e.id} label="Today" value={e.title} to="/" />
         ))}
         {dinner && <ThreadItem label="Dinner" value={dinner} detail="From this week's plan" />}
+        {todayHabits.length > 0 && (
+          <ThreadItem label="Habits" value={`${doneHabits.length}/${todayHabits.length} habits done today`} detail={doneHabits.map(h => h.name).join(", ")} to="/me" />
+        )}
+        {todayHealth && (todayHealth.water > 0 || todayHealth.sleep) && (
+          <ThreadItem label="Health" value={todayHealth.water > 0 ? `${todayHealth.water} glasses of water` : "Health logged"} detail={todayHealth.sleep ? `${todayHealth.sleep}h sleep last night` : undefined} to="/me" />
+        )}
         {leftToBuy > 0 && (
           <ThreadItem label="Grocery" value={`${leftToBuy} still to pick up`} />
         )}
@@ -119,7 +130,11 @@ function Today() {
 
       <Section eyebrow="How today looks" title="Progress">
         <div className="grid gap-6 sm:grid-cols-3">
-          <Stat label="Tasks" value={`${doneCount}/${tasks.length}`} pct={tasks.length ? (doneCount / tasks.length) * 100 : 0} />
+          <Stat
+            label="Tasks"
+            value={`${doneCount}/${dueToday.length}`}
+            pct={dueToday.length ? (doneCount / dueToday.length) * 100 : 0}
+          />
           <Stat label="Salah" value={`${prayed}/5`} pct={(prayed / 5) * 100} />
           <Stat
             label="Grocery"
@@ -168,8 +183,8 @@ function ThreadItem({
   );
   return (
     <div className="thread-node" data-active={active ? "true" : undefined} data-done={done ? "true" : undefined}>
-      {to === "/deen" ? (
-        <Link to="/deen" className="block">
+      {to === "/deen" || to === "/me" ? (
+        <Link to={to} className="block">
           {body}
         </Link>
       ) : (
@@ -180,7 +195,7 @@ function ThreadItem({
 }
 
 function HomePage() {
-  const [tab, setTab] = useState("today");
+  const [tab, setTab] = useTab("today");
   return (
     <Shell space="home">
       <div className="mb-8">
@@ -192,8 +207,9 @@ function HomePage() {
       {tab === "grocery" && <GroceryList />}
       {tab === "kids" && <Kids />}
       {tab === "deeds" && <Deeds />}
-      {tab === "calendar" && <FamilyCalendar />}
+      {tab === "calendar" && <UnifiedCalendar />}
       {tab === "notes" && <Notes />}
+      {tab === "reminders" && <Reminders />}
     </Shell>
   );
 }

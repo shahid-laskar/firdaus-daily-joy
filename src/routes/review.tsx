@@ -1,0 +1,233 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { Shell } from "@/components/veedu/shell";
+import { Meter, Section } from "@/components/veedu/primitives";
+import { money } from "@/components/budget/modules";
+import { useStore } from "@/lib/store";
+
+export const Route = createFileRoute("/review")({
+  head: () => ({
+    meta: [
+      { title: "Weekly review — how your week actually went | Firdous" },
+      {
+        name: "description",
+        content:
+          "A quiet weekly reflection: salah consistency, tasks completed, spending, habits, mood and Quran reading, gathered from what you already logged.",
+      },
+      { property: "og:title", content: "Weekly review — how your week actually went" },
+      {
+        property: "og:description",
+        content: "One calm page that answers a single question: how did my week go?",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: ReviewPage,
+});
+
+const MOOD_LABELS: Record<string, string> = {
+  bright: "Bright",
+  steady: "Steady",
+  tired: "Tired",
+  heavy: "Heavy",
+  grateful: "Grateful",
+};
+
+const isoOffset = (offset: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0, 10);
+};
+
+function ReviewPage() {
+  const week = useMemo(() => [...Array(7)].map((_, i) => isoOffset(-(6 - i))), []);
+  const [salah] = useStore<Record<string, Record<string, string>>>("salah", {});
+  const [tasks] = useStore<{ id: string; title: string; done: boolean; date: string; recur?: any; completions?: string[] }[]>("tasks", []);
+  const [expenses] = useStore<{ amount: number; category: string; date: string }[]>("expenses", []);
+  const [habits] = useStore<{ id: string; name: string; days: string[] }[]>("habits", []);
+  const [checkins] = useStore<Record<string, string>>("checkins", {});
+  const [health] = useStore<Record<string, { water: number; sleep: string }>>("health", {});
+  const [sessions] = useStore<{ date: string; surah?: string; mins?: string }[]>("quran-log", []);
+  const [fasting] = useStore<Record<string, string>>("fasting", {});
+  const [deeds] = useStore<{ who: string; what: string; date: string }[]>("deeds", []);
+
+  const prayed = week.reduce((s, d) => s + Object.keys(salah[d] ?? {}).length, 0);
+  const onTime = week.reduce(
+    (s, d) => s + Object.values(salah[d] ?? {}).filter((v) => v === "ontime").length,
+    0,
+  );
+  const tasksDone = tasks.filter(
+    (t) =>
+      (t.done && week.includes(t.date)) ||
+      (t.completions ?? []).filter((c) => week.includes(c)).length > 0,
+  ).length;
+  const taskCompletions =
+    tasks.filter((t) => t.done && week.includes(t.date)).length +
+    tasks.reduce((s, t) => s + (t.completions ?? []).filter((c) => week.includes(c)).length, 0);
+  const openNow = tasks.filter((t) => !t.done && !t.recur).length;
+
+  const weekSpend = expenses.filter((e) => week.includes(e.date)).reduce((s, e) => s + e.amount, 0);
+  const prevWeek = [...Array(7)].map((_, i) => isoOffset(-(13 - i)));
+  const prevSpend = expenses.filter((e) => prevWeek.includes(e.date)).reduce((s, e) => s + e.amount, 0);
+  const topCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    expenses.filter((e) => week.includes(e.date)).forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
+    return [...map.entries()].sort((a, b) => b[1] - a[1])[0];
+  }, [expenses, week]);
+
+  const habitHits = habits.map((h) => ({ name: h.name, hits: week.filter((d) => h.days.includes(d)).length }));
+  const moodDays = week.filter((d) => checkins[d]);
+  const dominantMood = useMemo(() => {
+    const map = new Map<string, number>();
+    moodDays.forEach((d) => map.set(checkins[d] as string, (map.get(checkins[d] as string) ?? 0) + 1));
+    return [...map.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  }, [moodDays, checkins]);
+  const water = week.reduce((s, d) => s + (health[d]?.water ?? 0), 0);
+  const sleepDays = week.filter((d) => Number(health[d]?.sleep ?? 0) > 0);
+  const avgSleep = sleepDays.length
+    ? (sleepDays.reduce((s, d) => s + Number(health[d]?.sleep ?? 0), 0) / sleepDays.length).toFixed(1)
+    : null;
+  const quranSessions = sessions.filter((s) => week.includes(s.date)).length;
+  const fasts = week.filter((d) => fasting[d]).length;
+  const weekDeeds = deeds.filter((d) => week.includes(d.date));
+
+  const highlights: string[] = [];
+  if (onTime / Math.max(1, prayed) > 0.8 && prayed >= 25) highlights.push("Salah was steady and mostly on time.");
+  if (taskCompletions >= 5) highlights.push(`${taskCompletions} things closed out.`);
+  if (prevSpend && weekSpend < prevSpend) highlights.push("You spent less than last week.");
+  if (habitHits.some((h) => h.hits >= 5)) highlights.push("A habit held for most of the week.");
+  if (weekDeeds.length) highlights.push(`${weekDeeds.length} small kindness${weekDeeds.length > 1 ? "es" : ""} noticed.`);
+  const attention: string[] = [];
+  if (prayed < 30) attention.push(`${35 - prayed} prayers weren't logged.`);
+  if (openNow > 5) attention.push(`${openNow} tasks are still open.`);
+  if (prevSpend && weekSpend > prevSpend * 1.15) attention.push("Spending rose noticeably.");
+  if (avgSleep && Number(avgSleep) < 6.5) attention.push("Sleep averaged under 6.5 hours.");
+
+  return (
+    <Shell space="home">
+      <header className="rise mb-10">
+        <p className="eyebrow">
+          {week[0]} → {week[6]}
+        </p>
+        <h1 className="display-xl mt-3">How your week went</h1>
+        <p className="text-muted-foreground mt-3 text-sm">
+          Gathered from what you already logged. Nothing extra to fill in.
+        </p>
+      </header>
+
+      <div className="space-y-12">
+        <Section eyebrow="Deen" title="Salah & Quran">
+          <div className="grid gap-6 sm:grid-cols-3">
+            <Stat label="Prayers logged" value={`${prayed}/35`} pct={(prayed / 35) * 100} />
+            <Stat label="On time" value={`${onTime}/${Math.max(prayed, 1)}`} pct={(onTime / Math.max(prayed, 1)) * 100} />
+            <Stat label="Quran sessions" value={String(quranSessions)} pct={Math.min(100, quranSessions * 20)} />
+          </div>
+          <p className="text-muted-foreground mt-6 text-sm">
+            {fasts > 0 ? `${fasts} day${fasts > 1 ? "s" : ""} of fasting this week.` : "No fasting logged this week."}
+          </p>
+        </Section>
+
+        <Section eyebrow="Household" title="Tasks & habits">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Stat label="Completed" value={String(taskCompletions)} pct={Math.min(100, taskCompletions * 8)} />
+            <Stat label="Still open" value={String(openNow)} pct={Math.min(100, openNow * 10)} />
+          </div>
+          {habitHits.length > 0 && (
+            <ul className="mt-8 space-y-4">
+              {habitHits.map((h) => (
+                <li key={h.name}>
+                  <div className="mb-1.5 flex items-baseline justify-between">
+                    <span className="text-[0.95rem]">{h.name}</span>
+                    <span className="numeric text-ink-soft text-sm">{h.hits}/7</span>
+                  </div>
+                  <Meter value={(h.hits / 7) * 100} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
+        <Section eyebrow="Money" title="Spending">
+          <p className="display-lg numeric">₹{money(weekSpend)}</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {prevSpend
+              ? `${weekSpend >= prevSpend ? "▲" : "▼"} ${Math.abs(Math.round(((weekSpend - prevSpend) / prevSpend) * 100))}% vs the week before`
+              : "First week with records"}
+            {topCategory ? ` · most on ${topCategory[0]}` : ""}
+          </p>
+          <div className="mt-5">
+            <Link to="/budget" search={{ tab: "history" }} className="text-space text-xs underline underline-offset-4">
+              See the full history
+            </Link>
+          </div>
+        </Section>
+
+        <Section eyebrow="You" title="Mood & body">
+          <div className="grid gap-6 sm:grid-cols-3">
+            <Stat label="Check-ins" value={`${moodDays.length}/7`} pct={(moodDays.length / 7) * 100} />
+            <Stat label="Water" value={`${water} glasses`} pct={Math.min(100, (water / 56) * 100)} />
+            <Stat label="Avg sleep" value={avgSleep ? `${avgSleep}h` : "—"} pct={avgSleep ? Math.min(100, (Number(avgSleep) / 8) * 100) : 0} />
+          </div>
+          {dominantMood && (
+            <p className="text-muted-foreground mt-6 text-sm">
+              Mostly {MOOD_LABELS[dominantMood]?.toLowerCase()} this week.
+            </p>
+          )}
+        </Section>
+
+        <Section eyebrow="In a sentence" title="What stood out">
+          <div className="grid gap-8 sm:grid-cols-2">
+            <div>
+              <p className="eyebrow mb-3">Went well</p>
+              <ul className="thread">
+                {(highlights.length ? highlights : ["Not enough logged yet to say."]).map((h) => (
+                  <li key={h} data-active="true" className="thread-node py-2.5 text-[0.95rem]">
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="eyebrow mb-3">Worth a look</p>
+              <ul className="thread">
+                {(attention.length ? attention : ["Nothing pressing."]).map((h) => (
+                  <li key={h} className="thread-node py-2.5 text-[0.95rem]">
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Section>
+
+        {weekDeeds.length > 0 && (
+          <Section eyebrow="Noticed" title="Good deeds">
+            <ul className="thread">
+              {weekDeeds.map((d) => (
+                <li key={`${d.date}${d.what}`} className="thread-node py-3">
+                  <p className="text-[0.95rem]">{d.what}</p>
+                  <p className="text-ink-faint numeric text-xs">
+                    {d.who} · {d.date}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+      </div>
+    </Shell>
+  );
+}
+
+function Stat({ label, value, pct }: { label: string; value: string; pct: number }) {
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between">
+        <span className="eyebrow">{label}</span>
+        <span className="numeric font-display text-lg">{value}</span>
+      </div>
+      <Meter value={pct} />
+    </div>
+  );
+}
