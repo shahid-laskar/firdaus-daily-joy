@@ -42,14 +42,12 @@ export function SubTabs({
   value: string;
   onChange: (id: string) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
   return (
-    <div className="relative -mx-5">
+    <div className="-mx-5 px-5">
       <div
-        ref={ref}
         role="tablist"
         aria-label="Sections"
-        className="no-scrollbar flex gap-1 overflow-x-auto px-5 pb-px"
+        className="flex flex-wrap gap-1.5 pb-px"
       >
         {tabs.map((t) => {
           const active = t.id === value;
@@ -73,8 +71,6 @@ export function SubTabs({
           );
         })}
       </div>
-      <div className="from-background pointer-events-none absolute inset-y-0 left-0 w-5 bg-gradient-to-r to-transparent" />
-      <div className="from-background pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l to-transparent" />
     </div>
   );
 }

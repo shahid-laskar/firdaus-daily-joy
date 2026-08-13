@@ -17,13 +17,13 @@ import {
 export const Route = createFileRoute("/deen")({
   head: () => ({
     meta: [
-      { title: "Deen — prayer, Quran and dhikr in Veedu" },
+      { title: "Deen — prayer, Quran and dhikr in Firdous" },
       {
         name: "description",
         content:
           "A calm space for Salah times, Quran reading, dhikr, duas, hifz and fasting — designed for focus and reverence.",
       },
-      { property: "og:title", content: "Deen — prayer, Quran and dhikr in Veedu" },
+      { property: "og:title", content: "Deen — prayer, Quran and dhikr in Firdous" },
       {
         property: "og:description",
         content: "Salah, Quran, dhikr, duas, hifz and fasting in one quiet, reverent space.",

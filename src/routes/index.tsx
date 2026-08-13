@@ -17,13 +17,13 @@ import { todayKey, useNow, useStore } from "@/lib/store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Veedu — a handcrafted home for everyday life" },
+      { title: "Firdous — a handcrafted home for everyday life" },
       {
         name: "description",
         content:
-          "Veedu brings family life, prayer, money and personal wellbeing into one calm, beautifully made daily companion.",
+          "Firdous brings family life, prayer, money and personal wellbeing into one calm, beautifully made daily companion.",
       },
-      { property: "og:title", content: "Veedu — a handcrafted home for everyday life" },
+      { property: "og:title", content: "Firdous — a handcrafted home for everyday life" },
       {
         property: "og:description",
         content:
@@ -93,7 +93,7 @@ function Today() {
         </p>
       </header>
 
-      {/* The thread — Veedu's signature: today read as one line, not a grid of cards */}
+      {/* The thread — Firdous's signature: today read as one line, not a grid of cards */}
       <section className="thread rise space-y-1">
         <ThreadItem
           active

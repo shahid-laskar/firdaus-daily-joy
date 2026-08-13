@@ -2,17 +2,18 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Action, Field } from "@/components/veedu/primitives";
 import { useStore } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in to Veedu" },
+      { title: "Sign in to Firdous" },
       {
         name: "description",
         content:
-          "Sign in to sync Veedu across your devices, or continue as a guest with everything stored privately on this device.",
+          "Sign in to sync Firdous across your devices, or continue as a guest with everything stored privately on this device.",
       },
-      { property: "og:title", content: "Sign in to Veedu" },
+      { property: "og:title", content: "Sign in to Firdous" },
       {
         property: "og:description",
         content: "Sync across devices, or keep everything local as a guest.",
@@ -28,7 +29,7 @@ type Mode = "signin" | "register" | "magic" | "reset";
 
 const COPY: Record<Mode, { title: string; body: string; cta: string }> = {
   signin: { title: "Welcome back", body: "Your home, exactly as you left it.", cta: "Sign in" },
-  register: { title: "Make it yours", body: "One account keeps Veedu with you across devices.", cta: "Create account" },
+  register: { title: "Make it yours", body: "One account keeps Firdous with you across devices.", cta: "Create account" },
   magic: { title: "No password", body: "We'll send a link that signs you straight in.", cta: "Send link" },
   reset: { title: "Reset password", body: "We'll email you a way back in.", cta: "Send reset" },
 };
@@ -38,6 +39,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [account, setAccount] = useStore<{ email: string } | null>("account", null);
+  const [profile] = useStore("profile", { name: "", city: "Kozhikode", gender: "", lat: 11.2588, lng: 75.7804, madhab: "shafi", method: "MuslimWorldLeague" });
   const [sent, setSent] = useState(false);
   const navigate = useNavigate();
   const copy = COPY[mode];
@@ -46,7 +48,7 @@ function AuthPage() {
     <div data-space="home" className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16">
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 flex items-baseline gap-2">
-          <span className="font-display text-xl">Veedu</span>
+          <span className="font-display text-xl">Firdous</span>
           <span className="bg-space size-[5px] rounded-full" />
         </div>
 
@@ -60,20 +62,62 @@ function AuthPage() {
               <Action variant="solid" onClick={() => navigate({ to: "/" })}>
                 Go home
               </Action>
-              <Action onClick={() => setAccount(null)}>Sign out</Action>
+              <Action onClick={async () => {
+                await supabase.auth.signOut();
+                setAccount(null);
+              }}>Sign out</Action>
             </div>
           </div>
         ) : (
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               if (!email.trim()) return;
-              if (mode === "magic" || mode === "reset") {
-                setSent(true);
+              
+              if (mode === "magic") {
+                const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
+                if (!error) setSent(true);
+                else alert(error.message);
                 return;
               }
-              setAccount({ email: email.trim() });
-              navigate({ to: "/" });
+              if (mode === "reset") {
+                const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+                if (!error) setSent(true);
+                else alert(error.message);
+                return;
+              }
+
+              if (mode === "register") {
+                const { data, error } = await supabase.auth.signUp({
+                  email: email.trim(),
+                  password,
+                });
+                if (error) {
+                  alert(error.message);
+                  return;
+                }
+                if (data.user) setAccount({ email: data.user.email! });
+                navigate({ to: "/onboarding" });
+                return;
+              }
+
+              if (mode === "signin") {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                  email: email.trim(),
+                  password,
+                });
+                if (error) {
+                  alert(error.message);
+                  return;
+                }
+                if (data.user) setAccount({ email: data.user.email! });
+                
+                if (profile.name) {
+                  navigate({ to: "/" });
+                } else {
+                  navigate({ to: "/onboarding" });
+                }
+              }
             }}
             className="mt-8 space-y-4"
           >
@@ -101,6 +145,7 @@ function AuthPage() {
             .map((m) => (
               <button
                 key={m}
+                type="button"
                 onClick={() => {
                   setMode(m);
                   setSent(false);

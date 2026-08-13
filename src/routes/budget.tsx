@@ -7,13 +7,13 @@ import { Overview, QuickEntry, Zakat } from "@/components/budget/modules";
 export const Route = createFileRoute("/budget")({
   head: () => ({
     meta: [
-      { title: "Budget — clear, calm money tracking in Veedu" },
+      { title: "Budget — clear, calm money tracking in Firdous" },
       {
         name: "description",
         content:
           "Record expenses in seconds, see where the month is going, and calculate zakat — without spreadsheets or anxiety.",
       },
-      { property: "og:title", content: "Budget — clear, calm money tracking in Veedu" },
+      { property: "og:title", content: "Budget — clear, calm money tracking in Firdous" },
       {
         property: "og:description",
         content: "Quick expense entry, monthly limits and a zakat calculator, made understandable.",

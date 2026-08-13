@@ -44,7 +44,7 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
-  /* Veedu palette */
+  /* Firdous palette */
   --color-paper: var(--paper);
   --color-paper-raised: var(--paper-raised);
   --color-ink: var(--ink);
@@ -291,7 +291,7 @@
   letter-spacing: 0;
 }
 
-/* the thread: Veedu's signature spine */
+/* the thread: Firdous's signature spine */
 @utility thread {
   position: relative;
   padding-left: 1.65rem;

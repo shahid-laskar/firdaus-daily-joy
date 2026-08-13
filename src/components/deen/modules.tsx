@@ -2,13 +2,46 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Action, EmptyState, Field, Meter, Section, Tick } from "@/components/veedu/primitives";
 import { todayKey, uid, useNow, useStore } from "@/lib/store";
 
-export const PRAYERS = [
-  { id: "fajr", name: "Fajr", time: "05:12" },
-  { id: "dhuhr", name: "Dhuhr", time: "12:34" },
-  { id: "asr", name: "Asr", time: "15:48" },
-  { id: "maghrib", name: "Maghrib", time: "18:31" },
-  { id: "isha", name: "Isha", time: "19:45" },
-];
+import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from "adhan";
+
+export function usePrayers(date = new Date()) {
+  const [profile] = useStore("profile", {
+    name: "", 
+    city: "Kozhikode", 
+    gender: "",
+    lat: 11.2588,
+    lng: 75.7804,
+    madhab: "shafi",
+    method: "MuslimWorldLeague"
+  });
+
+  return useMemo(() => {
+    const pLat = profile.lat ?? 11.2588;
+    const pLng = profile.lng ?? 75.7804;
+    const pMethod = profile.method ?? "MuslimWorldLeague";
+    const pMadhab = profile.madhab ?? "shafi";
+
+    const coordinates = new Coordinates(pLat, pLng);
+    let params = (CalculationMethod as any)[pMethod] 
+      ? (CalculationMethod as any)[pMethod]() 
+      : CalculationMethod.MuslimWorldLeague();
+    params.madhab = pMadhab === "hanafi" ? Madhab.Hanafi : Madhab.Shafi;
+    
+    const prayerTimes = new PrayerTimes(coordinates, date, params);
+    
+    const formatTime = (d: Date) => {
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+
+    return [
+      { id: "fajr", name: "Fajr", time: formatTime(prayerTimes.fajr) },
+      { id: "dhuhr", name: "Dhuhr", time: formatTime(prayerTimes.dhuhr) },
+      { id: "asr", name: "Asr", time: formatTime(prayerTimes.asr) },
+      { id: "maghrib", name: "Maghrib", time: formatTime(prayerTimes.maghrib) },
+      { id: "isha", name: "Isha", time: formatTime(prayerTimes.isha) },
+    ];
+  }, [profile, date.toISOString().slice(0, 10)]);
+}
 
 type SalahLog = Record<string, Record<string, "ontime" | "late">>;
 
@@ -23,14 +56,15 @@ function minutes(t: string) {
 
 export function useNextPrayer() {
   const now = useNow(15000);
+  const prayers = usePrayers(now || new Date());
   return useMemo(() => {
     if (!now) return null;
     const cur = now.getHours() * 60 + now.getMinutes();
-    const next = PRAYERS.find((p) => minutes(p.time) > cur) ?? PRAYERS[0]!;
+    const next = prayers.find((p) => minutes(p.time) > cur) ?? prayers[0]!;
     let diff = minutes(next.time) - cur;
     if (diff < 0) diff += 24 * 60;
     return { next, hours: Math.floor(diff / 60), mins: diff % 60 };
-  }, [now]);
+  }, [now, prayers]);
 }
 
 export function DeenHero() {
@@ -115,6 +149,7 @@ export function DailyVerse() {
 export function Salah() {
   const [log, setLog] = useSalah();
   const today = log[todayKey()] ?? {};
+  const prayers = usePrayers();
   const week = [...Array(7)].map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
@@ -132,7 +167,7 @@ export function Salah() {
     <div className="space-y-10">
       <Section eyebrow="Today" title="Salah">
         <ul className="thread">
-          {PRAYERS.map((p) => {
+          {prayers.map((p) => {
             const state = today[p.id];
             return (
               <li
@@ -166,7 +201,7 @@ export function Salah() {
             return (
               <div key={d} className="text-center">
                 <div className="flex flex-col gap-1">
-                  {PRAYERS.map((p) => {
+                  {prayers.map((p) => {
                     const s = day[p.id];
                     return (
                       <span

@@ -28,7 +28,15 @@ export function Shell({
   const online = useOnline();
   const [settings, setSettings] = useState(false);
   const [theme, setTheme] = useTheme();
-  const [profile, setProfile] = useStore("profile", { name: "", city: "Kozhikode" });
+  const [profile, setProfile] = useStore("profile", { 
+    name: "", 
+    city: "Kozhikode", 
+    gender: "",
+    lat: 11.2588,
+    lng: 75.7804,
+    madhab: "shafi",
+    method: "MuslimWorldLeague"
+  });
   const [account] = useStore<{ email: string } | null>("account", null);
   const path = useRouterState({ select: (s) => s.location.pathname });
 
@@ -36,16 +44,13 @@ export function Shell({
     <div data-space={space} className="relative z-[1] min-h-dvh">
       <header className="border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
-          <Link to="/" className="flex items-baseline gap-2">
-            <span className="font-display text-[1.15rem] font-medium tracking-tight">
-              Veedu
-            </span>
-            <span className="bg-space size-[5px] rounded-full" />
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo.jpg" alt="Firdous Logo" className="size-10 object-cover rounded-xl shadow-sm" />
           </Link>
           <div className="flex items-center gap-1.5">
             <span
               className="text-ink-faint flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.7rem]"
-              title={online ? "Synced with Veedu Cloud" : "Saved on this device"}
+              title={online ? "Synced with Firdous Cloud" : "Saved on this device"}
             >
               <span
                 className="size-[6px] rounded-full"
@@ -77,7 +82,7 @@ export function Shell({
       <main className="mx-auto max-w-3xl px-5 pt-6 pb-32">{children}</main>
 
       <nav
-        aria-label="Veedu spaces"
+        aria-label="Firdous spaces"
         className="fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[max(0.75rem,env(safe-area-inset-bottom))]"
       >
         <div className="border-border/70 bg-background/90 flex gap-1 rounded-full border p-1.5 shadow-[var(--shadow-float)] backdrop-blur-xl">
@@ -109,7 +114,7 @@ export function Shell({
           <Field
             label="Your name"
             value={profile.name}
-            placeholder="How should Veedu greet you?"
+            placeholder="How should Firdous greet you?"
             onChange={(e) => setProfile({ ...profile, name: e.target.value })}
           />
           <Field
@@ -117,6 +122,56 @@ export function Shell({
             value={profile.city}
             onChange={(e) => setProfile({ ...profile, city: e.target.value })}
           />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="title-md">Location Coordinates</p>
+              <p className="text-muted-foreground text-xs">{(profile.lat ?? 11.2588).toFixed(4)}, {(profile.lng ?? 75.7804).toFixed(4)}</p>
+            </div>
+            <Action onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                  setProfile({ ...profile, lat: pos.coords.latitude, lng: pos.coords.longitude });
+                });
+              }
+            }}>Detect</Action>
+          </div>
+          <div className="space-y-2">
+            <label className="text-foreground/80 block text-[0.8rem] font-semibold tracking-wide">
+              Madhab (Asr Method)
+            </label>
+            <select 
+              value={profile.madhab ?? "shafi"}
+              onChange={(e) => setProfile({ ...profile, madhab: e.target.value })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            >
+              <option value="shafi">Shafi'i, Maliki, Hanbali (Standard)</option>
+              <option value="hanafi">Hanafi</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-foreground/80 block text-[0.8rem] font-semibold tracking-wide">
+              Calculation Method
+            </label>
+            <select 
+              value={profile.method ?? "MuslimWorldLeague"}
+              onChange={(e) => setProfile({ ...profile, method: e.target.value })}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            >
+              <option value="MuslimWorldLeague">Muslim World League</option>
+              <option value="Egyptian">Egyptian General Authority of Survey</option>
+              <option value="Karachi">University of Islamic Sciences, Karachi</option>
+              <option value="UmmAlQura">Umm Al-Qura University, Makkah</option>
+              <option value="Dubai">Dubai</option>
+              <option value="MoonsightingCommittee">Moonsighting Committee</option>
+              <option value="NorthAmerica">ISNA (North America)</option>
+              <option value="Kuwait">Kuwait</option>
+              <option value="Qatar">Qatar</option>
+              <option value="Singapore">Singapore</option>
+              <option value="Tehran">Tehran</option>
+              <option value="Turkey">Turkey</option>
+            </select>
+          </div>
+          <div className="rule-line" />
           <div className="flex items-center justify-between">
             <div>
               <p className="title-md">Appearance</p>

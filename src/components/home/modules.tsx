@@ -269,7 +269,7 @@ export function GroceryList() {
         <EmptyState
           glyph="◦"
           headline="The basket is empty"
-          body="Add what's missing, or let Veedu read this week's meal plan and fill it for you."
+          body="Add what's missing, or let Firdous read this week's meal plan and fill it for you."
           action={<Action variant="solid" onClick={generate}>Build from meal plan</Action>}
         />
       ) : (
