@@ -133,7 +133,14 @@ export function Meals() {
 
   return (
     <div className="space-y-10">
-      <Section eyebrow="This week" title="Meal plan">
+      <Section 
+        eyebrow="This week" 
+        title="Meal plan"
+        aside={Object.keys(plan).length > 0 ? <button onClick={() => { if(confirm("Clear the entire week?")) setPlan({}) }} className="text-xs text-ink-faint hover:text-destructive transition">Clear week</button> : undefined}
+      >
+        <datalist id="saved-recipes">
+          {recipes.map(r => <option key={r.id} value={r.name} />)}
+        </datalist>
         <div className="overflow-x-auto no-scrollbar -mx-5 px-5">
           <table className="w-full min-w-[560px] border-separate border-spacing-y-1">
             <thead>
@@ -147,22 +154,28 @@ export function Meals() {
               </tr>
             </thead>
             <tbody>
-              {DAYS.map((d) => (
-                <tr key={d}>
-                  <td className="text-ink-soft font-display pr-3 text-sm">{d}</td>
-                  {SLOTS.map((s) => (
-                    <td key={s} className="pr-2">
-                      <input
-                        aria-label={`${d} ${s}`}
-                        value={plan[`${d}-${s}`] ?? ""}
-                        placeholder="—"
-                        onChange={(e) => setPlan({ ...plan, [`${d}-${s}`]: e.target.value })}
-                        className="border-border/50 focus:border-space w-full rounded-lg border-b bg-transparent py-1.5 text-sm outline-none"
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {DAYS.map((d) => {
+                const isToday = d === ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date().getDay()];
+                return (
+                  <tr key={d} className={isToday ? "bg-space-soft/30 rounded-lg" : ""}>
+                    <td className={`font-display pr-3 text-sm rounded-l-lg py-1 pl-2 ${isToday ? "text-foreground font-semibold" : "text-ink-soft"}`}>{d}</td>
+                    {SLOTS.map((s, i) => (
+                      <td key={s} className={`pr-2 ${i === SLOTS.length - 1 ? 'rounded-r-lg' : ''}`}>
+                        <input
+                          aria-label={`${d} ${s}`}
+                          list="saved-recipes"
+                          value={plan[`${d}-${s}`] ?? ""}
+                          placeholder="—"
+                          onChange={(e) => setPlan({ ...plan, [`${d}-${s}`]: e.target.value })}
+                          className={`w-full border-b bg-transparent py-1.5 text-sm outline-none transition-colors ${
+                            isToday ? "border-border/80 focus:border-space" : "border-border/50 focus:border-space"
+                          }`}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

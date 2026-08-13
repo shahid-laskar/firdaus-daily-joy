@@ -10,14 +10,7 @@ const SPACES = [
   { id: "me", to: "/me", label: "Me", glyph: "❋" },
 ] as const;
 
-function useTheme() {
-  const [theme, setTheme] = useStore<"light" | "dark">("theme", "light");
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-  }, [theme]);
-  return [theme, setTheme] as const;
-}
-
+import { ThemeSwitcher } from "./theme-switcher";
 export function Shell({
   space,
   children,
@@ -27,7 +20,6 @@ export function Shell({
 }) {
   const online = useOnline();
   const [settings, setSettings] = useState(false);
-  const [theme, setTheme] = useTheme();
   const [profile, setProfile] = useStore("profile", { 
     name: "", 
     city: "Kozhikode", 
@@ -172,15 +164,8 @@ export function Shell({
             </select>
           </div>
           <div className="rule-line" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="title-md">Appearance</p>
-              <p className="text-muted-foreground text-xs">Paper by day, ink by night.</p>
-            </div>
-            <Action onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? "Night" : "Day"}
-            </Action>
-          </div>
+          <div className="rule-line" />
+          <ThemeSwitcher />
           <div className="rule-line" />
           <p className="text-muted-foreground text-xs leading-relaxed">
             Everything you write lives on this device first. When you're online it quietly

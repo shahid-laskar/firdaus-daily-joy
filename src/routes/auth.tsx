@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Action, Field } from "@/components/veedu/primitives";
-import { useStore } from "@/lib/store";
+import { useStore, syncFromCloud } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/auth")({
@@ -112,7 +112,12 @@ function AuthPage() {
                 }
                 if (data.user) setAccount({ email: data.user.email! });
                 
-                if (profile.name) {
+                await syncFromCloud();
+                
+                const rawProfile = window.localStorage.getItem("veedu:profile");
+                const freshProfile = rawProfile ? JSON.parse(rawProfile) : {};
+                
+                if (freshProfile.name) {
                   navigate({ to: "/" });
                 } else {
                   navigate({ to: "/onboarding" });
@@ -150,7 +155,7 @@ function AuthPage() {
                   setMode(m);
                   setSent(false);
                 }}
-                className="text-ink-faint hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground"
               >
                 {m === "signin" ? "Sign in" : m === "register" ? "Create account" : m === "magic" ? "Magic link" : "Forgot password"}
               </button>
@@ -164,7 +169,7 @@ function AuthPage() {
           className="press text-ink-soft hover:text-foreground text-left text-sm"
         >
           Continue as guest →
-          <span className="text-ink-faint mt-1 block text-xs leading-relaxed">
+          <span className="text-muted-foreground mt-1 block text-xs leading-relaxed">
             Everything stays on this device. Nothing is sent anywhere until you decide.
           </span>
         </button>

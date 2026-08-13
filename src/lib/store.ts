@@ -37,8 +37,8 @@ export function writeStore<T>(key: string, value: T) {
         key: key,
         value: value,
         updated_at: new Date().toISOString()
-      }, { onConflict: "user_id, key" }).then(({ error }) => {
-        if (error) console.error("Sync error:", error);
+      }, { onConflict: "user_id,key" }).then(({ error }) => {
+        if (error) console.error("Sync push error for key", key, ":", error);
       });
     }
   });
@@ -53,7 +53,7 @@ export async function syncFromCloud() {
     .select("key, value");
 
   if (error || !data) {
-    console.error("Failed to sync from cloud", error);
+    console.error("Failed to sync pull from cloud:", error);
     return;
   }
 
