@@ -28,7 +28,7 @@ function OnboardingPage() {
     <div data-space="home" className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16">
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 flex items-center gap-2">
-          <img src="/logo.jpg" alt="Firdous Logo" className="size-10 object-cover rounded-xl shadow-sm" />
+          <img src="/logo.png" alt="Firdous Logo" className="size-10 object-cover rounded-xl shadow-sm" />
         </div>
 
         <h1 className="display-lg">Welcome to Firdous</h1>
