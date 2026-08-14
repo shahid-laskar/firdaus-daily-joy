@@ -32,16 +32,16 @@ This document tracks the progress of the Firdous application against the product
 ## ⏳ Pending Tasks
 
 ### Phase 0 — Leftovers
-- [ ] **More daily verses:** Expand the hardcoded list of verses in the Deen module from 3 to 30+ verses to ensure a rotating variety.
+- [x] **More daily verses:** Expand the hardcoded list of verses in the Deen module from 3 to 30+ verses to ensure a rotating variety.
 
 ### Phase 2 — Workflow Integration (4–8 weeks)
-- [ ] **Unified visual calendar:** Upgrade the current calendar view to a month/week grid showing tasks, events, meals, fasting, and Islamic dates all in one place.
-- [ ] **Task ↔ Calendar sync:** Tasks with dates should appear on the calendar; calendar events should surface as tasks.
-- [ ] **Islamic calendar overlay:** Integrate Hijri dates into the calendar and highlight key Islamic events (Ramadan, Eid, Ashura).
-- [ ] **Recurring calendar events:** Allow calendar events (like appointments) to repeat on a schedule.
-- [ ] **Recurring kid routines:** Build daily chore templates specifically for children's routines.
-- [ ] **Grocery → Budget prompt:** Upon checking off all grocery items, trigger an optional prompt asking the user to log the total spent in the Budget module.
-- [ ] **Search:** Implement full-text global search across tasks, notes, journals, recipes, and expenses.
+- [x] **Unified visual calendar:** Upgrade the current calendar view to a month/week grid showing tasks, events, meals, fasting, and Islamic dates all in one place.
+- [x] **Task ↔ Calendar sync:** Tasks with dates should appear on the calendar; calendar events should surface as tasks.
+- [x] **Islamic calendar overlay:** Integrate Hijri dates into the calendar and highlight key Islamic events (Ramadan, Eid, Ashura).
+- [x] **Recurring calendar events:** Allow calendar events (like appointments) to repeat on a schedule.
+- [x] **Recurring kid routines:** Build daily chore templates specifically for children's routines.
+- [x] **Grocery → Budget prompt:** Upon checking off all grocery items, trigger an optional prompt asking the user to log the total spent in the Budget module.
+- [x] **Search:** Implement full-text global search across tasks, notes, journals, recipes, and expenses.
 
 ### Phase 3 — Intelligence & Automation (8–16 weeks)
 - [ ] **Smart weekly meal suggestions:** Auto-suggest meals from the recipe repository based on historical meal plans.
