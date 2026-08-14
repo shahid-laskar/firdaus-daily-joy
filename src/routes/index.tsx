@@ -9,6 +9,7 @@ import { useNextPrayer, useSalah } from "@/components/deen/modules";
 import { isRepeating, occursOn } from "@/lib/recurrence";
 import { useTab } from "@/lib/use-tab";
 import { todayKey, useNow, useStore } from "@/lib/store";
+import { useFamilyMigration } from "@/lib/family-model";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -226,6 +227,7 @@ function ThreadItem({
 }
 
 function HomePage() {
+  useFamilyMigration();
   const [tab, setTab] = useTab("today");
   return (
     <Shell space="home">

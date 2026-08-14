@@ -17,7 +17,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
   const [grocery] = useStore<{ id: string; name: string; got: boolean }[]>("grocery", []);
   const [expenses] = useStore<{ id: string; category: string; note: string; amount: number; date: string }[]>("expenses", []);
   const [habits] = useStore<{ id: string; name: string }[]>("habits", []);
-  const [kids] = useStore<{ id: string; name: string; chores: { id: string; title: string }[] }[]>("kids", []);
+  const [family] = useStore<{ id: string; name: string; role: string; chores: { id: string; title: string }[] }[]>("family", []);
 
   useEffect(() => {
     if (!open) setQ("");
@@ -33,7 +33,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
       ...recipes.map((r) => ({ id: `r${r.id}`, label: r.name, where: "Recipe", to: "/?tab=meals" })),
       ...grocery.map((g) => ({ id: `g${g.id}`, label: g.name, where: "Grocery", to: "/?tab=grocery" })),
       ...habits.map((h) => ({ id: `h${h.id}`, label: h.name, where: "Habit", to: "/me?tab=habits" })),
-      ...kids.flatMap((k) =>
+      ...family.filter((f) => f.role === "child").flatMap((k) =>
         k.chores.map((c) => ({ id: `c${c.id}`, label: c.title, where: `${k.name}'s routine`, to: "/?tab=kids" })),
       ),
       ...expenses.map((e) => ({
@@ -44,7 +44,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
       })),
     ];
     return all.filter((h) => h.label.toLowerCase().includes(term)).slice(0, 12);
-  }, [q, tasks, notes, events, recipes, grocery, habits, kids, expenses]);
+  }, [q, tasks, notes, events, recipes, grocery, habits, family, expenses]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();

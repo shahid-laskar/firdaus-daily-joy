@@ -4,6 +4,7 @@ import { useLogGroceryRun } from "@/components/budget/history";
 import { RecurrenceField, RepeatChip } from "@/components/veedu/recurrence-field";
 import { type Recurrence, isRepeating, nextOccurrence, occursOn } from "@/lib/recurrence";
 import { todayKey, uid, useStore } from "@/lib/store";
+import { type FamilyMember, type Chore } from "@/lib/family-model";
 
 export type Task = {
   id: string;
@@ -14,6 +15,7 @@ export type Task = {
   date: string;
   recur?: Recurrence;
   completions?: string[];
+  assigneeId?: string;
 };
 const LISTS = ["General", "Shopping", "Work", "Home"];
 
@@ -457,23 +459,13 @@ function GroceryRun() {
 }
 
 
-
-type Chore = {
-  id: string;
-  title: string;
-  done: boolean;
-  recur?: Recurrence;
-  completions?: string[];
-};
-type Kid = { id: string; name: string; age: string; chores: Chore[] };
-
-/** A repeating chore resets every day — it is only "done" for the day you're on. */
 export function isChoreDone(c: Chore, iso = todayKey()) {
   return isRepeating(c.recur) ? (c.completions ?? []).includes(iso) : c.done;
 }
 
 export function Kids() {
-  const [kids, setKids] = useStore<Kid[]>("kids", []);
+  const [family, setFamily] = useStore<FamilyMember[]>("family", []);
+  const kids = family.filter(f => f.role === "child");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const today = todayKey();
@@ -507,7 +499,7 @@ export function Kids() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!name.trim()) return;
-          setKids([...kids, { id: uid(), name: name.trim(), age, chores: [] }]);
+          setFamily([...family, { id: uid(), name: name.trim(), role: "child", age, chores: [] }]);
           setName("");
           setAge("");
         }}
@@ -536,7 +528,7 @@ export function Kids() {
                   {k.age && <span className="text-ink-faint text-sm font-normal"> · {k.age}</span>}
                 </h3>
                 <button
-                  onClick={() => setKids(kids.filter((x) => x.id !== k.id))}
+                  onClick={() => setFamily(family.filter((x) => x.id !== k.id))}
                   className="text-ink-faint hover:text-destructive text-xs"
                 >
                   Remove
@@ -544,7 +536,7 @@ export function Kids() {
               </div>
               <ChoreList
                 kid={k}
-                onChange={(chores) => setKids(kids.map((x) => (x.id === k.id ? { ...x, chores } : x)))}
+                onChange={(chores) => setFamily(family.map((x) => (x.id === k.id ? { ...x, chores } : x)))}
               />
             </div>
           ))}
@@ -554,7 +546,7 @@ export function Kids() {
   );
 }
 
-function ChoreList({ kid, onChange }: { kid: Kid; onChange: (c: Chore[]) => void }) {
+function ChoreList({ kid, onChange }: { kid: FamilyMember; onChange: (c: Chore[]) => void }) {
   const [draft, setDraft] = useState("");
   const [recur, setRecur] = useState<Recurrence>({ freq: "daily", start: todayKey() });
   const today = todayKey();
