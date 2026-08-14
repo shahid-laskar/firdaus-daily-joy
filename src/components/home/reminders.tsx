@@ -3,57 +3,13 @@ import { Action, EmptyState, Field, Section } from "@/components/veedu/primitive
 import { RecurrenceField, RepeatChip } from "@/components/veedu/recurrence-field";
 import { type Recurrence, describeRecurrence, nextOccurrence, occursOn } from "@/lib/recurrence";
 import { todayKey, uid, useStore } from "@/lib/store";
-import { useNextPrayer, usePrayers } from "@/components/deen/modules";
+import { useNextPrayer } from "@/components/deen/modules";
 
 export type Reminder = { id: string; title: string; time: string; recur: Recurrence };
 export type NotifPrefs = { prayers: boolean; reminders: boolean; leadMinutes: number };
 
 export function useNotifPrefs() {
   return useStore<NotifPrefs>("notifPrefs", { prayers: false, reminders: false, leadMinutes: 10 });
-}
-
-export function useNudges() {
-  const [prefs] = useNotifPrefs();
-  const [reminders] = useStore<Reminder[]>("reminders", []);
-  const prayers = usePrayers();
-  
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof Notification === "undefined" || Notification.permission !== "granted") return;
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
-    const now = new Date();
-    
-    // Prayer nudges
-    if (prefs.prayers) {
-      prayers.forEach(p => {
-        const [h, m] = p.time.split(":").map(Number);
-        const pTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-        const nudgeTime = new Date(pTime.getTime() - prefs.leadMinutes * 60000);
-        const delay = nudgeTime.getTime() - now.getTime();
-        if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
-          timeouts.push(setTimeout(() => {
-            new Notification("Firdous", { body: `${p.name} is in ${prefs.leadMinutes} minutes.` });
-          }, delay));
-        }
-      });
-    }
-
-    // Reminders
-    if (prefs.reminders) {
-      reminders.forEach(r => {
-        if (!occursOn(r.recur, todayKey())) return;
-        const [h, m] = r.time.split(":").map(Number);
-        const rTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
-        const delay = rTime.getTime() - now.getTime();
-        if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
-          timeouts.push(setTimeout(() => {
-            new Notification("Firdous", { body: r.title });
-          }, delay));
-        }
-      });
-    }
-
-    return () => timeouts.forEach(clearTimeout);
-  }, [prefs, reminders, prayers]);
 }
 
 /** PROTOTYPE — one reminder system, plus prayer nudges, using the browser's own notifications. */

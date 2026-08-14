@@ -60,7 +60,10 @@ function Today() {
   const [events] = useStore<CalEvent[]>("events", []);
   const [meals] = useStore<Record<string, string>>("meals", {});
   const [habits] = useStore<{ id: string; name: string; days: string[] }[]>("habits", []);
-  const [health] = useStore<Record<string, { water: number; weight: string; sleep: string }>>("health", {});
+  const [health] = useStore<Record<string, { water: number }>>("health", {});
+  const [checkins] = useStore<Record<string, string>>("checkins", {});
+  const [expenses] = useStore<{ amount: number; date: string }[]>("expenses", []);
+  const [limits] = useStore<Record<string, number>>("limits", {});
   const [salah] = useSalah();
   const countdown = useNextPrayer();
 
@@ -74,10 +77,14 @@ function Today() {
   const dinner = meals[`${dayName}-Dinner`];
   const prayed = Object.keys(salah[todayKey()] ?? {}).length;
   const leftToBuy = grocery.filter((g) => !g.got).length;
+  const habitsHit = habits.filter((h) => h.days.includes(todayKey())).length;
+  const water = health[todayKey()]?.water ?? 0;
+  const mood = checkins[todayKey()];
+  const month = todayKey().slice(0, 7);
+  const spent = expenses.filter((e) => e.date.startsWith(month)).reduce((s, e) => s + e.amount, 0);
+  const cap = Object.values(limits).reduce((s, n) => s + n, 0);
+  const overBudget = cap > 0 && spent / cap > 0.8;
 
-  const todayHabits = habits.slice(0, 3);
-  const doneHabits = todayHabits.filter(h => h.days.includes(todayKey()));
-  const todayHealth = health[todayKey()];
 
   return (
     <div className="space-y-12">
@@ -114,21 +121,43 @@ function Today() {
           <ThreadItem key={e.id} label="Today" value={e.title} to="/" />
         ))}
         {dinner && <ThreadItem label="Dinner" value={dinner} detail="From this week's plan" />}
-        {todayHabits.length > 0 && (
-          <ThreadItem label="Habits" value={`${doneHabits.length}/${todayHabits.length} habits done today`} detail={doneHabits.map(h => h.name).join(", ")} to="/me" />
-        )}
-        {todayHealth && (todayHealth.water > 0 || todayHealth.sleep) && (
-          <ThreadItem label="Health" value={todayHealth.water > 0 ? `${todayHealth.water} glasses of water` : "Health logged"} detail={todayHealth.sleep ? `${todayHealth.sleep}h sleep last night` : undefined} to="/me" />
-        )}
         {leftToBuy > 0 && (
           <ThreadItem label="Grocery" value={`${leftToBuy} still to pick up`} />
+        )}
+        {habits.length > 0 && (
+          <ThreadItem
+            label="Habits"
+            value={`${habitsHit} of ${habits.length} kept today`}
+            detail={habitsHit < habits.length ? habits.filter((h) => !h.days.includes(todayKey()))[0]?.name : "All of them"}
+            to="/me"
+          />
+        )}
+        {water < 8 && (
+          <ThreadItem label="Water" value={`${water} of 8 glasses`} to="/me" />
+        )}
+        {!mood && <ThreadItem label="Check in" value="How are you today?" to="/me" />}
+        {overBudget && (
+          <ThreadItem
+            label="Money"
+            value={`${Math.round((spent / cap) * 100)}% of this month's limits used`}
+            detail="Worth a look before the month ends"
+            to="/budget"
+          />
         )}
         {doneCount > 0 && (
           <ThreadItem done label="Behind you" value={`${doneCount} finished today`} />
         )}
       </section>
 
-      <Section eyebrow="How today looks" title="Progress">
+      <Section
+        eyebrow="How today looks"
+        title="Progress"
+        aside={
+          <Link to="/review" className="text-ink-faint hover:text-foreground text-xs">
+            Weekly review →
+          </Link>
+        }
+      >
         <div className="grid gap-6 sm:grid-cols-3">
           <Stat
             label="Tasks"
@@ -143,6 +172,7 @@ function Today() {
           />
         </div>
       </Section>
+
     </div>
   );
 }
@@ -172,7 +202,7 @@ function ThreadItem({
   detail?: string | undefined;
   active?: boolean | undefined;
   done?: boolean | undefined;
-  to?: string | undefined;
+  to?: "/deen" | "/me" | "/budget" | "/review" | "/" | undefined;
 }) {
   const body = (
     <div className="py-3">
@@ -183,7 +213,7 @@ function ThreadItem({
   );
   return (
     <div className="thread-node" data-active={active ? "true" : undefined} data-done={done ? "true" : undefined}>
-      {to === "/deen" || to === "/me" ? (
+      {to ? (
         <Link to={to} className="block">
           {body}
         </Link>
@@ -192,6 +222,7 @@ function ThreadItem({
       )}
     </div>
   );
+
 }
 
 function HomePage() {

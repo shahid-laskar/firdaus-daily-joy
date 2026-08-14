@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Action, EmptyState, Field, Meter, Section, Tick } from "@/components/veedu/primitives";
 import { todayKey, uid, useNow, useStore } from "@/lib/store";
+import { VERSES, verseOfDay } from "@/lib/verses";
 
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from "adhan";
 
@@ -103,48 +104,47 @@ export function DeenHero() {
   );
 }
 
-const VERSES = [
-  {
-    ar: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
-    en: "Indeed, with hardship comes ease.",
-    ref: "Ash-Sharh 94:6",
-  },
-  {
-    ar: "وَبَشِّرِ الصَّابِرِينَ",
-    en: "And give good tidings to the patient.",
-    ref: "Al-Baqarah 2:155",
-  },
-  {
-    ar: "فَاذْكُرُونِي أَذْكُرْكُمْ",
-    en: "So remember Me; I will remember you.",
-    ref: "Al-Baqarah 2:152",
-  },
-];
-
 export function DailyVerse() {
-  const verse = VERSES[new Date().getDate() % VERSES.length]!;
+  const today = verseOfDay();
+  const [offset, setOffset] = useState(0);
+  const index = (VERSES.indexOf(today) + offset + VERSES.length * 2) % VERSES.length;
+  const verse = VERSES[index]!;
   const [copied, setCopied] = useState(false);
   return (
     <section className="rise border-border/70 border-y py-8">
-      <p className="eyebrow mb-5">Verse of the day</p>
+      <p className="eyebrow mb-5">{offset === 0 ? "Verse of the day" : "Another verse"}</p>
       <p className="arabic text-[1.9rem] leading-[2.4]">{verse.ar}</p>
       <p className="text-ink-soft mt-5 text-[1.02rem] leading-relaxed">{verse.en}</p>
       <div className="mt-4 flex items-center justify-between">
         <span className="text-ink-faint text-xs tracking-wide">{verse.ref}</span>
-        <button
-          onClick={() => {
-            navigator.clipboard?.writeText(`${verse.ar}\n\n${verse.en}\n— ${verse.ref}`);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1600);
-          }}
-          className="text-ink-faint hover:text-foreground text-xs"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setOffset(offset + 1)}
+            className="text-ink-faint hover:text-foreground text-xs"
+          >
+            Another
+          </button>
+          {offset !== 0 && (
+            <button onClick={() => setOffset(0)} className="text-ink-faint hover:text-foreground text-xs">
+              Today's
+            </button>
+          )}
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(`${verse.ar}\n\n${verse.en}\n— ${verse.ref}`);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1600);
+            }}
+            className="text-ink-faint hover:text-foreground text-xs"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
       </div>
     </section>
   );
 }
+
 
 export function Salah() {
   const [log, setLog] = useSalah();

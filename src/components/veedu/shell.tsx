@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useOnline, useStore } from "@/lib/store";
+import { downloadExport, importFromFile } from "@/lib/backup";
+import { GlobalSearch } from "./search";
 import { Sheet, Field, Action } from "./primitives";
 
 const SPACES = [
@@ -11,9 +13,6 @@ const SPACES = [
 ] as const;
 
 import { ThemeSwitcher } from "./theme-switcher";
-import { exportAllData } from "@/lib/prototype-data";
-import { useNudges } from "@/components/home/reminders";
-
 export function Shell({
   space,
   children,
@@ -22,7 +21,6 @@ export function Shell({
   children: ReactNode;
 }) {
   const online = useOnline();
-  useNudges();
   const [settings, setSettings] = useState(false);
   const [profile, setProfile] = useStore("profile", { 
     name: "", 
@@ -35,15 +33,41 @@ export function Shell({
   });
   const [account] = useStore<{ email: string } | null>("account", null);
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [search, setSearch] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [restored, setRestored] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearch(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <div data-space={space} className="relative z-[1] min-h-dvh">
       <header className="border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="Firdous Logo" className="size-10 object-cover rounded-xl shadow-sm" />
+            <img src="/logo.jpg" alt="Firdous Logo" className="size-10 object-cover rounded-xl shadow-sm" />
           </Link>
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setSearch(true)}
+              aria-label="Search everything"
+              title="Search everything (⌘K)"
+              className="press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
+            >
+              <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="M16 16l4.5 4.5" strokeLinecap="round" />
+              </svg>
+            </button>
+
             <span
               className="text-ink-faint flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.7rem]"
               title={online ? "Synced with Firdous Cloud" : "Saved on this device"}
@@ -168,16 +192,36 @@ export function Shell({
             </select>
           </div>
           <div className="rule-line" />
-          <div className="rule-line" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="title-md">Data Backup</p>
-              <p className="text-muted-foreground text-xs">Export all your data as a JSON file.</p>
-            </div>
-            <Action onClick={exportAllData}>Export</Action>
-          </div>
-          <div className="rule-line" />
           <ThemeSwitcher />
+          <div className="rule-line" />
+          <div>
+            <p className="title-md">Your data</p>
+            <p className="text-muted-foreground mt-1 mb-3 text-xs leading-relaxed">
+              Take a copy of everything Firdous holds, or bring it back on another device.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Action onClick={() => downloadExport()}>Export a backup</Action>
+              <Action onClick={() => fileInput.current?.click()}>Restore</Action>
+              <input
+                ref={fileInput}
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const n = await importFromFile(file);
+                    setRestored(`${n} sections restored — reloading…`);
+                    setTimeout(() => window.location.reload(), 900);
+                  } catch {
+                    setRestored("That file couldn't be read.");
+                  }
+                }}
+              />
+            </div>
+            {restored && <p className="text-space mt-3 text-xs">{restored}</p>}
+          </div>
           <div className="rule-line" />
           <p className="text-muted-foreground text-xs leading-relaxed">
             Everything you write lives on this device first. When you're online it quietly
@@ -185,6 +229,9 @@ export function Shell({
           </p>
         </div>
       </Sheet>
+
+      <GlobalSearch open={search} onClose={() => setSearch(false)} />
     </div>
   );
+
 }

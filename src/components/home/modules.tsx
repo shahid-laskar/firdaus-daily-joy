@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Action, EmptyState, Field, Meter, Section, Tick } from "@/components/veedu/primitives";
+import { useLogGroceryRun } from "@/components/budget/history";
 import { RecurrenceField, RepeatChip } from "@/components/veedu/recurrence-field";
 import { type Recurrence, isRepeating, nextOccurrence, occursOn } from "@/lib/recurrence";
 import { todayKey, uid, useStore } from "@/lib/store";
@@ -169,29 +170,62 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const SLOTS = ["Breakfast", "Lunch", "Dinner"];
 type Plan = Record<string, string>;
 
+/** ISO-ish week key, e.g. 2026-W33 — used to keep a light history of meal plans. */
+function weekKey(offset = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset * 7);
+  const start = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d.getTime() - start.getTime()) / 86_400_000 + start.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
 export function Meals() {
   const [plan, setPlan] = useStore<Plan>("meals", {});
-  const [lastPlan, setLastPlan] = useStore<Plan>("lastMeals", {});
+  const [history, setHistory] = useStore<Record<string, Plan>>("mealsHistory", {});
   const [recipes, setRecipes] = useStore<{ id: string; name: string; items: string }[]>("recipes", []);
   const [name, setName] = useState("");
   const [items, setItems] = useState("");
+  const thisWeek = weekKey(0);
+  const lastWeek = weekKey(-1);
+  const previous = history[lastWeek];
+
+  // Keep this week's plan in the light history so "copy last week" has something to read.
+  useEffect(() => {
+    if (Object.keys(plan).length === 0) return;
+    if (JSON.stringify(history[thisWeek] ?? {}) === JSON.stringify(plan)) return;
+    setHistory({ ...history, [thisWeek]: plan });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan]);
 
   return (
     <div className="space-y-10">
-      <Section 
-        eyebrow="This week" 
+      <Section
+        eyebrow="This week"
         title="Meal plan"
         aside={
           <div className="flex items-center gap-3">
-            {Object.keys(lastPlan).length > 0 && Object.keys(plan).length === 0 && (
-              <button onClick={() => setPlan(lastPlan)} className="text-xs text-space hover:text-space-dark transition">Copy last week</button>
+            {previous && (
+              <button
+                onClick={() => setPlan({ ...previous })}
+                className="text-ink-faint hover:text-foreground text-xs transition"
+              >
+                Copy last week
+              </button>
             )}
             {Object.keys(plan).length > 0 && (
-              <button onClick={() => { if(confirm("Clear the entire week?")) { setLastPlan(plan); setPlan({}); } }} className="text-xs text-ink-faint hover:text-destructive transition">Clear week</button>
+              <button
+                onClick={() => {
+                  if (confirm("Clear the entire week?")) setPlan({});
+                }}
+                className="text-ink-faint hover:text-destructive text-xs transition"
+              >
+                Clear week
+              </button>
             )}
           </div>
         }
       >
+
         <datalist id="saved-recipes">
           {recipes.map(r => <option key={r.id} value={r.name} />)}
         </datalist>
@@ -365,15 +399,76 @@ export function GroceryList() {
               </li>
             ))}
           </ul>
+          <GroceryRun />
         </>
       )}
     </Section>
   );
 }
 
-type Kid = { id: string; name: string; age: string; chores: { id: string; title: string; done: boolean; recur?: Recurrence; completions?: string[] }[] };
+/** PROTOTYPE — the shopping run flows straight into Budget instead of being retyped. */
+function GroceryRun() {
+  const { picked, log } = useLogGroceryRun();
+  const [amount, setAmount] = useState("");
+  const [logged, setLogged] = useState<string | null>(null);
 
-export function isChoreDone(c: Kid["chores"][0], iso = todayKey()) {
+  if (picked.length === 0)
+    return (
+      <p className="text-ink-faint mt-6 text-xs">
+        Tick what you've picked up — Firdous can log the run as an expense.
+      </p>
+    );
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const value = Number(amount);
+        if (log(value)) {
+          setLogged(`₹${value} logged to Groceries · list cleared`);
+          setAmount("");
+          setTimeout(() => setLogged(null), 3000);
+        }
+      }}
+      className="border-border/70 mt-7 rounded-2xl border p-4"
+    >
+      <p className="eyebrow">Finished shopping</p>
+      <p className="text-muted-foreground mt-1 mb-3 text-sm">
+        {picked.length} item{picked.length === 1 ? "" : "s"} in the basket. Log what it cost and Budget
+        picks it up.
+      </p>
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <Field
+            label="Amount spent"
+            type="number"
+            value={amount}
+            placeholder="0"
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+        <Action type="submit" variant="solid" className="h-[42px]">
+          Log to Budget
+        </Action>
+      </div>
+      {logged && <p className="text-space mt-3 text-xs">{logged}</p>}
+    </form>
+  );
+}
+
+
+
+type Chore = {
+  id: string;
+  title: string;
+  done: boolean;
+  recur?: Recurrence;
+  completions?: string[];
+};
+type Kid = { id: string; name: string; age: string; chores: Chore[] };
+
+/** A repeating chore resets every day — it is only "done" for the day you're on. */
+export function isChoreDone(c: Chore, iso = todayKey()) {
   return isRepeating(c.recur) ? (c.completions ?? []).includes(iso) : c.done;
 }
 
@@ -381,9 +476,33 @@ export function Kids() {
   const [kids, setKids] = useStore<Kid[]>("kids", []);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
+  const today = todayKey();
+
+  const routineTotal = kids.reduce(
+    (s, k) => s + k.chores.filter((c) => !isRepeating(c.recur) || occursOn(c.recur, today)).length,
+    0,
+  );
+  const routineDone = kids.reduce(
+    (s, k) =>
+      s +
+      k.chores.filter(
+        (c) => (!isRepeating(c.recur) || occursOn(c.recur, today)) && isChoreDone(c, today),
+      ).length,
+    0,
+  );
 
   return (
-    <Section eyebrow="Family" title="Kids">
+    <Section
+      eyebrow="Family"
+      title="Kids"
+      aside={
+        routineTotal > 0 ? (
+          <span className="text-ink-faint numeric text-xs">
+            {routineDone}/{routineTotal} done today
+          </span>
+        ) : undefined
+      }
+    >
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -405,7 +524,7 @@ export function Kids() {
         <EmptyState
           glyph="❋"
           headline="No little ones added"
-          body="Add a child to track activities, chores and the small wins worth noticing."
+          body="Add a child to track routines, chores and the small wins worth noticing."
         />
       ) : (
         <div className="space-y-8">
@@ -435,35 +554,41 @@ export function Kids() {
   );
 }
 
-function ChoreList({ kid, onChange }: { kid: Kid; onChange: (c: Kid["chores"]) => void }) {
+function ChoreList({ kid, onChange }: { kid: Kid; onChange: (c: Chore[]) => void }) {
   const [draft, setDraft] = useState("");
+  const [recur, setRecur] = useState<Recurrence>({ freq: "daily", start: todayKey() });
   const today = todayKey();
+
+  function toggle(c: Chore) {
+    onChange(
+      kid.chores.map((x) => {
+        if (x.id !== c.id) return x;
+        if (!isRepeating(x.recur)) return { ...x, done: !x.done };
+        const days = x.completions ?? [];
+        return {
+          ...x,
+          completions: days.includes(today) ? days.filter((d) => d !== today) : [...days, today],
+        };
+      }),
+    );
+  }
+
+  const visible = kid.chores.filter((c) => !isRepeating(c.recur) || occursOn(c.recur, today));
+
   return (
     <div className="thread">
-      {kid.chores.map((c) => {
+      {visible.map((c) => {
         const done = isChoreDone(c, today);
         return (
-          <div key={c.id} data-done={done} className="thread-node flex items-center gap-3 py-2 group">
-            <Tick
-              done={done}
-              label={c.title}
-              onToggle={() =>
-                onChange(
-                  kid.chores.map((x) => {
-                    if (x.id !== c.id) return x;
-                    if (!isRepeating(x.recur)) return { ...x, done: !x.done };
-                    const days = x.completions ?? [];
-                    return {
-                      ...x,
-                      completions: days.includes(today) ? days.filter((d) => d !== today) : [...days, today],
-                    };
-                  })
-                )
-              }
-            />
-            <span className={`flex-1 text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>{c.title}</span>
+          <div key={c.id} data-done={done} className="thread-node group flex items-center gap-3 py-2">
+            <Tick done={done} label={c.title} onToggle={() => toggle(c)} />
+            <span className={`flex-1 text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>
+              {c.title}
+            </span>
+            <RepeatChip recur={c.recur} />
             <button
               onClick={() => onChange(kid.chores.filter((x) => x.id !== c.id))}
+              aria-label={`Remove ${c.title}`}
               className="text-ink-faint hover:text-destructive text-xs opacity-0 transition group-hover:opacity-100"
             >
               Remove
@@ -475,21 +600,26 @@ function ChoreList({ kid, onChange }: { kid: Kid; onChange: (c: Kid["chores"]) =
         onSubmit={(e) => {
           e.preventDefault();
           if (!draft.trim()) return;
-          onChange([...kid.chores, { id: uid(), title: draft.trim(), done: false, recur: { freq: "daily", start: todayKey() }, completions: [] }]);
+          onChange([
+            ...kid.chores,
+            { id: uid(), title: draft.trim(), done: false, recur: { ...recur }, completions: [] },
+          ]);
           setDraft("");
         }}
-        className="thread-node py-2"
+        className="thread-node space-y-2 py-2"
       >
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Add an activity or chore"
+          placeholder="Add a routine or chore"
           className="text-ink-faint placeholder:text-ink-faint focus:text-foreground w-full bg-transparent text-sm outline-none"
         />
+        <RecurrenceField value={recur} onChange={setRecur} compact />
       </form>
     </div>
   );
 }
+
 
 export function Deeds() {
   const [deeds, setDeeds] = useStore<{ id: string; who: string; what: string; date: string }[]>("deeds", []);
