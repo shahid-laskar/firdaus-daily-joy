@@ -53,8 +53,8 @@ export function Shell({
       <header className="border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.jpg" alt="Sunnah Home Logo" className="size-10 object-cover rounded-xl shadow-sm" />
-            <span className="font-display text-xl tracking-wide text-foreground">Sunnah Home</span>
+            <img src="/logo.jpg" alt="Sunnah Home Logo" className="animate-butterfly size-10 object-cover rounded-xl shadow-sm" />
+            <span className="font-cursive text-3xl tracking-wide text-foreground">Sunnah Home</span>
           </Link>
           <div className="flex items-center gap-1.5">
             <button
