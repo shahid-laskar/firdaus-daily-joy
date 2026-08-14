@@ -28,7 +28,7 @@ function OnboardingPage() {
     <div data-space="home" className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16">
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 flex items-center gap-3">
-          <img src="/logo.jpg" alt="Sunnah Home Logo" className="animate-butterfly size-10 object-cover rounded-xl shadow-sm" />
+          <img src="/logo.gif" alt="Sunnah Home Logo" className="animate-butterfly size-10 object-cover rounded-xl shadow-sm" />
           <span className="font-cursive text-4xl tracking-wide text-foreground">Sunnah Home</span>
         </div>
 
