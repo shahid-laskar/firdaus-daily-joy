@@ -1,15 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { Shell } from "@/components/veedu/shell";
 import { SubTabs, Section, Meter } from "@/components/veedu/primitives";
 import { Deeds, GroceryList, Kids, Meals, Tasks, isTaskDone, type Task } from "@/components/home/modules";
 import { Notes } from "@/components/home/notes";
 import { UnifiedCalendar, eventsOn, type CalEvent } from "@/components/home/calendar";
-import { Reminders } from "@/components/home/reminders";
+import { Reminders, useReminderEngine } from "@/components/home/reminders";
 import { useNextPrayer, useSalah } from "@/components/deen/modules";
 import { isRepeating, occursOn } from "@/lib/recurrence";
 import { useTab } from "@/lib/use-tab";
 import { todayKey, useNow, useStore } from "@/lib/store";
 import { useFamilyMigration } from "@/lib/family-model";
+import { calculateBudgetAnalytics } from "@/lib/budget-intelligence";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -82,7 +84,8 @@ function Today() {
   const water = health[todayKey()]?.water ?? 0;
   const mood = checkins[todayKey()];
   const month = todayKey().slice(0, 7);
-  const spent = expenses.filter((e) => e.date.startsWith(month)).reduce((s, e) => s + e.amount, 0);
+  const budgetAnalytics = useMemo(() => calculateBudgetAnalytics(expenses as any, month), [expenses, month]);
+  const spent = budgetAnalytics.currentMonthTotal;
   const cap = Object.values(limits).reduce((s, n) => s + n, 0);
   const overBudget = cap > 0 && spent / cap > 0.8;
 

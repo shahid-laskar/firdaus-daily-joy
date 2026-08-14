@@ -22,8 +22,8 @@ export interface BudgetAnalytics {
  */
 export function getPreviousMonthPrefix(monthPrefix: string): string {
   const [yearStr, monthStr] = monthPrefix.split("-");
-  let year = parseInt(yearStr, 10);
-  let month = parseInt(monthStr, 10);
+  let year = parseInt(yearStr ?? "0", 10);
+  let month = parseInt(monthStr ?? "0", 10);
   
   if (month === 1) {
     year -= 1;

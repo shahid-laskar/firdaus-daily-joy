@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Action, EmptyState, Field, Meter, Section } from "@/components/veedu/primitives";
 import { todayKey, uid, useStore } from "@/lib/store";
+import { calculateBudgetAnalytics, generateBudgetInsights } from "@/lib/budget-intelligence";
 
 export type Expense = { id: string; amount: number; category: string; note: string; date: string };
 
@@ -118,16 +119,24 @@ export function Overview() {
   const [newCat, setNewCat] = useState("");
   const [newLimit, setNewLimit] = useState("");
 
-  const monthly = expenses.filter((e) => e.date.startsWith(month()));
-  const total = monthly.reduce((s, e) => s + e.amount, 0);
+  const currentMonth = month();
+  const analytics = useMemo(
+    () => calculateBudgetAnalytics(expenses, currentMonth),
+    [expenses, currentMonth],
+  );
+  const insights = useMemo(
+    () => generateBudgetInsights(analytics, limits),
+    [analytics, limits],
+  );
+
+  const total = analytics.currentMonthTotal;
   const cap = Object.values(limits).reduce((s, n) => s + n, 0);
 
   const byCategory = useMemo(() => {
-    const map = new Map<string, number>();
-    monthly.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
+    const map = new Map<string, number>(Object.entries(analytics.categoryTotals));
     Object.keys(limits).forEach((k) => !map.has(k) && map.set(k, 0));
     return [...map.entries()].sort((a, b) => b[1] - a[1]);
-  }, [monthly, limits]);
+  }, [analytics.categoryTotals, limits]);
 
   return (
     <div className="space-y-10">
@@ -136,10 +145,25 @@ export function Overview() {
         <p className="display-xl numeric mt-3">₹{money(total)}</p>
         <p className="text-muted-foreground mt-2 text-sm">
           {cap ? `of ₹${money(cap)} planned · ₹${money(Math.max(0, cap - total))} left` : "No monthly limit set yet"}
+          {analytics.previousMonthTotal > 0 && (
+            <span> · {analytics.delta.delta >= 0 ? "▲" : "▼"} {Math.abs(Math.round(analytics.delta.percentage))}% vs last month</span>
+          )}
         </p>
         <div className="mt-5">
           <Meter value={cap ? (total / cap) * 100 : 0} />
         </div>
+        {insights.length > 0 && (
+          <div className="mt-4 space-y-1.5 border-border/70 border-t pt-3">
+            {insights.slice(0, 2).map((ins) => (
+              <p key={ins.id} className="text-ink-soft text-xs">
+                <span className={ins.severity === "warning" ? "text-destructive font-medium" : "text-space font-medium"}>
+                  {ins.title}:
+                </span>{" "}
+                {ins.explanation}
+              </p>
+            ))}
+          </div>
+        )}
       </section>
 
       <Section eyebrow="Where it went" title="Categories">

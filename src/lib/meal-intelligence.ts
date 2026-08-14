@@ -20,7 +20,7 @@ export interface RecipeScore {
 export function weekToAbsolute(weekKey: string): number {
   if (!weekKey || !weekKey.includes("-W")) return 0;
   const [yearStr, weekStr] = weekKey.split("-W");
-  return parseInt(yearStr, 10) * 52 + parseInt(weekStr, 10);
+  return parseInt(yearStr ?? "0", 10) * 52 + parseInt(weekStr ?? "0", 10);
 }
 
 /**
@@ -46,7 +46,7 @@ export function rankRecipes(
   const allWeeks = Object.keys(history).sort();
   for (const week of allWeeks) {
     const plan = history[week];
-    for (const mealName of Object.values(plan)) {
+    for (const mealName of Object.values(plan ?? {})) {
       if (!mealName) continue;
       
       const normalized = mealName.trim().toLowerCase();
@@ -81,13 +81,16 @@ export function rankRecipes(
       score -= 50; 
     }
 
-    return {
+    const result: RecipeScore = {
       recipe,
-      lastUsedWeek: stats.lastWeekStr ?? undefined,
       weeksSinceUsed,
       historicalCount: stats.count,
       score,
     };
+    if (stats.lastWeekStr) {
+      result.lastUsedWeek = stats.lastWeekStr;
+    }
+    return result;
   });
 
   // Sort by score descending, then deterministically by name

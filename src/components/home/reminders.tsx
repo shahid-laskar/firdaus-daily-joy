@@ -2,14 +2,52 @@ import { useEffect, useState } from "react";
 import { Action, EmptyState, Field, Section } from "@/components/veedu/primitives";
 import { RecurrenceField, RepeatChip } from "@/components/veedu/recurrence-field";
 import { type Recurrence, describeRecurrence, nextOccurrence, occursOn } from "@/lib/recurrence";
-import { todayKey, uid, useStore } from "@/lib/store";
+import { todayKey, uid, useNow, useStore } from "@/lib/store";
 import { useNextPrayer } from "@/components/deen/modules";
+import { evaluateReminders, coreReminderRules, type ReminderContext } from "@/lib/reminder-engine";
 
 export type Reminder = { id: string; title: string; time: string; recur: Recurrence };
 export type NotifPrefs = { prayers: boolean; reminders: boolean; leadMinutes: number };
 
 export function useNotifPrefs() {
   return useStore<NotifPrefs>("notifPrefs", { prayers: false, reminders: false, leadMinutes: 10 });
+}
+
+export function useReminderEngine() {
+  const [reminders] = useStore<Reminder[]>("reminders", []);
+  const [prefs] = useNotifPrefs();
+  const [history, setHistory] = useStore<Record<string, string>>("reminderHistory", {});
+  const countdown = useNextPrayer();
+  const now = useNow(30_000);
+
+  useEffect(() => {
+    if (!now || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    if (!prefs.prayers && !prefs.reminders) return;
+
+    const ctx: ReminderContext = {
+      currentTime: now,
+      prefs,
+      history,
+      nextPrayer: countdown,
+      customReminders: reminders,
+    };
+
+    const signals = evaluateReminders(ctx, coreReminderRules);
+    if (signals.length === 0) return;
+
+    const newHistory = { ...history };
+    for (const sig of signals) {
+      newHistory[sig.dedupeKey] = sig.timestamp;
+      try {
+        new Notification("Sunnah Home", {
+          body: sig.message,
+        });
+      } catch (e) {
+        console.error("Failed to show notification:", e);
+      }
+    }
+    setHistory(newHistory);
+  }, [now, prefs, history, countdown, reminders, setHistory]);
 }
 
 /** PROTOTYPE — one reminder system, plus prayer nudges, using the browser's own notifications. */

@@ -1,6 +1,5 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { renderHook } from "@testing-library/react"; // If DOM is available, but actually let's test purely or skip hook execution
 import type { FamilyMember } from "./family-model";
 
 // Since we're using node:test and not necessarily React DOM in this layer easily,

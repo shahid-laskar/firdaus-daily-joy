@@ -64,12 +64,12 @@ describe("Meal Intelligence", () => {
     assert.ok(tacos.score < 0);     // weeksSinceUsed = 0
 
     // Salad, Soup, New Recipe should be ranked higher because they weren't used recently
-    assert.equal(ranked[0].recipe.name, "New Recipe"); // alphabetically first among ties?
+    assert.equal(ranked[0]?.recipe.name, "New Recipe"); // alphabetically first among ties?
     // Salad, Soup, New Recipe all have 0 count, 12 weeks fallback = 18 score
     // Sorted by score (18), then alphabetically: New Recipe, Salad, Soup
-    assert.equal(ranked[0].recipe.name, "New Recipe");
-    assert.equal(ranked[1].recipe.name, "Salad");
-    assert.equal(ranked[2].recipe.name, "Soup");
+    assert.equal(ranked[0]?.recipe.name, "New Recipe");
+    assert.equal(ranked[1]?.recipe.name, "Salad");
+    assert.equal(ranked[2]?.recipe.name, "Soup");
   });
 
   test("rankRecipes favors high frequency staples over time", () => {

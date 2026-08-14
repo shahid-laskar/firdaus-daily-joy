@@ -4,6 +4,9 @@ import { Shell } from "@/components/veedu/shell";
 import { Meter, Section } from "@/components/veedu/primitives";
 import { money } from "@/components/budget/modules";
 import { useStore } from "@/lib/store";
+import { getWeekRange, isoOffset, sum, trendDelta } from "@/lib/intelligence";
+import { compareSalahPeriods, generateSalahInsights, type SalahData } from "@/lib/salah-intelligence";
+import { calculateMoodAnalytics, generateMoodInsights, type DailyActivityData } from "@/lib/mood-intelligence";
 
 export const Route = createFileRoute("/review")({
   head: () => ({
@@ -34,15 +37,11 @@ const MOOD_LABELS: Record<string, string> = {
   grateful: "Grateful",
 };
 
-const isoOffset = (offset: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  return d.toISOString().slice(0, 10);
-};
-
 function ReviewPage() {
-  const week = useMemo(() => [...Array(7)].map((_, i) => isoOffset(-(6 - i))), []);
-  const [salah] = useStore<Record<string, Record<string, string>>>("salah", {});
+  const week = useMemo(() => getWeekRange(new Date()), []);
+  const prevWeek = useMemo(() => [...Array(7)].map((_, i) => isoOffset(new Date(), -(13 - i))), []);
+
+  const [salah] = useStore<SalahData>("salah", {});
   const [tasks] = useStore<{ id: string; title: string; done: boolean; date: string; recur?: any; completions?: string[] }[]>("tasks", []);
   const [expenses] = useStore<{ amount: number; category: string; date: string }[]>("expenses", []);
   const [habits] = useStore<{ id: string; name: string; days: string[] }[]>("habits", []);
@@ -52,11 +51,13 @@ function ReviewPage() {
   const [fasting] = useStore<Record<string, string>>("fasting", {});
   const [deeds] = useStore<{ who: string; what: string; date: string }[]>("deeds", []);
 
-  const prayed = week.reduce((s, d) => s + Object.keys(salah[d] ?? {}).length, 0);
-  const onTime = week.reduce(
-    (s, d) => s + Object.values(salah[d] ?? {}).filter((v) => v === "ontime").length,
-    0,
-  );
+  // Centralized Salah Intelligence
+  const salahComparison = useMemo(() => compareSalahPeriods(salah, week, prevWeek), [salah, week, prevWeek]);
+  const salahAnalytics = salahComparison.current;
+  const salahInsights = useMemo(() => generateSalahInsights(salahComparison), [salahComparison]);
+  const prayed = salahAnalytics.totalLogged;
+  const onTime = salahAnalytics.onTimeCount;
+
   const tasksDone = tasks.filter(
     (t) =>
       (t.done && week.includes(t.date)) ||
@@ -67,22 +68,50 @@ function ReviewPage() {
     tasks.reduce((s, t) => s + (t.completions ?? []).filter((c) => week.includes(c)).length, 0);
   const openNow = tasks.filter((t) => !t.done && !t.recur).length;
 
-  const weekSpend = expenses.filter((e) => week.includes(e.date)).reduce((s, e) => s + e.amount, 0);
-  const prevWeek = [...Array(7)].map((_, i) => isoOffset(-(13 - i)));
-  const prevSpend = expenses.filter((e) => prevWeek.includes(e.date)).reduce((s, e) => s + e.amount, 0);
+  // Centralized Spending Analytics
+  const weekExpenses = useMemo(() => expenses.filter((e) => week.includes(e.date)), [expenses, week]);
+  const prevWeekExpenses = useMemo(() => expenses.filter((e) => prevWeek.includes(e.date)), [expenses, prevWeek]);
+  const weekSpend = sum(weekExpenses.map((e) => e.amount));
+  const prevSpend = sum(prevWeekExpenses.map((e) => e.amount));
+  const spendDelta = useMemo(() => trendDelta(weekSpend, prevSpend), [weekSpend, prevSpend]);
+
   const topCategory = useMemo(() => {
     const map = new Map<string, number>();
-    expenses.filter((e) => week.includes(e.date)).forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
+    weekExpenses.forEach((e) => map.set(e.category, (map.get(e.category) ?? 0) + e.amount));
     return [...map.entries()].sort((a, b) => b[1] - a[1])[0];
-  }, [expenses, week]);
+  }, [weekExpenses]);
 
   const habitHits = habits.map((h) => ({ name: h.name, hits: week.filter((d) => h.days.includes(d)).length }));
+
+  // Centralized Mood Intelligence
+  const dailyActivityData: DailyActivityData[] = useMemo(() => {
+    return week.map((date) => {
+      const daySalah = salah[date] || {};
+      const sLogged = Object.keys(daySalah).length;
+      const sOnTime = Object.values(daySalah).filter((s) => s === "ontime").length;
+      const h = health[date];
+      const entry: DailyActivityData = {
+        date,
+        waterGlasses: h?.water ?? 0,
+        habitsCompleted: habits.filter((h) => h.days.includes(date)).length,
+      };
+      if (checkins[date]) entry.mood = checkins[date];
+      if (h?.sleep && Number(h.sleep) > 0) entry.sleepHours = Number(h.sleep);
+      if (sLogged > 0) entry.salahOnTimePct = (sOnTime / sLogged) * 100;
+      return entry;
+    });
+  }, [week, salah, health, checkins, habits]);
+
+  const moodAnalytics = useMemo(() => calculateMoodAnalytics(dailyActivityData), [dailyActivityData]);
+  const moodInsights = useMemo(() => generateMoodInsights(moodAnalytics), [moodAnalytics]);
+
   const moodDays = week.filter((d) => checkins[d]);
   const dominantMood = useMemo(() => {
     const map = new Map<string, number>();
     moodDays.forEach((d) => map.set(checkins[d] as string, (map.get(checkins[d] as string) ?? 0) + 1));
     return [...map.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   }, [moodDays, checkins]);
+
   const water = week.reduce((s, d) => s + (health[d]?.water ?? 0), 0);
   const sleepDays = week.filter((d) => Number(health[d]?.sleep ?? 0) > 0);
   const avgSleep = sleepDays.length
@@ -94,14 +123,24 @@ function ReviewPage() {
 
   const highlights: string[] = [];
   if (onTime / Math.max(1, prayed) > 0.8 && prayed >= 25) highlights.push("Salah was steady and mostly on time.");
+  salahInsights.filter((i) => i.severity === "success").forEach((i) => {
+    if (!highlights.includes(i.explanation)) highlights.push(i.explanation);
+  });
   if (taskCompletions >= 5) highlights.push(`${taskCompletions} things closed out.`);
-  if (prevSpend && weekSpend < prevSpend) highlights.push("You spent less than last week.");
+  if (prevSpend > 0 && weekSpend < prevSpend) highlights.push("You spent less than last week.");
   if (habitHits.some((h) => h.hits >= 5)) highlights.push("A habit held for most of the week.");
+  moodInsights.filter((i) => i.severity === "success").forEach((i) => {
+    if (!highlights.includes(i.explanation)) highlights.push(i.explanation);
+  });
   if (weekDeeds.length) highlights.push(`${weekDeeds.length} small kindness${weekDeeds.length > 1 ? "es" : ""} noticed.`);
+
   const attention: string[] = [];
   if (prayed < 30) attention.push(`${35 - prayed} prayers weren't logged.`);
+  salahInsights.filter((i) => i.severity === "warning" || i.id === "salah-weakest" || i.id === "salah-trend-down").forEach((i) => {
+    if (!attention.includes(i.explanation)) attention.push(i.explanation);
+  });
   if (openNow > 5) attention.push(`${openNow} tasks are still open.`);
-  if (prevSpend && weekSpend > prevSpend * 1.15) attention.push("Spending rose noticeably.");
+  if (prevSpend > 0 && spendDelta.percentage > 15) attention.push("Spending rose noticeably.");
   if (avgSleep && Number(avgSleep) < 6.5) attention.push("Sleep averaged under 6.5 hours.");
 
   return (

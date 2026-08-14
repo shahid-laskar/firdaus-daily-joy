@@ -89,7 +89,7 @@ describe("Mood Intelligence", () => {
     const insights = generateMoodInsights(analytics);
     
     assert.equal(insights.length, 1);
-    assert.equal(insights[0].id, "mood-insufficient");
+    assert.equal(insights[0]?.id, "mood-insufficient");
   });
 
   test("generateMoodInsights - patterns forming", () => {
@@ -105,7 +105,7 @@ describe("Mood Intelligence", () => {
     const insights = generateMoodInsights(analytics);
     
     assert.equal(insights.length, 1);
-    assert.equal(insights[0].id, "mood-baseline");
+    assert.equal(insights[0]?.id, "mood-baseline");
   });
 
   test("generateMoodInsights - positive patterns", () => {

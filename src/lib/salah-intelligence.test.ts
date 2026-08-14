@@ -38,19 +38,19 @@ describe("Salah Intelligence", () => {
     const analytics = calculateSalahAnalytics(mockData, dates);
     
     const fajr = analytics.perPrayerConsistency["fajr"];
-    assert.equal(fajr.logged, 2);
-    assert.equal(fajr.onTime, 1);
-    assert.equal(fajr.percentage, 50);
+    assert.equal(fajr?.logged, 2);
+    assert.equal(fajr?.onTime, 1);
+    assert.equal(fajr?.percentage, 50);
 
     const dhuhr = analytics.perPrayerConsistency["dhuhr"];
-    assert.equal(dhuhr.logged, 2);
-    assert.equal(dhuhr.onTime, 2);
-    assert.equal(dhuhr.percentage, 100);
+    assert.equal(dhuhr?.logged, 2);
+    assert.equal(dhuhr?.onTime, 2);
+    assert.equal(dhuhr?.percentage, 100);
 
     const asr = analytics.perPrayerConsistency["asr"];
-    assert.equal(asr.logged, 1);
-    assert.equal(asr.onTime, 0);
-    assert.equal(asr.percentage, 0);
+    assert.equal(asr?.logged, 1);
+    assert.equal(asr?.onTime, 0);
+    assert.equal(asr?.percentage, 0);
   });
 
   test("calculateSalahAnalytics - empty data safely handled", () => {
@@ -58,7 +58,7 @@ describe("Salah Intelligence", () => {
     const analytics = calculateSalahAnalytics(mockData, dates);
     assert.equal(analytics.totalLogged, 0);
     assert.equal(analytics.onTimePercentage, 0);
-    assert.equal(analytics.perPrayerConsistency["fajr"].percentage, 0);
+    assert.equal(analytics.perPrayerConsistency["fajr"]?.percentage, 0);
   });
 
   test("compareSalahPeriods", () => {

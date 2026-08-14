@@ -124,8 +124,8 @@ export const customReminderRule: ReminderRule = (context) => {
       const parts = r.time.split(":");
       if (parts.length !== 2) continue;
       
-      const rH = parseInt(parts[0], 10);
-      const rM = parseInt(parts[1], 10);
+      const rH = parseInt(parts[0] ?? "0", 10);
+      const rM = parseInt(parts[1] ?? "0", 10);
       
       // Is past due?
       const isPast = curH > rH || (curH === rH && curM >= rM);

@@ -75,30 +75,35 @@ export function calculateMoodAnalytics(data: DailyActivityData[]): MoodAnalytics
     return undefined;
   };
 
-  analytics.sleepCorrelation = calculateCorrelation(
+  const sleepCorr = calculateCorrelation(
     "7+ hours of sleep",
     d => d.sleepHours !== undefined && d.sleepHours >= 7
   );
+  if (sleepCorr) analytics.sleepCorrelation = sleepCorr;
 
-  analytics.waterCorrelation = calculateCorrelation(
+  const waterCorr = calculateCorrelation(
     "6+ glasses of water",
     d => d.waterGlasses !== undefined && d.waterGlasses >= 6
   );
+  if (waterCorr) analytics.waterCorrelation = waterCorr;
 
-  analytics.workoutCorrelation = calculateCorrelation(
+  const workoutCorr = calculateCorrelation(
     "a workout",
     d => !!d.workedOut
   );
+  if (workoutCorr) analytics.workoutCorrelation = workoutCorr;
 
-  analytics.salahCorrelation = calculateCorrelation(
+  const salahCorr = calculateCorrelation(
     "mostly on-time Salah",
     d => d.salahOnTimePct !== undefined && d.salahOnTimePct >= 80
   );
+  if (salahCorr) analytics.salahCorrelation = salahCorr;
 
-  analytics.habitCorrelation = calculateCorrelation(
+  const habitCorr = calculateCorrelation(
     "completing multiple habits",
     d => d.habitsCompleted !== undefined && d.habitsCompleted >= 3
   );
+  if (habitCorr) analytics.habitCorrelation = habitCorr;
 
   return analytics;
 }

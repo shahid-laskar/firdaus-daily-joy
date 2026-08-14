@@ -9,7 +9,8 @@ import {
   average,
   distribution,
   trendDelta,
-  checkThreshold
+  checkThreshold,
+  fillMissingData
 } from "./intelligence";
 
 describe("Intelligence Foundation", () => {

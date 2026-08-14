@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Action, EmptyState, Field, Meter, Section, Tick } from "@/components/veedu/primitives";
 import { todayKey, uid, useNow, useStore } from "@/lib/store";
 import { VERSES, verseOfDay } from "@/lib/verses";
+import { getWeekRange } from "@/lib/intelligence";
+import { calculateSalahAnalytics } from "@/lib/salah-intelligence";
 
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from "adhan";
 
@@ -150,11 +152,8 @@ export function Salah() {
   const [log, setLog] = useSalah();
   const today = log[todayKey()] ?? {};
   const prayers = usePrayers();
-  const week = [...Array(7)].map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().slice(0, 10);
-  });
+  const week = useMemo(() => getWeekRange(new Date()), []);
+  const analytics = useMemo(() => calculateSalahAnalytics(log, week), [log, week]);
 
   function mark(id: string, state: "ontime" | "late") {
     const day = { ...(log[todayKey()] ?? {}) };
@@ -194,7 +193,17 @@ export function Salah() {
         </ul>
       </Section>
 
-      <Section eyebrow="Last seven days" title="Consistency">
+      <Section
+        eyebrow="Last seven days"
+        title="Consistency"
+        aside={
+          analytics.totalLogged > 0 ? (
+            <span className="text-ink-faint numeric text-xs">
+              {analytics.totalLogged}/35 logged · {Math.round(analytics.onTimePercentage)}% on time
+            </span>
+          ) : undefined
+        }
+      >
         <div className="grid grid-cols-7 gap-2">
           {week.map((d) => {
             const day = log[d] ?? {};

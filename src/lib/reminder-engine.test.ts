@@ -24,9 +24,11 @@ describe("Reminder Engine", () => {
     
     const result = evaluateReminders(ctx, [prayerRule]);
     assert.equal(result.length, 1);
-    assert.equal(result[0].category, "prayer");
-    assert.ok(result[0].message.includes("Dhuhr is in 5 minutes"));
-    assert.ok(result[0].dedupeKey.startsWith("prayer-dhuhr-"));
+    const first = result[0];
+    assert.ok(first);
+    assert.equal(first.category, "prayer");
+    assert.ok(first.message.includes("Dhuhr is in 5 minutes"));
+    assert.ok(first.dedupeKey.startsWith("prayer-dhuhr-"));
   });
 
   test("prayerRule does not generate if outside lead window", () => {
@@ -71,8 +73,10 @@ describe("Reminder Engine", () => {
 
     const result = evaluateReminders(ctx, [customReminderRule]);
     assert.equal(result.length, 1);
-    assert.equal(result[0].message, "Buy milk");
-    assert.equal(result[0].dedupeKey, `custom-test1-${dateStr}`);
+    const first = result[0];
+    assert.ok(first);
+    assert.equal(first.message, "Buy milk");
+    assert.equal(first.dedupeKey, `custom-test1-${dateStr}`);
   });
 
   test("deduplication blocks already-fired reminders", () => {
@@ -87,9 +91,9 @@ describe("Reminder Engine", () => {
     // In our implementation, dateStr is built from local time. To ensure this test
     // passes regardless of runner timezone, we check what it actually outputs.
     const generated = prayerRule(ctx);
-    if (generated.length > 0) {
+    if (generated.length > 0 && generated[0]) {
       // Overwrite history to definitely block this generated key
-      ctx.history = { [generated[0].dedupeKey]: "fired-earlier" };
+      ctx.history = { ...ctx.history, [generated[0].dedupeKey]: "fired-earlier" };
       const result = evaluateReminders(ctx, [prayerRule]);
       assert.equal(result.length, 0);
     }

@@ -5,6 +5,7 @@ import { RecurrenceField, RepeatChip } from "@/components/veedu/recurrence-field
 import { type Recurrence, isRepeating, nextOccurrence, occursOn } from "@/lib/recurrence";
 import { todayKey, uid, useStore } from "@/lib/store";
 import { type FamilyMember, type Chore } from "@/lib/family-model";
+import { rankRecipes } from "@/lib/meal-intelligence";
 
 export type Task = {
   id: string;
@@ -191,6 +192,24 @@ export function Meals() {
   const lastWeek = weekKey(-1);
   const previous = history[lastWeek];
 
+  const rankedRecipes = useMemo(() => {
+    return rankRecipes(recipes, history, thisWeek);
+  }, [recipes, history, thisWeek]);
+  const suggestions = rankedRecipes.slice(0, 4);
+
+  function addSuggestion(dishName: string) {
+    const slotOrder: string[] = [];
+    for (const d of DAYS) {
+      slotOrder.push(`${d}-Dinner`);
+      slotOrder.push(`${d}-Lunch`);
+      slotOrder.push(`${d}-Breakfast`);
+    }
+    const emptySlot = slotOrder.find((slot) => !plan[slot]);
+    if (emptySlot) {
+      setPlan({ ...plan, [emptySlot]: dishName });
+    }
+  }
+
   // Keep this week's plan in the light history so "copy last week" has something to read.
   useEffect(() => {
     if (Object.keys(plan).length === 0) return;
@@ -227,9 +246,29 @@ export function Meals() {
           </div>
         }
       >
+        {suggestions.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-1.5">
+            <span className="text-ink-faint text-xs mr-1">Suggestions:</span>
+            {suggestions.map((s) => (
+              <button
+                key={s.recipe.id}
+                type="button"
+                onClick={() => addSuggestion(s.recipe.name)}
+                className="press bg-space-soft/60 hover:bg-space-soft text-foreground rounded-full px-2.5 py-0.5 text-xs inline-flex items-center gap-1 cursor-pointer transition"
+                title={
+                  s.lastUsedWeek
+                    ? `Click to add · Used in ${s.lastUsedWeek} (${s.historicalCount}x historically)`
+                    : `Click to add · Fresh idea (${s.historicalCount}x recorded)`
+                }
+              >
+                + {s.recipe.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         <datalist id="saved-recipes">
-          {recipes.map(r => <option key={r.id} value={r.name} />)}
+          {rankedRecipes.map(r => <option key={r.recipe.id} value={r.recipe.name} />)}
         </datalist>
         <div className="overflow-x-auto no-scrollbar -mx-5 px-5">
           <table className="w-full min-w-[560px] border-separate border-spacing-y-1">
