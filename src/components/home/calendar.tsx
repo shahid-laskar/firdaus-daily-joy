@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Action, Field, Section } from "@/components/veedu/primitives";
 import { RecurrenceField, RepeatChip } from "@/components/veedu/recurrence-field";
-import { hijriLabel, islamicMarker } from "@/lib/hijri";
+import { hijriLabel, islamicMarker, hijriParts } from "@/lib/hijri";
 import { type Recurrence, occursOn } from "@/lib/recurrence";
 import { todayKey, uid, useStore } from "@/lib/store";
 
@@ -127,20 +127,33 @@ export function UnifiedCalendar() {
             const fasted = !!fasting[iso];
             const isSel = iso === selected;
             const isToday = iso === todayKey();
+            const hp = hijriParts(d);
+            const imarker = islamicMarker(d);
             return (
               <button
                 key={iso}
                 onClick={() => setSelected(iso)}
-                className="press flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border text-[0.72rem] transition-colors"
+                className="press relative flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border text-[0.72rem] transition-colors"
                 style={{
                   borderColor: isSel ? "var(--space-accent)" : isToday ? "var(--rule)" : "transparent",
                   background: isSel ? "var(--space-accent-soft)" : "transparent",
                 }}
               >
-                <span className={`numeric ${isToday ? "text-foreground font-semibold" : "text-ink-soft"}`}>
+                {hp && (
+                  <span 
+                    className="absolute top-1.5 right-1.5 text-[0.55rem] leading-none" 
+                    style={{ color: imarker ? "var(--clay)" : "var(--ink-faint)", opacity: imarker ? 1 : 0.5 }}
+                  >
+                    {hp.day}
+                  </span>
+                )}
+                <span className={`numeric mt-1 ${isToday ? "text-foreground font-semibold" : "text-ink-soft"}`}>
                   {iso.slice(8)}
                 </span>
                 <span className="flex h-1.5 items-center gap-[3px]">
+                  {imarker && (
+                    <i className="size-[5px] rounded-full" style={{ background: "var(--clay)" }} />
+                  )}
                   {dayEvents.length > 0 && (
                     <i className="size-[5px] rounded-full" style={{ background: "var(--space-accent)" }} />
                   )}
@@ -148,7 +161,7 @@ export function UnifiedCalendar() {
                     <i className="size-[5px] rounded-full" style={{ background: "var(--brass)" }} />
                   )}
                   {fasted && <i className="size-[5px] rounded-full" style={{ background: "var(--leaf)" }} />}
-                  {hasMeal && !dayEvents.length && !dayTasks.length && !fasted && (
+                  {hasMeal && !dayEvents.length && !dayTasks.length && !fasted && !imarker && (
                     <i className="bg-rule size-[5px] rounded-full" />
                   )}
                 </span>
@@ -161,6 +174,7 @@ export function UnifiedCalendar() {
           <Legend color="var(--brass)" label="Tasks due" />
           <Legend color="var(--leaf)" label="Fasting" />
           <Legend color="var(--rule)" label="Meal planned" />
+          <Legend color="var(--clay)" label="Islamic Event" />
         </div>
       </Section>
 
