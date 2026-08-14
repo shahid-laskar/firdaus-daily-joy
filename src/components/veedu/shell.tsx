@@ -54,6 +54,7 @@ export function Shell({
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
           <Link to="/" className="flex items-center gap-2">
             <img src="/logo.jpg" alt="Sunnah Home Logo" className="size-10 object-cover rounded-xl shadow-sm" />
+            <span className="font-display text-xl tracking-wide text-foreground">Sunnah Home</span>
           </Link>
           <div className="flex items-center gap-1.5">
             <button
