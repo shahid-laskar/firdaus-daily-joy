@@ -1,0 +1,32 @@
+CLAUDE REVIEW TASK TEMPLATE
+
+Review the current implementation of the assigned Firdaus task.
+
+Read:
+- docs/agents/03-agent-rules.md
+- the assigned task specification
+- relevant implementation files
+
+Focus on:
+1. architecture consistency
+2. data integrity and migrations
+3. algorithm correctness
+4. date/time correctness
+5. privacy
+6. UX regressions
+7. test coverage
+8. unnecessary complexity
+9. Phase 0–2 regressions
+
+Classify findings:
+- Critical
+- Important
+- Minor
+- Positive
+
+Then provide:
+- required fixes before merge
+- optional improvements
+- explicit recommendation: approve / approve after fixes / reject
+
+Do not broaden the task beyond correctness, security, data integrity, maintainability, or stated product requirements.

@@ -1,0 +1,38 @@
+LOVABLE TASK PROMPT TEMPLATE
+
+You are working on one narrowly scoped Firdaus UI/UX task.
+
+Read:
+- docs/agents/03-agent-rules.md
+- the assigned task file
+- the existing repository UI and design system
+
+The repository is the source of truth.
+
+Your task is to improve only the specified product surface.
+
+DO NOT:
+- rebuild data models
+- rewrite business logic
+- replace persistence
+- change unrelated routes
+- redesign the entire app
+- add mock data when real data exists
+- introduce unrelated dependencies
+
+Use existing theme tokens, components, spacing, typography, interaction patterns, and state.
+
+Prioritize:
+- mobile UX
+- premium visual hierarchy
+- calm/minimal interaction
+- accessibility
+- empty/loading/error states
+- responsive behavior
+- consistency with existing Firdaus design
+
+At the end:
+- summarize UI/components changed
+- identify any logic assumptions
+- identify any non-UI changes
+- do not claim backend/business-logic work was completed unless the task explicitly included it.

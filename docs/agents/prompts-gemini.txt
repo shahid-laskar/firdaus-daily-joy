@@ -1,0 +1,35 @@
+GEMINI TASK PROMPT TEMPLATE
+
+You are implementing one specific Firdaus roadmap task.
+
+Read:
+- docs/agents/03-agent-rules.md
+- the original research plan in docs/
+- the relevant task file in docs/agents/phase3 or docs/agents/phase4
+- the current repository implementation
+
+Repository is the source of truth.
+
+First audit the existing implementation related to this task. Report:
+1. what already exists
+2. what is missing
+3. what must be preserved
+4. the smallest implementation plan
+
+Then implement only this task.
+
+Do not rebuild existing functionality.
+Do not change unrelated architecture.
+Preserve localStorage/Supabase data.
+Add migrations when schema changes.
+Reuse existing components/utilities.
+Prefer deterministic, testable logic.
+
+After implementation:
+- run relevant tests
+- run typecheck/build
+- verify persistence and refresh
+- verify mobile behavior
+- report changed files, migration details, test/build results, and remaining risks.
+
+Do not declare success if only the UI renders.
