@@ -8,13 +8,13 @@ import { useTab } from "@/lib/use-tab";
 export const Route = createFileRoute("/budget")({
   head: () => ({
     meta: [
-      { title: "Budget — clear, calm money tracking in Firdous" },
+      { title: "Budget — clear, calm money tracking in Sunnah Home" },
       {
         name: "description",
         content:
           "Record expenses in seconds, see where the month is going, and calculate zakat — without spreadsheets or anxiety.",
       },
-      { property: "og:title", content: "Budget — clear, calm money tracking in Firdous" },
+      { property: "og:title", content: "Budget — clear, calm money tracking in Sunnah Home" },
       {
         property: "og:description",
         content: "Quick expense entry, monthly limits and a zakat calculator, made understandable.",

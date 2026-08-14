@@ -14,7 +14,7 @@ export function exportData() {
       out[key.slice(PREFIX.length)] = raw;
     }
   }
-  return { app: "firdous", exportedAt: new Date().toISOString(), data: out };
+  return { app: "Sunnah Home", exportedAt: new Date().toISOString(), data: out };
 }
 
 export function downloadExport() {
@@ -22,7 +22,7 @@ export function downloadExport() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `firdous-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `Sunnah Home-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

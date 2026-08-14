@@ -7,13 +7,13 @@ import { supabase } from "@/lib/supabase";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in to Firdous" },
+      { title: "Sign in to Sunnah Home" },
       {
         name: "description",
         content:
-          "Sign in to sync Firdous across your devices, or continue as a guest with everything stored privately on this device.",
+          "Sign in to sync Sunnah Home across your devices, or continue as a guest with everything stored privately on this device.",
       },
-      { property: "og:title", content: "Sign in to Firdous" },
+      { property: "og:title", content: "Sign in to Sunnah Home" },
       {
         property: "og:description",
         content: "Sync across devices, or keep everything local as a guest.",
@@ -29,7 +29,7 @@ type Mode = "signin" | "register" | "magic" | "reset";
 
 const COPY: Record<Mode, { title: string; body: string; cta: string }> = {
   signin: { title: "Welcome back", body: "Your home, exactly as you left it.", cta: "Sign in" },
-  register: { title: "Make it yours", body: "One account keeps Firdous with you across devices.", cta: "Create account" },
+  register: { title: "Make it yours", body: "One account keeps Sunnah Home with you across devices.", cta: "Create account" },
   magic: { title: "No password", body: "We'll send a link that signs you straight in.", cta: "Send link" },
   reset: { title: "Reset password", body: "We'll email you a way back in.", cta: "Send reset" },
 };
@@ -48,7 +48,7 @@ function AuthPage() {
     <div data-space="home" className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16">
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 flex items-baseline gap-2">
-          <span className="font-display text-xl">Firdous</span>
+          <span className="font-display text-xl">Sunnah Home</span>
           <span className="bg-space size-[5px] rounded-full" />
         </div>
 

@@ -35,7 +35,7 @@ export function Reminders() {
     setPermission(state);
     if (state === "granted") {
       setPrefs({ ...prefs, [kind]: !prefs[kind] });
-      new Notification("Firdous", {
+      new Notification("Sunnah Home", {
         body: kind === "prayers" ? "Prayer reminders are on." : "Reminders are on.",
       });
     }
@@ -87,7 +87,7 @@ export function Reminders() {
         </div>
         {permission === "denied" && (
           <p className="text-ink-faint mt-4 text-xs">
-            Notifications are blocked in this browser's settings, so nudges stay inside Firdous.
+            Notifications are blocked in this browser's settings, so nudges stay inside Sunnah Home.
           </p>
         )}
       </Section>

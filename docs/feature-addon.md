@@ -1,8 +1,8 @@
-# Firdous — Product, Feature Gap & Optimization Research
+# Sunnah Home — Product, Feature Gap & Optimization Research
 
 You are acting as a **senior product strategist, UX researcher, product designer, and software architect**.
 
-Your task is to deeply analyze the existing **Firdous** application and produce a research-backed plan for improving it.
+Your task is to deeply analyze the existing **Sunnah Home** application and produce a research-backed plan for improving it.
 
 This is a **research and planning task only**.
 
@@ -12,7 +12,7 @@ This is a **research and planning task only**.
 
 # 1. Source of Truth
 
-You have access to the existing Firdous GitHub repository.
+You have access to the existing Sunnah Home GitHub repository.
 
 Treat the **actual codebase as the primary source of truth**.
 
@@ -49,7 +49,7 @@ Inspect the repository to determine whether something is:
 
 ---
 
-# 2. First: Understand Firdous Completely
+# 2. First: Understand Sunnah Home Completely
 
 Before proposing anything, build a clear mental model of the existing product.
 
@@ -165,7 +165,7 @@ Determine whether the simplicity is intentional and useful or whether it reflect
 
 This is one of the most important parts of the research.
 
-Firdous contains multiple life domains.
+Sunnah Home contains multiple life domains.
 
 Investigate how the existing modules could intelligently work together.
 
@@ -195,7 +195,7 @@ Do not automatically recommend these integrations.
 
 Determine which relationships would create genuine user value.
 
-Find opportunities where Firdous could reduce manual work by connecting existing information.
+Find opportunities where Sunnah Home could reduce manual work by connecting existing information.
 
 ---
 
@@ -279,7 +279,7 @@ Think across the following areas:
 
 ## Intelligence / automation
 
-Investigate whether Firdous could reduce user effort through:
+Investigate whether Sunnah Home could reduce user effort through:
 
 * smart suggestions
 * contextual reminders
@@ -332,15 +332,15 @@ Do not simply copy competitor features.
 
 Ask:
 
-> What problem does this solve, and would it genuinely improve Firdous?
+> What problem does this solve, and would it genuinely improve Sunnah Home?
 
 Prefer first-party documentation and credible product sources where available.
 
 ---
 
-# 8. Identify Firdous's Potential Differentiator
+# 8. Identify Sunnah Home's Potential Differentiator
 
-Do not assume Firdous should become:
+Do not assume Sunnah Home should become:
 
 > "another productivity app with Islamic features"
 
@@ -369,7 +369,7 @@ For every proposed feature, ask:
 3. How frequently will it be used?
 4. Does it reduce effort?
 5. Does it improve outcomes?
-6. Does it integrate with existing Firdous modules?
+6. Does it integrate with existing Sunnah Home modules?
 7. Does it create a meaningful competitive advantage?
 8. Does it introduce unnecessary complexity?
 9. Could an existing feature solve the problem instead?
@@ -381,7 +381,7 @@ Reject features that are:
 * duplicative
 * overly complex
 * unlikely to be used
-* inconsistent with Firdous's philosophy
+* inconsistent with Sunnah Home's philosophy
 * better handled by existing tools
 
 ---
@@ -505,11 +505,11 @@ The Home screen should reduce cognitive load rather than become an information d
 
 # 15. Identify Missing Feedback Loops
 
-Look for areas where Firdous records information but doesn't provide enough value back to the user.
+Look for areas where Sunnah Home records information but doesn't provide enough value back to the user.
 
 Examples:
 
-> User logs something → Firdous should learn/summarize/visualize/respond.
+> User logs something → Sunnah Home should learn/summarize/visualize/respond.
 
 Investigate:
 
@@ -568,7 +568,7 @@ A concise assessment of the current product.
 
 ## Product Model
 
-What Firdous currently is.
+What Sunnah Home currently is.
 
 ## Existing Feature Inventory
 
@@ -588,11 +588,11 @@ Where existing capabilities could work better together.
 
 ## Competitive / Category Research
 
-What mature products do well and what Firdous can learn from them.
+What mature products do well and what Sunnah Home can learn from them.
 
 ## Differentiation Opportunities
 
-Where Firdous could build unique value.
+Where Sunnah Home could build unique value.
 
 ## Quick Wins
 
@@ -641,7 +641,7 @@ Reduce manual effort.
 
 ### Phase 4 — Differentiation
 
-Build capabilities that make Firdous meaningfully unique.
+Build capabilities that make Sunnah Home meaningfully unique.
 
 Use whatever phase structure makes sense after your research.
 
@@ -661,7 +661,7 @@ What problem it solves.
 
 ### Current State
 
-What Firdous already has.
+What Sunnah Home already has.
 
 ### Proposed Experience
 
@@ -724,9 +724,9 @@ That is a valid and valuable finding.
 
 The final result should answer one central question:
 
-> **"Given what Firdous already is, what should we improve, connect, add, automate, or deliberately avoid to make it a genuinely exceptional family + deen + personal-life product?"**
+> **"Given what Sunnah Home already is, what should we improve, connect, add, automate, or deliberately avoid to make it a genuinely exceptional family + deen + personal-life product?"**
 
-The output must be **specific to Firdous and its actual codebase**, not a generic productivity-app roadmap.
+The output must be **specific to Sunnah Home and its actual codebase**, not a generic productivity-app roadmap.
 
 Prioritize depth of reasoning, evidence from the repository, product coherence, and practical implementation sequencing over the number of features proposed.
 

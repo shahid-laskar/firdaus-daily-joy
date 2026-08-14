@@ -6,7 +6,7 @@ import type { CalEvent } from "@/components/home/calendar";
 
 type Hit = { id: string; label: string; where: string; to: string };
 
-/** PROTOTYPE — one search across everything Firdous already knows. */
+/** PROTOTYPE — one search across everything Sunnah Home already knows. */
 export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [q, setQ] = useState("");
   const navigate = useNavigate();

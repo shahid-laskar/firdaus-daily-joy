@@ -318,7 +318,7 @@ export function Cycle() {
         </div>
       ) : (
         <div className="mt-8">
-          <EmptyState glyph="❋" headline="Nothing tracked yet" body="Add the date your last period started and Firdous will keep the rest quiet and simple." />
+          <EmptyState glyph="❋" headline="Nothing tracked yet" body="Add the date your last period started and Sunnah Home will keep the rest quiet and simple." />
         </div>
       )}
     </Section>

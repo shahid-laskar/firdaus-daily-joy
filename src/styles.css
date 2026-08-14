@@ -45,7 +45,7 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
-  /* Firdous palette */
+  /* Sunnah Home palette */
   --color-paper: var(--paper);
   --color-paper-raised: var(--paper-raised);
   --color-ink: var(--ink);
@@ -175,7 +175,7 @@
   letter-spacing: 0;
 }
 
-/* the thread: Firdous's signature spine */
+/* the thread: Sunnah Home's signature spine */
 @utility thread {
   position: relative;
   padding-left: 1.65rem;

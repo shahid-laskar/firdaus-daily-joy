@@ -1,6 +1,6 @@
-# Firdous — Continue From Existing Prototype
+# Sunnah Home — Continue From Existing Prototype
 
-You are taking over an existing **Firdous** project that has already been partially prototyped by another agent.
+You are taking over an existing **Sunnah Home** project that has already been partially prototyped by another agent.
 
 The previous agent exhausted its available usage, so you are continuing the work in a new session/account.
 
@@ -149,7 +149,7 @@ Only proceed to later phases once the earlier foundations are solid.
 
 # 5. DO NOT REPLACE THE PRODUCT DIRECTION
 
-Preserve Firdous's existing philosophy:
+Preserve Sunnah Home's existing philosophy:
 
 **Deen + Family + Household + Personal Life**
 
@@ -259,7 +259,7 @@ Avoid four separate incompatible recurrence systems.
 
 # 10. DATA SAFETY
 
-Firdous is currently localStorage-first.
+Sunnah Home is currently localStorage-first.
 
 Do not casually replace this architecture.
 
@@ -293,7 +293,7 @@ For every feature, verify:
 * refresh behavior
 * edge cases
 
-The new functionality must feel native to the existing Firdous design.
+The new functionality must feel native to the existing Sunnah Home design.
 
 ---
 
@@ -334,6 +334,6 @@ Do not start from zero.
 
 The existing repository already contains prototype work from another agent.
 
-Your job is to turn that existing prototype into a **coherent, reliable, production-quality Firdous implementation**, while continuing the roadmap in priority order.
+Your job is to turn that existing prototype into a **coherent, reliable, production-quality Sunnah Home implementation**, while continuing the roadmap in priority order.
 
 Before making major architectural decisions, inspect what already exists and build on it.

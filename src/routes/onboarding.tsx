@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
-      { title: "Welcome to Firdous" },
+      { title: "Welcome to Sunnah Home" },
     ],
   }),
   component: OnboardingPage,
@@ -28,10 +28,10 @@ function OnboardingPage() {
     <div data-space="home" className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16">
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 flex items-center gap-2">
-          <img src="/logo.jpg" alt="Firdous Logo" className="size-10 object-cover rounded-xl shadow-sm" />
+          <img src="/logo.jpg" alt="Sunnah Home Logo" className="size-10 object-cover rounded-xl shadow-sm" />
         </div>
 
-        <h1 className="display-lg">Welcome to Firdous</h1>
+        <h1 className="display-lg">Welcome to Sunnah Home</h1>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
           Let's personalize your experience. Your location helps us tailor your experience, and gender helps us activate specific features like female-only cycle tracking.
         </p>
@@ -41,7 +41,7 @@ function OnboardingPage() {
             label="Your Name"
             value={localProfile.name}
             onChange={(e) => setLocalProfile({ ...localProfile, name: e.target.value })}
-            placeholder="How should Firdous greet you?"
+            placeholder="How should Sunnah Home greet you?"
           />
           <Field
             label="Location (City/Country)"

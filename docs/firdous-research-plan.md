@@ -1,12 +1,12 @@
-# Firdous — Product, Feature Gap & Optimization Research Report
+# Sunnah Home — Product, Feature Gap & Optimization Research Report
 
 ---
 
 ## Executive Summary
 
-Firdous is a **beautifully designed, offline-first family + deen + personal wellbeing companion** built with TanStack Start (React 19, Vite 8), Supabase for cloud sync, and localStorage as the primary data layer. It targets Muslim families who want one quiet, private space for daily life — prayer, household, money, and self-care.
+Sunnah Home is a **beautifully designed, offline-first family + deen + personal wellbeing companion** built with TanStack Start (React 19, Vite 8), Supabase for cloud sync, and localStorage as the primary data layer. It targets Muslim families who want one quiet, private space for daily life — prayer, household, money, and self-care.
 
-**What Firdous gets right:**
+**What Sunnah Home gets right:**
 - Exceptional design philosophy: calm, paper-like aesthetic with 13 theme variations
 - Intentionally minimal — no gamification bloat, no social features
 - Offline-first with simple cloud sync via Supabase `user_data` table
@@ -24,11 +24,11 @@ Firdous is a **beautifully designed, offline-first family + deen + personal well
 7. **No notification/reminder system** — critical for a daily-use product
 8. **Budget has no spending history** — expenses exist for current month only in the UI
 
-**Product thesis:** Firdous's unique value is the **integration of deen into daily life management** — not as a bolted-on feature, but as the organizing principle. No other product on the market combines prayer tracking, Quran progress, family coordination, household operations, and personal wellness in a single coherent experience. The opportunity is to make these modules **talk to each other** intelligently.
+**Product thesis:** Sunnah Home's unique value is the **integration of deen into daily life management** — not as a bolted-on feature, but as the organizing principle. No other product on the market combines prayer tracking, Quran progress, family coordination, household operations, and personal wellness in a single coherent experience. The opportunity is to make these modules **talk to each other** intelligently.
 
 ---
 
-## Product Model — What Firdous Currently Is
+## Product Model — What Sunnah Home Currently Is
 
 ### Architecture
 
@@ -135,7 +135,7 @@ Firdous is a **beautifully designed, offline-first family + deen + personal well
 
 ### 1. Excessive Manual Entry, No Recurring Patterns
 
-**Problem:** Nearly everything in Firdous is one-shot. There is no concept of recurring tasks, recurring events, or recurring routines.
+**Problem:** Nearly everything in Sunnah Home is one-shot. There is no concept of recurring tasks, recurring events, or recurring routines.
 
 - A parent adding "Bath" to a kid's chores has to re-add it every day
 - Tasks have no recurrence (daily, weekly, etc.)
@@ -143,7 +143,7 @@ Firdous is a **beautifully designed, offline-first family + deen + personal well
 - Calendar events can't repeat
 - Health logging (weight, sleep) has no pre-fill from yesterday
 
-**Impact:** High. This is the single biggest friction point. It turns Firdous from a system into a logbook.
+**Impact:** High. This is the single biggest friction point. It turns Sunnah Home from a system into a logbook.
 
 ### 2. No Trends, Insights, or Feedback Loops
 
@@ -230,35 +230,35 @@ Missing:
 ## Competitive / Category Research
 
 ### Islamic Apps
-| App | Strength | What Firdous Can Learn |
+| App | Strength | What Sunnah Home Can Learn |
 |-----|---------|----------------------|
-| **Muslim Pro** | Prayer times reliability, wide adoption | Firdous's `adhan` library is equally accurate |
-| **Tarteel** | AI Quran recitation correction | Too specialized; Firdous should link to external Quran apps rather than rebuild |
-| **Everyday Muslim** | Social accountability, group tracking | Family-level accountability (not social) could work for Firdous |
+| **Muslim Pro** | Prayer times reliability, wide adoption | Sunnah Home's `adhan` library is equally accurate |
+| **Tarteel** | AI Quran recitation correction | Too specialized; Sunnah Home should link to external Quran apps rather than rebuild |
+| **Everyday Muslim** | Social accountability, group tracking | Family-level accountability (not social) could work for Sunnah Home |
 
 ### Household/Family Apps
-| App | Strength | What Firdous Can Learn |
+| App | Strength | What Sunnah Home Can Learn |
 |-----|---------|----------------------|
-| **Wimely** | Meal plan → auto grocery, drop-off coordination | Firdous already has meal→grocery; coordination features are valuable |
-| **AnyList** | Best-in-class grocery + recipe management | Firdous recipes need quantities and instructions |
+| **Wimely** | Meal plan → auto grocery, drop-off coordination | Sunnah Home already has meal→grocery; coordination features are valuable |
+| **AnyList** | Best-in-class grocery + recipe management | Sunnah Home recipes need quantities and instructions |
 | **Maple** | Generous free tier, full suite | Validates that integrated family apps have market demand |
 | **FamilyWall** | Shared calendar, family messaging | Shared calendar is critical; messaging is out of scope |
 
 ### Productivity/Wellness
-| App | Strength | What Firdous Can Learn |
+| App | Strength | What Sunnah Home Can Learn |
 |-----|---------|----------------------|
 | **Todoist** | Recurring tasks, natural language input | Recurring items are essential for daily-use products |
-| **Streaks** | Clean habit tracking with completion rings | Firdous habit UI is already comparable |
+| **Streaks** | Clean habit tracking with completion rings | Sunnah Home habit UI is already comparable |
 | **Apple Health** | Trend charts, weekly summaries | Users need feedback from logged data |
 
 ### Key Insight
-No competitor combines **deen + family + household + personal wellness** in one app. This is Firdous's structural advantage. The closest would be using Muslim Pro + Cozi + Todoist + Apple Health — four separate apps. Firdous can win by being **the one app a Muslim family opens every morning**.
+No competitor combines **deen + family + household + personal wellness** in one app. This is Sunnah Home's structural advantage. The closest would be using Muslim Pro + Cozi + Todoist + Apple Health — four separate apps. Sunnah Home can win by being **the one app a Muslim family opens every morning**.
 
 ---
 
 ## Differentiation Opportunities
 
-Firdous's potential product thesis:
+Sunnah Home's potential product thesis:
 
 > **"The daily operating system for a Muslim family — where deen, household, and personal growth live together as naturally as they do in real life."**
 
@@ -311,14 +311,14 @@ No competitor achieves this integration.
 
 | Feature | Why Avoid |
 |---------|----------|
-| **Social features / family sharing** | Adds massive complexity; Firdous is private-first |
+| **Social features / family sharing** | Adds massive complexity; Sunnah Home is private-first |
 | **AI-powered suggestions** | Premature; not enough user base or data |
 | **Gamification (points, badges, leaderboards)** | Contradicts the calm, intentional philosophy |
 | **Full Quran app** | Tarteel, Quran.com are better — link to them instead |
-| **Chat / messaging** | WhatsApp exists; not Firdous's problem to solve |
+| **Chat / messaging** | WhatsApp exists; not Sunnah Home's problem to solve |
 | **Photo uploads** | Storage complexity; not core to the product |
-| **Complex budgeting (accounts, transfers)** | Firdous is for simple expense tracking, not accounting |
-| **Fitness/exercise programs** | Apple Health, Strava exist; Firdous tracks basic movement |
+| **Complex budgeting (accounts, transfers)** | Sunnah Home is for simple expense tracking, not accounting |
+| **Fitness/exercise programs** | Apple Health, Strava exist; Sunnah Home tracks basic movement |
 | **Multi-language UI** | Important eventually but premature optimization now |
 | **Recipe import from URLs** | Nice to have but complex scraping; manual entry works |
 
@@ -412,7 +412,7 @@ Reduce manual effort; make the app work for the user.
 
 ### Phase 4 — Differentiation (16+ weeks)
 
-Build capabilities that make Firdous meaningfully unique.
+Build capabilities that make Sunnah Home meaningfully unique.
 
 | Feature | Description | Effort |
 |---------|-------------|--------|
@@ -560,7 +560,7 @@ type Note = { id: string; title: string; body: string; updated: string };
 
 2. **"Deeds" is an outlier** — it's a logging feature (who did something kind) that doesn't fit naturally with Tasks, Meals, or Grocery. Consider moving it to the Me space or making it part of Journal.
 
-3. **Calendar should be more prominent** — it's buried as the 7th sub-tab on Home. As Firdous grows, the calendar could become a 5th bottom-bar space or a top-level feature.
+3. **Calendar should be more prominent** — it's buried as the 7th sub-tab on Home. As Sunnah Home grows, the calendar could become a 5th bottom-bar space or a top-level feature.
 
 ### Recommendation: Do not restructure navigation yet
 
@@ -570,7 +570,7 @@ The current structure works for the current feature set. Restructuring before Ph
 
 ## Home Experience Assessment
 
-The Home/Today view is Firdous's **strongest design asset**. The "thread" paradigm — a vertical line of contextual items — is distinctive and effective. It currently shows:
+The Home/Today view is Sunnah Home's **strongest design asset**. The "thread" paradigm — a vertical line of contextual items — is distinctive and effective. It currently shows:
 
 - Next prayer + countdown
 - Open tasks (top 3)
@@ -648,10 +648,10 @@ The principle: **Home should reduce cognitive load by surfacing only what needs 
 
 ---
 
-> **Conclusion:** Firdous is already an unusually well-designed product with a genuine product thesis. Its gaps are not in vision but in **depth** — every module needs one or two more layers of functionality to go from "logging tool" to "daily companion." The recurring items engine and notification system are the two highest-leverage investments. The weekly review is the most important retention feature. And the unified calendar is the architectural piece that will make all modules feel like one product rather than twelve separate features.
+> **Conclusion:** Sunnah Home is already an unusually well-designed product with a genuine product thesis. Its gaps are not in vision but in **depth** — every module needs one or two more layers of functionality to go from "logging tool" to "daily companion." The recurring items engine and notification system are the two highest-leverage investments. The weekly review is the most important retention feature. And the unified calendar is the architectural piece that will make all modules feel like one product rather than twelve separate features.
 >
 > **The central question — answered:**
-> *Given what Firdous already is, what should we do?*
+> *Given what Sunnah Home already is, what should we do?*
 >
 > 1. **Improve:** Recurring items, multiple notes, kid chore resets, calendar times, budget history
 > 2. **Connect:** Calendar ↔ Tasks, Grocery → Budget, Habits → Home, everything → Weekly Review

@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/review")({
   head: () => ({
     meta: [
-      { title: "Weekly review — how your week actually went | Firdous" },
+      { title: "Weekly review — how your week actually went | Sunnah Home" },
       {
         name: "description",
         content:

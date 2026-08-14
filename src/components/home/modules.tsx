@@ -370,7 +370,7 @@ export function GroceryList() {
         <EmptyState
           glyph="◦"
           headline="The basket is empty"
-          body="Add what's missing, or let Firdous read this week's meal plan and fill it for you."
+          body="Add what's missing, or let Sunnah Home read this week's meal plan and fill it for you."
           action={<Action variant="solid" onClick={generate}>Build from meal plan</Action>}
         />
       ) : (
@@ -415,7 +415,7 @@ function GroceryRun() {
   if (picked.length === 0)
     return (
       <p className="text-ink-faint mt-6 text-xs">
-        Tick what you've picked up — Firdous can log the run as an expense.
+        Tick what you've picked up — Sunnah Home can log the run as an expense.
       </p>
     );
 

@@ -1,6 +1,6 @@
-# Firdous Task Tracker
+# Sunnah Home Task Tracker
 
-This document tracks the progress of the Firdous application against the product roadmap defined in `docs/firdous-research-plan.md` and `docs/plan-01.md`.
+This document tracks the progress of the Sunnah Home application against the product roadmap defined in `docs/Sunnah Home-research-plan.md` and `docs/plan-01.md`.
 
 ## ✅ Completed Tasks
 

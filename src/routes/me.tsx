@@ -9,13 +9,13 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/me")({
   head: () => ({
     meta: [
-      { title: "Me — your private corner of Firdous" },
+      { title: "Me — your private corner of Sunnah Home" },
       {
         name: "description",
         content:
           "Check in with yourself, keep habits, write a private journal and track health — quietly, on your own device.",
       },
-      { property: "og:title", content: "Me — your private corner of Firdous" },
+      { property: "og:title", content: "Me — your private corner of Sunnah Home" },
       {
         property: "og:description",
         content: "Mood check-ins, habits, journaling, health and cycle tracking, kept private.",

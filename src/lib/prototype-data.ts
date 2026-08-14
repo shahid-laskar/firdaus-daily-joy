@@ -160,7 +160,7 @@ export function seedPrototypeData(force = false) {
     {
       id: uid(),
       title: "Wifi & gate codes",
-      body: "Wifi: firdous-home / 8·4·2·2·1\nGate: 4417\nWater filter service: Rafeeq 98••••21",
+      body: "Wifi: Sunnah Home-home / 8·4·2·2·1\nGate: 4417\nWater filter service: Rafeeq 98••••21",
       updated: iso(-9),
       pinned: true,
     },
@@ -262,20 +262,20 @@ export function seedPrototypeData(force = false) {
   seedKey("notifPrefs", { prayers: true, reminders: true, leadMinutes: 10 });
 }
 
-/** PROTOTYPE — export everything Firdous holds for this person. */
+/** PROTOTYPE — export everything Sunnah Home holds for this person. */
 export function exportAllData() {
   const payload: Record<string, unknown> = {};
   PROTOTYPE_KEYS.forEach((k) => {
     const v = readStore<unknown>(k, null);
     if (v !== null) payload[k] = v;
   });
-  const blob = new Blob([JSON.stringify({ app: "Firdous", exportedAt: new Date().toISOString(), data: payload }, null, 2)], {
+  const blob = new Blob([JSON.stringify({ app: "Sunnah Home", exportedAt: new Date().toISOString(), data: payload }, null, 2)], {
     type: "application/json",
   });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `firdous-backup-${todayKey()}.json`;
+  a.download = `Sunnah Home-backup-${todayKey()}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

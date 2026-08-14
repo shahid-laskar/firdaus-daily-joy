@@ -53,7 +53,7 @@ export function Shell({
       <header className="border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.jpg" alt="Firdous Logo" className="size-10 object-cover rounded-xl shadow-sm" />
+            <img src="/logo.jpg" alt="Sunnah Home Logo" className="size-10 object-cover rounded-xl shadow-sm" />
           </Link>
           <div className="flex items-center gap-1.5">
             <button
@@ -70,7 +70,7 @@ export function Shell({
 
             <span
               className="text-ink-faint flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.7rem]"
-              title={online ? "Synced with Firdous Cloud" : "Saved on this device"}
+              title={online ? "Synced with Sunnah Home Cloud" : "Saved on this device"}
             >
               <span
                 className="size-[6px] rounded-full"
@@ -102,7 +102,7 @@ export function Shell({
       <main className="mx-auto max-w-3xl px-5 pt-6 pb-32">{children}</main>
 
       <nav
-        aria-label="Firdous spaces"
+        aria-label="Sunnah Home spaces"
         className="fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[max(0.75rem,env(safe-area-inset-bottom))]"
       >
         <div className="border-border/70 bg-background/90 flex gap-1 rounded-full border p-1.5 shadow-[var(--shadow-float)] backdrop-blur-xl">
@@ -134,7 +134,7 @@ export function Shell({
           <Field
             label="Your name"
             value={profile.name}
-            placeholder="How should Firdous greet you?"
+            placeholder="How should Sunnah Home greet you?"
             onChange={(e) => setProfile({ ...profile, name: e.target.value })}
           />
           <Field
@@ -197,7 +197,7 @@ export function Shell({
           <div>
             <p className="title-md">Your data</p>
             <p className="text-muted-foreground mt-1 mb-3 text-xs leading-relaxed">
-              Take a copy of everything Firdous holds, or bring it back on another device.
+              Take a copy of everything Sunnah Home holds, or bring it back on another device.
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <Action onClick={() => downloadExport()}>Export a backup</Action>
