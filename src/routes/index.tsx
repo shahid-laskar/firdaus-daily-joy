@@ -14,12 +14,15 @@ import {
 import { Notes } from "@/components/home/notes";
 import { UnifiedCalendar, eventsOn, type CalEvent } from "@/components/home/calendar";
 import { Reminders, useReminderEngine } from "@/components/home/reminders";
-import { useNextPrayer, useSalah } from "@/components/deen/modules";
+import { useNextPrayer, usePrayers, useSalah } from "@/components/deen/modules";
 import { isRepeating, occursOn } from "@/lib/recurrence";
 import { useTab } from "@/lib/use-tab";
 import { todayKey, useNow, useStore } from "@/lib/store";
 import { useFamilyMigration } from "@/lib/family-model";
 import { calculateBudgetAnalytics } from "@/lib/budget-intelligence";
+import { buildDailyThread } from "@/lib/daily-surface";
+import { useRamadanMode } from "@/lib/ramadan";
+import type { HifzItem } from "@/lib/hifz-scheduler";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,6 +68,7 @@ function greeting(h: number) {
 
 function Today() {
   const now = useNow(60_000);
+  const today = todayKey();
   const [profile] = useStore("profile", { name: "", city: "Kozhikode" });
   const [tasks] = useStore<Task[]>("tasks", []);
   const [grocery] = useStore<{ id: string; got: boolean }[]>("grocery", []);
@@ -75,32 +79,64 @@ function Today() {
   const [checkins] = useStore<Record<string, string>>("checkins", {});
   const [expenses] = useStore<{ amount: number; date: string }[]>("expenses", []);
   const [limits] = useStore<Record<string, number>>("limits", {});
+  const [hifzItems] = useStore<HifzItem[]>("hifz", []);
   const [salah] = useSalah();
   const countdown = useNextPrayer();
+  const prayers = usePrayers();
+  const { isActive: isRamadan, ramadanDay } = useRamadanMode();
+  useReminderEngine();
 
   const hour = now?.getHours() ?? 8;
-  // Repeating tasks only count on the days they actually fall on.
   const dueToday = tasks.filter((t) =>
-    isRepeating(t.recur) ? occursOn(t.recur, todayKey()) : !t.done,
+    isRepeating(t.recur) ? occursOn(t.recur, today) : !t.done,
   );
   const open = dueToday.filter((t) => !isTaskDone(t));
   const doneCount = dueToday.length - open.length;
-  const todayEvents = eventsOn(events, todayKey());
-  const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][now?.getDay() ?? 1];
-  const dinner = meals[`${dayName}-Dinner`];
-  const prayed = Object.keys(salah[todayKey()] ?? {}).length;
+  const todayEvents = eventsOn(events, today);
+  const prayed = Object.keys(salah[today] ?? {}).length;
   const leftToBuy = grocery.filter((g) => !g.got).length;
-  const habitsHit = habits.filter((h) => h.days.includes(todayKey())).length;
-  const water = health[todayKey()]?.water ?? 0;
-  const mood = checkins[todayKey()];
-  const month = todayKey().slice(0, 7);
-  const budgetAnalytics = useMemo(
-    () => calculateBudgetAnalytics(expenses as any, month),
-    [expenses, month],
+
+  const threadItems = useMemo(
+    () =>
+      buildDailyThread({
+        now: now ?? new Date(),
+        profile,
+        prayers,
+        nextPrayer: countdown,
+        salahLog: salah,
+        hifzItems,
+        isRamadan,
+        ramadanDay,
+        tasks,
+        events,
+        meals,
+        grocery,
+        habits,
+        health,
+        checkins,
+        expenses,
+        limits,
+      }),
+    [
+      now,
+      profile,
+      prayers,
+      countdown,
+      salah,
+      hifzItems,
+      isRamadan,
+      ramadanDay,
+      tasks,
+      events,
+      meals,
+      grocery,
+      habits,
+      health,
+      checkins,
+      expenses,
+      limits,
+    ]
   );
-  const spent = budgetAnalytics.currentMonthTotal;
-  const cap = Object.values(limits).reduce((s, n) => s + n, 0);
-  const overBudget = cap > 0 && spent / cap > 0.8;
 
   return (
     <div className="space-y-12">
@@ -122,52 +158,19 @@ function Today() {
         </p>
       </header>
 
-      {/* The thread — Sunnah Home's signature: today read as one line, not a grid of cards */}
+      {/* The thread — Firdaus's signature: today read as one prioritized line, not a grid of cards */}
       <section className="thread rise space-y-1">
-        <ThreadItem
-          active
-          label="Next prayer"
-          value={countdown ? `${countdown.next.name} · ${countdown.next.time}` : "—"}
-          detail={
-            countdown
-              ? `in ${countdown.hours ? `${countdown.hours}h ` : ""}${countdown.mins}m · ${prayed}/5 logged`
-              : undefined
-          }
-          to="/deen"
-        />
-        {open.slice(0, 3).map((t) => (
-          <ThreadItem key={t.id} label="Waiting" value={t.title} detail={t.time} />
-        ))}
-        {todayEvents.map((e) => (
-          <ThreadItem key={e.id} label="Today" value={e.title} to="/" />
-        ))}
-        {dinner && <ThreadItem label="Dinner" value={dinner} detail="From this week's plan" />}
-        {leftToBuy > 0 && <ThreadItem label="Grocery" value={`${leftToBuy} still to pick up`} />}
-        {habits.length > 0 && (
+        {threadItems.map((item) => (
           <ThreadItem
-            label="Habits"
-            value={`${habitsHit} of ${habits.length} kept today`}
-            detail={
-              habitsHit < habits.length
-                ? habits.filter((h) => !h.days.includes(todayKey()))[0]?.name
-                : "All of them"
-            }
-            to="/me"
+            key={item.id}
+            active={item.active}
+            done={item.done}
+            label={item.label}
+            value={item.value}
+            detail={item.detail}
+            to={item.to}
           />
-        )}
-        {water < 8 && <ThreadItem label="Water" value={`${water} of 8 glasses`} to="/me" />}
-        {!mood && <ThreadItem label="Check in" value="How are you today?" to="/me" />}
-        {overBudget && (
-          <ThreadItem
-            label="Money"
-            value={`${Math.round((spent / cap) * 100)}% of this month's limits used`}
-            detail="Worth a look before the month ends"
-            to="/budget"
-          />
-        )}
-        {doneCount > 0 && (
-          <ThreadItem done label="Behind you" value={`${doneCount} finished today`} />
-        )}
+        ))}
       </section>
 
       <Section
