@@ -13,6 +13,8 @@ import {
   Salah,
   Tasbih,
 } from "@/components/deen/modules";
+import { RamadanModeView } from "@/components/deen/ramadan";
+import { useRamadanMode } from "@/lib/ramadan";
 
 export const Route = createFileRoute("/deen")({
   head: () => ({
@@ -35,8 +37,9 @@ export const Route = createFileRoute("/deen")({
   component: DeenPage,
 });
 
-const TABS = [
+const BASE_TABS = [
   { id: "today", label: "Today" },
+  { id: "ramadan", label: "Ramadan" },
   { id: "quran", label: "Quran" },
   { id: "dhikr", label: "Dhikr" },
   { id: "duas", label: "Duas" },
@@ -47,10 +50,18 @@ const TABS = [
 
 function DeenPage() {
   const [tab, setTab] = useState("today");
+  const { isActive, ramadanDay } = useRamadanMode();
+
+  const tabs = BASE_TABS.map((t) =>
+    t.id === "ramadan" && isActive
+      ? { ...t, label: ramadanDay ? `🌙 Ramadan ${ramadanDay}` : "🌙 Ramadan" }
+      : t
+  );
+
   return (
     <Shell space="deen">
       <div className="mb-8">
-        <SubTabs tabs={TABS} value={tab} onChange={setTab} />
+        <SubTabs tabs={tabs} value={tab} onChange={setTab} />
       </div>
       {tab === "today" && (
         <div className="space-y-12">
@@ -59,6 +70,7 @@ function DeenPage() {
           <DailyVerse />
         </div>
       )}
+      {tab === "ramadan" && <RamadanModeView />}
       {tab === "quran" && <Quran />}
       {tab === "dhikr" && <Tasbih />}
       {tab === "duas" && <Duas />}
