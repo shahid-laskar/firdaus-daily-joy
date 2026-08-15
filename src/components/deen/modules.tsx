@@ -6,6 +6,14 @@ import { getWeekRange } from "@/lib/intelligence";
 import { calculateSalahAnalytics } from "@/lib/salah-intelligence";
 import { ALL_SURAHS, searchSurahs } from "@/lib/quran-data";
 import { useSurah, preloadBookmarkedSurahs, isSurahCached } from "@/lib/quran-service";
+import {
+  type HifzItem,
+  type HifzRating,
+  generateHifzRevisionQueue,
+  getRetentionScore,
+  recordHifzRevision,
+  HIFZ_RATING_CONFIG,
+} from "@/lib/hifz-scheduler";
 
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from "adhan";
 
@@ -680,10 +688,14 @@ export function Duas() {
 }
 
 export function Hifz() {
-  const [items, setItems] = useStore<{ id: string; surah: string; pct: number }[]>("hifz", []);
+  const [items, setItems] = useStore<HifzItem[]>("hifz", []);
   const [surah, setSurah] = useState("");
+  const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
+
+  const queue = useMemo(() => generateHifzRevisionQueue(items, todayKey()), [items]);
+
   return (
-    <Section eyebrow="Memorisation" title="Hifz">
+    <Section eyebrow="Memorisation & Muraja'ah" title="Hifz">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -693,11 +705,31 @@ export function Hifz() {
         }}
         className="mb-6 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end"
       >
-        <Field label="Surah in progress" value={surah} onChange={(e) => setSurah(e.target.value)} />
+        <Field
+          label="Surah in progress"
+          value={surah}
+          placeholder="e.g. Al-Mulk, Yasin, Juz 30…"
+          onChange={(e) => setSurah(e.target.value)}
+        />
         <Action type="submit" variant="solid" className="h-[42px]">
           Track
         </Action>
       </form>
+
+      {queue.summary.dueCount > 0 && (
+        <div className="mb-6 rounded-xl border border-border bg-space-soft/40 p-3.5 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-foreground">
+              {queue.summary.dueCount} portion(s) due for Muraja'ah today
+            </p>
+            <p className="text-[0.72rem] text-muted-foreground mt-0.5">
+              Average retention health: {queue.summary.averageRetention}%
+            </p>
+          </div>
+          <span className="text-xs text-space font-medium numeric">Spaced review</span>
+        </div>
+      )}
+
       {items.length === 0 ? (
         <EmptyState
           glyph="◈"
@@ -706,39 +738,105 @@ export function Hifz() {
         />
       ) : (
         <div className="space-y-6">
-          {items.map((i) => (
-            <div key={i.id}>
-              <div className="mb-2 flex items-baseline justify-between">
-                <p className="title-md">{i.surah}</p>
-                <span className="numeric text-ink-soft text-sm">{i.pct}%</span>
+          {items.map((i) => {
+            const retention = getRetentionScore(i, todayKey());
+            const isRevising = activeRevisionId === i.id;
+
+            return (
+              <div key={i.id} className="rounded-xl border border-border/70 p-4 space-y-3">
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <p className="title-md">{i.surah}</p>
+                    <p className="text-ink-faint text-[0.72rem] mt-0.5">
+                      {retention.status === "due"
+                        ? "Due for revision today"
+                        : i.nextDue
+                          ? `Next revision: ${i.nextDue}`
+                          : "New memorisation"}
+                      {retention.daysSince !== null && ` · Last revised ${retention.daysSince}d ago`}
+                      {` · Retention ${retention.retentionPct}%`}
+                    </p>
+                  </div>
+                  <span className="numeric text-ink-soft text-sm font-medium">{i.pct}%</span>
+                </div>
+
+                <Meter value={i.pct} />
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <div className="flex gap-1.5">
+                    <Action
+                      onClick={() =>
+                        setItems(
+                          items.map((x) =>
+                            x.id === i.id ? { ...x, pct: Math.max(0, x.pct - 10) } : x,
+                          ),
+                        )
+                      }
+                    >
+                      −10%
+                    </Action>
+                    <Action
+                      onClick={() =>
+                        setItems(
+                          items.map((x) =>
+                            x.id === i.id ? { ...x, pct: Math.min(100, x.pct + 10) } : x,
+                          ),
+                        )
+                      }
+                    >
+                      +10%
+                    </Action>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setActiveRevisionId(isRevising ? null : i.id)}
+                      className="press text-xs rounded-lg px-2.5 py-1.5 border border-border bg-background hover:bg-space-soft transition-colors text-foreground font-medium"
+                    >
+                      {isRevising ? "Cancel" : "Record Muraja'ah"}
+                    </button>
+                    <button
+                      onClick={() => setItems(items.filter((x) => x.id !== i.id))}
+                      className="text-ink-faint hover:text-destructive text-xs"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                {isRevising && (
+                  <div className="mt-3 pt-3 border-t border-border/60">
+                    <p className="text-xs font-semibold text-foreground mb-2">
+                      How fluent was your recitation?
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                      {(["hard", "fair", "good", "strong"] as HifzRating[]).map((rating) => {
+                        const cfg = HIFZ_RATING_CONFIG[rating];
+                        return (
+                          <button
+                            key={rating}
+                            onClick={() => {
+                              const updated = recordHifzRevision(items, i.id, rating);
+                              setItems(updated);
+                              setActiveRevisionId(null);
+                            }}
+                            className="press flex flex-col items-start p-2 rounded-lg border border-border bg-card hover:bg-space-soft/80 text-left transition-colors"
+                          >
+                            <span className="text-xs font-medium text-foreground">
+                              {cfg.glyph} {cfg.label}
+                            </span>
+                            <span className="text-[0.66rem] text-muted-foreground mt-0.5 line-clamp-1">
+                              {cfg.description}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-              <Meter value={i.pct} />
-              <div className="mt-2 flex gap-2">
-                <Action
-                  onClick={() =>
-                    setItems(
-                      items.map((x) =>
-                        x.id === i.id ? { ...x, pct: Math.max(0, x.pct - 10) } : x,
-                      ),
-                    )
-                  }
-                >
-                  −10%
-                </Action>
-                <Action
-                  onClick={() =>
-                    setItems(
-                      items.map((x) =>
-                        x.id === i.id ? { ...x, pct: Math.min(100, x.pct + 10) } : x,
-                      ),
-                    )
-                  }
-                >
-                  +10%
-                </Action>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </Section>
