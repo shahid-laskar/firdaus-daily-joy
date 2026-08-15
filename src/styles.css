@@ -258,6 +258,96 @@
   }
 }
 
+/* ── Phase 4 surfaces ─────────────────────────────────────────────────────
+   Primary context area shared by Ramadan Mode and Hifz. The seasonal tone
+   borrows the active space accent only — no separate colour system. */
+.context-hero {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow-lift);
+}
+.context-hero[data-tone="seasonal"] {
+  background:
+    radial-gradient(
+      120% 90% at 88% -10%,
+      var(--space-accent-soft) 0%,
+      transparent 62%
+    ),
+    var(--card);
+  border-color: color-mix(in oklab, var(--space-accent) 22%, var(--rule));
+}
+
+/* Quiet status word. Emphasis comes from weight and ink, not alarm colour. */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  background: color-mix(in oklab, var(--rule) 45%, transparent);
+}
+.status-chip[data-tone="urgent"] {
+  color: var(--foreground);
+  background: var(--space-accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--space-accent) 40%, transparent);
+}
+.status-chip[data-tone="attention"] {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--space-accent-soft) 60%, transparent);
+}
+.status-chip[data-tone="settled"] {
+  color: var(--ink-faint);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+/* Daily surface thread: urgent items lean forward, ambient ones recede. */
+@utility thread-lead {
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  line-height: 1.2;
+  letter-spacing: -0.018em;
+}
+
+/* Quran reader: comfortable measure and a restful ayah rhythm. */
+@utility reader-measure {
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+@utility ayah-block {
+  padding-block: 1.15rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--rule) 55%, transparent);
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+@utility safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@keyframes veedu-thread-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Thread item entrance — staggered via --i, runs once, never loops. */
+@utility thread-in {
+  animation: veedu-thread-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
 @keyframes veedu-rise {
   from {
     opacity: 0;

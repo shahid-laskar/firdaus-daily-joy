@@ -54,7 +54,7 @@ function DeenPage() {
 
   const tabs = BASE_TABS.map((t) =>
     t.id === "ramadan" && isActive
-      ? { ...t, label: ramadanDay ? `🌙 Ramadan ${ramadanDay}` : "🌙 Ramadan" }
+      ? { ...t, label: ramadanDay ? `☾ Ramadan ${ramadanDay}` : "☾ Ramadan" }
       : t
   );
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Action, EmptyState, Field, Meter, Section, Tick } from "@/components/veedu/primitives";
+import { ContextHero, Disclosure, ProgressLine, Status } from "@/components/veedu/phase4";
 import { todayKey, uid, useNow, useStore } from "@/lib/store";
 import { VERSES, verseOfDay } from "@/lib/verses";
 import { getWeekRange } from "@/lib/intelligence";
@@ -425,157 +426,181 @@ export function Quran() {
     if (surah) {
       return (
         <div className="rise">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="bg-background/85 border-border/60 sticky top-0 z-10 -mx-1 mb-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b px-1 py-3 backdrop-blur">
             <button
               onClick={() => setOpenSurah(null)}
-              className="text-ink-soft hover:text-foreground text-sm"
+              className="text-ink-soft hover:text-foreground min-w-0 truncate text-left text-sm"
             >
-              ← Surahs
+              ← All surahs
             </button>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                {surah.n > 1 && (
-                  <button
-                    onClick={() => setOpenSurah(surah.n - 1)}
-                    className="press text-ink-faint hover:text-foreground px-2 py-1 text-xs rounded border border-border"
-                  >
-                    Prev
-                  </button>
-                )}
-                {surah.n < 114 && (
-                  <button
-                    onClick={() => setOpenSurah(surah.n + 1)}
-                    className="press text-ink-faint hover:text-foreground px-2 py-1 text-xs rounded border border-border"
-                  >
-                    Next
-                  </button>
-                )}
-              </div>
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 onClick={() => setTranslation(!translation)}
                 className="text-ink-faint hover:text-foreground text-xs"
               >
-                {translation ? "Arabic only" : "Show translation"}
+                {translation ? "Arabic only" : "Translation"}
               </button>
+              <span className="bg-border/70 h-4 w-px" aria-hidden="true" />
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => surah.n > 1 && setOpenSurah(surah.n - 1)}
+                  disabled={surah.n <= 1}
+                  aria-label="Previous surah"
+                  className="press text-ink-faint hover:text-foreground border-border grid size-7 place-items-center rounded-full border text-xs disabled:opacity-30"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => surah.n < 114 && setOpenSurah(surah.n + 1)}
+                  disabled={surah.n >= 114}
+                  aria-label="Next surah"
+                  className="press text-ink-faint hover:text-foreground border-border grid size-7 place-items-center rounded-full border text-xs disabled:opacity-30"
+                >
+                  ›
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="mb-10 text-center">
-            <p className="eyebrow">
-              Surah {surah.n} · {surah.revelationType} · {surah.numberOfAyahs} Ayahs
-            </p>
-            <h1 className="display-lg mt-2 flex items-center justify-center gap-3">
-              <span>{surah.name}</span>
-              <span className="arabic text-3xl text-ink-soft font-normal">{surah.arabicName}</span>
-            </h1>
-            <p className="text-ink-faint text-sm mt-1">{surah.meaning}</p>
+          <div className="reader-measure">
+            <header className="mb-12 text-center">
+              <p className="arabic text-ink-soft text-4xl leading-tight sm:text-5xl" dir="rtl">
+                {surah.arabicName}
+              </p>
+              <h1 className="display-lg mt-3">{surah.name}</h1>
+              <p className="text-ink-faint mt-1 text-sm">{surah.meaning}</p>
+              <p className="eyebrow text-ink-faint mt-3">
+                {surah.revelationType} · {surah.numberOfAyahs} ayahs
+              </p>
 
-            {/* Noble Bismillah for all surahs except Al-Fatihah (which includes it as Ayah 1) and At-Tawbah (Surah 9) */}
-            {surah.n !== 1 && surah.n !== 9 && (
-              <div className="my-8 py-4 border-y border-border/50">
-                <p className="arabic text-2xl text-ink-soft">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
-                {translation && (
-                  <p className="text-ink-faint text-xs mt-1.5">
-                    In the name of Allah, the Entirely Merciful, the Especially Merciful.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div dir="rtl" className="space-y-8">
-            {surah.ayahs.map((a) => {
-              const key = `${surah.n}:${a.n}`;
-              const marked = bookmarks.includes(key);
-              return (
-                <article key={a.n} className="group">
-                  <p className="arabic text-[1.75rem] sm:text-[2rem] leading-loose">
-                    {a.ar}
-                    <span className="text-ink-faint mr-2 inline-grid size-7 place-items-center rounded-full border border-[var(--rule)] align-middle text-[0.7rem]">
-                      {a.n}
-                    </span>
+              {/* Bismillah — omitted for Al-Fatihah (Ayah 1) and At-Tawbah */}
+              {surah.n !== 1 && surah.n !== 9 && (
+                <div className="border-border/50 my-10 border-y py-5">
+                  <p className="arabic text-ink-soft text-2xl leading-loose" dir="rtl">
+                    بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                   </p>
                   {translation && (
-                    <p dir="ltr" className="text-ink-soft mt-3 text-[0.95rem] leading-relaxed">
-                      {a.en}
+                    <p className="text-ink-faint mt-2 text-xs">
+                      In the name of Allah, the Entirely Merciful, the Especially Merciful.
                     </p>
                   )}
-                  <div
-                    dir="ltr"
-                    className="mt-3 flex gap-3 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
-                  >
-                    <button
-                      onClick={() =>
-                        setBookmarks(
-                          marked ? bookmarks.filter((b) => b !== key) : [...bookmarks, key],
-                        )
-                      }
-                      className={`text-xs ${
-                        marked ? "text-foreground font-semibold" : "text-ink-faint hover:text-foreground"
-                      }`}
+                </div>
+              )}
+            </header>
+
+            <div className="space-y-1">
+              {surah.ayahs.map((a) => {
+                const key = `${surah.n}:${a.n}`;
+                const marked = bookmarks.includes(key);
+                return (
+                  <article key={a.n} className="ayah-block group">
+                    <p
+                      dir="rtl"
+                      className="arabic text-[1.7rem] leading-[2.25] sm:text-[2rem] sm:leading-[2.3]"
                     >
-                      {marked ? "★ Bookmarked" : "☆ Bookmark"}
-                    </button>
-                    <button
-                      onClick={() => navigator.clipboard?.writeText(`${a.ar}\n${a.en}`)}
-                      className="text-ink-faint hover:text-foreground text-xs"
-                    >
-                      Copy
-                    </button>
-                    <button
-                      onClick={() => {
-                        setForm({ surah: surah.name, range: `Ayah ${a.n}`, mins: "5" });
-                        setOpenSurah(null);
-                      }}
-                      className="text-ink-faint hover:text-foreground text-xs"
-                    >
-                      Log reading
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+                      {a.ar}
+                      <span className="text-ink-faint border-rule mr-2 inline-grid size-7 place-items-center rounded-full border align-middle text-[0.7rem]">
+                        {a.n}
+                      </span>
+                    </p>
+                    {translation && (
+                      <p className="text-ink-soft mt-3 text-[0.95rem] leading-relaxed">{a.en}</p>
+                    )}
+                    <div className="mt-3 flex gap-4 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                      <button
+                        onClick={() =>
+                          setBookmarks(
+                            marked ? bookmarks.filter((b) => b !== key) : [...bookmarks, key]
+                          )
+                        }
+                        aria-pressed={marked}
+                        className={`text-xs ${
+                          marked
+                            ? "text-foreground font-medium"
+                            : "text-ink-faint hover:text-foreground"
+                        }`}
+                      >
+                        {marked ? "★ Saved" : "☆ Save"}
+                      </button>
+                      <button
+                        onClick={() => navigator.clipboard?.writeText(`${a.ar}\n${a.en}`)}
+                        className="text-ink-faint hover:text-foreground text-xs"
+                      >
+                        Copy
+                      </button>
+                      <button
+                        onClick={() => {
+                          setForm({ surah: surah.name, range: `Ayah ${a.n}`, mins: "5" });
+                          setOpenSurah(null);
+                        }}
+                        className="text-ink-faint hover:text-foreground text-xs"
+                      >
+                        Log reading
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </div>
       );
+
     }
   }
 
+  const lastRead = sessions[0];
+
   return (
     <div className="space-y-10">
-      <Section eyebrow="Read" title="Quran">
+      {lastRead && (
+        <ContextHero
+          eyebrow={<span>Continue reading</span>}
+          headline={lastRead.surah}
+          support={`You last read ${lastRead.range || "here"} on ${lastRead.date}.`}
+        />
+      )}
+
+      <Section
+        eyebrow="Read"
+        title="Quran"
+        aside={
+          bookmarks.length > 0 ? (
+            <span className="text-ink-faint text-xs">{bookmarks.length} saved · on device</span>
+          ) : undefined
+        }
+      >
         <div className="mb-4">
           <Field
-            label="Search Surahs"
+            label="Find a surah"
             value={search}
-            placeholder="Search by name, meaning or number (e.g. Kahf, 18, Ya-Sin)…"
+            placeholder="By name, meaning or number — Kahf, 18, Ya-Sin…"
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        <div className="divide-border/70 divide-y max-h-[540px] overflow-y-auto pr-1">
+
+        <div className="divide-rule/70 max-h-[540px] divide-y overflow-y-auto pr-1">
           {filteredSurahs.map((s) => {
             const cached = isSurahCached(s.n);
             return (
               <button
                 key={s.n}
                 onClick={() => setOpenSurah(s.n)}
-                className="group flex w-full items-center gap-4 py-3.5 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.02] px-2 rounded-lg transition-colors"
+                className="group hover:bg-space-soft/40 grid w-full grid-cols-[1.75rem_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-2 py-3.5 text-left transition-colors"
               >
-                <span className="text-ink-faint numeric w-7 text-sm font-medium">{s.n}</span>
-                <span className="flex-1 min-w-0">
-                  <span className="title-md flex items-baseline gap-2">
-                    <span className="group-hover:text-foreground">{s.name}</span>
-                    <span className="text-[0.7rem] text-ink-faint font-normal uppercase tracking-wider">
-                      {s.revelationType}
-                    </span>
+                <span className="text-ink-faint numeric text-sm">{s.n}</span>
+                <span className="min-w-0">
+                  <span className="title-md block truncate">{s.name}</span>
+                  <span className="text-ink-faint block truncate text-xs">
+                    {s.meaning} · {s.revelationType}
                   </span>
-                  <span className="text-ink-faint text-xs truncate block">{s.meaning}</span>
                 </span>
-                <span className="text-right shrink-0">
-                  <span className="arabic text-ink-soft text-lg block">{s.arabicName}</span>
-                  <span className="text-ink-faint text-[0.7rem] block numeric">
-                    {s.numberOfAyahs} آيات {cached && "· on device"}
+                <span className="shrink-0 text-right">
+                  <span className="arabic text-ink-soft block text-lg">{s.arabicName}</span>
+                  <span className="text-ink-faint numeric block text-[0.7rem]">
+                    {s.numberOfAyahs} ayahs
+                    {cached && <span className="text-ink-faint/80"> · offline</span>}
                   </span>
                 </span>
               </button>
@@ -584,45 +609,58 @@ export function Quran() {
         </div>
 
         {filteredSurahs.length === 0 && (
-          <p className="text-ink-faint text-center py-6 text-sm">No Surah matches "{search}".</p>
-        )}
-
-        {bookmarks.length > 0 && (
-          <p className="text-ink-faint mt-4 text-xs">
-            {bookmarks.length} bookmarked ayah(s) automatically cached on device
+          <p className="text-ink-faint py-6 text-center text-sm">
+            Nothing matches “{search}”.
           </p>
         )}
       </Section>
 
-      <Section eyebrow="Reading log" title="Sessions">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!form.surah.trim()) return;
-            setSessions([{ id: uid(), ...form, date: todayKey() }, ...sessions]);
-            setForm({ surah: "", range: "", mins: "" });
-          }}
-          className="mb-5 grid gap-2 sm:grid-cols-[1fr_1fr_90px_auto] sm:items-end"
-        >
-          <Field
-            label="Surah"
-            value={form.surah}
-            onChange={(e) => setForm({ ...form, surah: e.target.value })}
-          />
-          <Field
-            label="Ayah range"
-            value={form.range}
-            onChange={(e) => setForm({ ...form, range: e.target.value })}
-          />
-          <Field
-            label="Minutes"
-            value={form.mins}
-            onChange={(e) => setForm({ ...form, mins: e.target.value })}
-          />
-          <Action type="submit" variant="solid" className="h-[42px]">
-            Log
-          </Action>
-        </form>
+
+      <Section
+        eyebrow="Reading log"
+        title="What you've read"
+        aside={
+          sessions.length > 0 ? (
+            <span className="text-ink-faint numeric text-xs">{sessions.length} sessions</span>
+          ) : undefined
+        }
+      >
+        <div className="mb-6">
+          <Disclosure summary="Log a reading" detail="Surah, range and time spent">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!form.surah.trim()) return;
+                setSessions([{ id: uid(), ...form, date: todayKey() }, ...sessions]);
+                setForm({ surah: "", range: "", mins: "" });
+              }}
+              className="grid gap-3 sm:grid-cols-[1fr_1fr_90px_auto] sm:items-end"
+            >
+              <Field
+                label="Surah"
+                value={form.surah}
+                placeholder="Al-Kahf"
+                onChange={(e) => setForm({ ...form, surah: e.target.value })}
+              />
+              <Field
+                label="Ayah range"
+                value={form.range}
+                placeholder="1–10"
+                onChange={(e) => setForm({ ...form, range: e.target.value })}
+              />
+              <Field
+                label="Minutes"
+                inputMode="numeric"
+                value={form.mins}
+                onChange={(e) => setForm({ ...form, mins: e.target.value })}
+              />
+              <Action type="submit" variant="solid" className="h-[42px]">
+                Log
+              </Action>
+            </form>
+          </Disclosure>
+        </div>
+
         {sessions.length === 0 ? (
           <EmptyState
             glyph="☾"
@@ -690,158 +728,268 @@ export function Duas() {
 export function Hifz() {
   const [items, setItems] = useStore<HifzItem[]>("hifz", []);
   const [surah, setSurah] = useState("");
-  const [activeRevisionId, setActiveRevisionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<{ surah: string; nextDue?: string } | null>(null);
 
-  const queue = useMemo(() => generateHifzRevisionQueue(items, todayKey()), [items]);
+  const today = todayKey();
+  const queue = useMemo(() => generateHifzRevisionQueue(items, today), [items, today]);
+
+  const focus = queue.dueToday[0] ?? null;
+  const focusRetention = focus ? getRetentionScore(focus, today) : null;
+  const session = sessionId ? queue.allNormalized.find((i) => i.id === sessionId) : null;
+
+  /** Human sentence for why a portion is being surfaced — no algorithm jargon. */
+  function reason(item: HifzItem) {
+    const r = getRetentionScore(item, today);
+    if (r.status === "new") return "New portion — first revision sets the rhythm";
+    if (r.daysOverdue > 0)
+      return `Due ${r.daysOverdue} day${r.daysOverdue === 1 ? "" : "s"} ago · retention is falling`;
+    if (r.isDue) return "Due today";
+    return item.nextDue ? `Next revision on ${item.nextDue}` : "Settled";
+  }
+
+  function rate(itemId: string, rating: HifzRating, surahName: string) {
+    const updated = recordHifzRevision(items, itemId, rating);
+    setItems(updated);
+    const fresh = updated.find((x) => x.id === itemId);
+    setLastResult(fresh?.nextDue ? { surah: surahName, nextDue: fresh.nextDue } : { surah: surahName });
+    setSessionId(null);
+  }
 
   return (
-    <Section eyebrow="Memorisation & Muraja'ah" title="Hifz">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!surah.trim()) return;
-          setItems([...items, { id: uid(), surah: surah.trim(), pct: 0 }]);
-          setSurah("");
-        }}
-        className="mb-6 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end"
-      >
-        <Field
-          label="Surah in progress"
-          value={surah}
-          placeholder="e.g. Al-Mulk, Yasin, Juz 30…"
-          onChange={(e) => setSurah(e.target.value)}
-        />
-        <Action type="submit" variant="solid" className="h-[42px]">
-          Track
-        </Action>
-      </form>
-
-      {queue.summary.dueCount > 0 && (
-        <div className="mb-6 rounded-xl border border-border bg-space-soft/40 p-3.5 flex items-center justify-between">
+    <div className="space-y-10">
+      {/* Revision session — one portion, full attention */}
+      {session ? (
+        <ContextHero
+          eyebrow={<span>Muraja'ah</span>}
+          headline={session.surah}
+          support={session.range ? `${session.range} · ${reason(session)}` : reason(session)}
+          aside={
+            <button
+              onClick={() => setSessionId(null)}
+              className="text-ink-faint hover:text-foreground text-xs"
+            >
+              Leave
+            </button>
+          }
+        >
           <div>
-            <p className="text-xs font-semibold text-foreground">
-              {queue.summary.dueCount} portion(s) due for Muraja'ah today
-            </p>
-            <p className="text-[0.72rem] text-muted-foreground mt-0.5">
-              Average retention health: {queue.summary.averageRetention}%
-            </p>
+            <p className="text-foreground mb-3 text-[0.92rem]">How did the recitation feel?</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(["hard", "fair", "good", "strong"] as HifzRating[]).map((rating) => {
+                const cfg = HIFZ_RATING_CONFIG[rating];
+                return (
+                  <button
+                    key={rating}
+                    onClick={() => rate(session.id, rating, session.surah)}
+                    className="press border-border bg-card hover:bg-space-soft/70 flex min-h-14 flex-col items-start justify-center rounded-2xl border px-4 py-2.5 text-left transition-colors"
+                  >
+                    <span className="text-foreground text-[0.92rem] font-medium">
+                      <span aria-hidden="true" className="text-ink-faint mr-1.5">
+                        {cfg.glyph}
+                      </span>
+                      {cfg.label}
+                    </span>
+                    <span className="text-ink-faint mt-0.5 text-xs">{cfg.description}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <span className="text-xs text-space font-medium numeric">Spaced review</span>
-        </div>
+        </ContextHero>
+      ) : focus && focusRetention ? (
+        <ContextHero
+          eyebrow={
+            <>
+              <span>Revise now</span>
+              {queue.summary.dueCount > 1 && (
+                <Status tone="attention">{queue.summary.dueCount} due</Status>
+              )}
+            </>
+          }
+          headline={focus.surah}
+          support={reason(focus)}
+        >
+          <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <ProgressLine
+              label="Retention"
+              value={`${focusRetention.retentionPct}%`}
+              pct={focusRetention.retentionPct}
+              note={
+                focusRetention.daysSince === null
+                  ? "Not revised yet"
+                  : `Last revised ${focusRetention.daysSince === 0 ? "today" : `${focusRetention.daysSince} days ago`}`
+              }
+            />
+            <Action variant="solid" onClick={() => setSessionId(focus.id)}>
+              Start revision
+            </Action>
+          </div>
+        </ContextHero>
+      ) : items.length > 0 ? (
+        <ContextHero
+          eyebrow={<span>Muraja'ah</span>}
+          headline="Nothing due today"
+          support={
+            queue.completedToday.length > 0
+              ? `${queue.completedToday.length} portion${queue.completedToday.length === 1 ? "" : "s"} revised today. Your memorisation is holding.`
+              : "Everything you've memorised is still fresh. Come back when a portion is due."
+          }
+        />
+      ) : null}
+
+      {lastResult && (
+        <p className="reveal text-ink-soft text-sm">
+          {lastResult.surah} recorded.
+          {lastResult.nextDue ? ` Next revision on ${lastResult.nextDue}.` : ""}
+        </p>
       )}
 
-      {items.length === 0 ? (
-        <EmptyState
-          glyph="◈"
-          headline="Nothing in progress"
-          body="Add a surah you're memorising and move it forward a little each day."
-        />
-      ) : (
-        <div className="space-y-6">
-          {items.map((i) => {
-            const retention = getRetentionScore(i, todayKey());
-            const isRevising = activeRevisionId === i.id;
-
-            return (
-              <div key={i.id} className="rounded-xl border border-border/70 p-4 space-y-3">
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <p className="title-md">{i.surah}</p>
-                    <p className="text-ink-faint text-[0.72rem] mt-0.5">
-                      {retention.status === "due"
-                        ? "Due for revision today"
-                        : i.nextDue
-                          ? `Next revision: ${i.nextDue}`
-                          : "New memorisation"}
-                      {retention.daysSince !== null && ` · Last revised ${retention.daysSince}d ago`}
-                      {` · Retention ${retention.retentionPct}%`}
-                    </p>
+      <Section
+        eyebrow="Memorisation"
+        title="Your portions"
+        aside={
+          items.length > 0 ? (
+            <span className="text-ink-faint numeric text-xs">
+              {queue.summary.masteredCount} complete · {queue.summary.averageRetention}% retention
+            </span>
+          ) : undefined
+        }
+      >
+        {items.length === 0 ? (
+          <EmptyState
+            glyph="◈"
+            headline="Nothing in progress"
+            body="Add a surah or juz you're memorising. Revision days will be scheduled for you."
+          />
+        ) : (
+          <ul className="thread">
+            {queue.allNormalized.map((i) => {
+              const retention = getRetentionScore(i, today);
+              const tone =
+                retention.daysOverdue > 0
+                  ? "urgent"
+                  : retention.isDue
+                    ? "attention"
+                    : retention.status === "fresh"
+                      ? "settled"
+                      : "ambient";
+              return (
+                <li
+                  key={i.id}
+                  className="thread-node py-4"
+                  data-active={retention.isDue ? "true" : undefined}
+                  data-done={!retention.isDue && retention.status === "fresh" ? "true" : undefined}
+                >
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="min-w-0">
+                      <p className="title-md truncate">{i.surah}</p>
+                      <p className="text-ink-faint mt-0.5 text-xs">{reason(i)}</p>
+                    </div>
+                    <span className="shrink-0 pt-0.5">
+                      <Status tone={tone as "urgent" | "attention" | "ambient" | "settled"}>
+                        {retention.isDue ? "Due" : `${retention.retentionPct}%`}
+                      </Status>
+                    </span>
                   </div>
-                  <span className="numeric text-ink-soft text-sm font-medium">{i.pct}%</span>
-                </div>
 
-                <Meter value={i.pct} />
+                  <div className="mt-3">
+                    <ProgressLine
+                      label="Memorised"
+                      value={`${i.pct}%`}
+                      pct={i.pct}
+                      note={i.range}
+                    />
+                  </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                  <div className="flex gap-1.5">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Action onClick={() => setSessionId(i.id)}>Revise</Action>
                     <Action
+                      ariaLabel={`Reduce memorised amount for ${i.surah}`}
                       onClick={() =>
                         setItems(
                           items.map((x) =>
-                            x.id === i.id ? { ...x, pct: Math.max(0, x.pct - 10) } : x,
-                          ),
+                            x.id === i.id ? { ...x, pct: Math.max(0, x.pct - 10) } : x
+                          )
                         )
                       }
                     >
                       −10%
                     </Action>
                     <Action
+                      ariaLabel={`Increase memorised amount for ${i.surah}`}
                       onClick={() =>
                         setItems(
                           items.map((x) =>
-                            x.id === i.id ? { ...x, pct: Math.min(100, x.pct + 10) } : x,
-                          ),
+                            x.id === i.id ? { ...x, pct: Math.min(100, x.pct + 10) } : x
+                          )
                         )
                       }
                     >
                       +10%
                     </Action>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setActiveRevisionId(isRevising ? null : i.id)}
-                      className="press text-xs rounded-lg px-2.5 py-1.5 border border-border bg-background hover:bg-space-soft transition-colors text-foreground font-medium"
-                    >
-                      {isRevising ? "Cancel" : "Record Muraja'ah"}
-                    </button>
                     <button
                       onClick={() => setItems(items.filter((x) => x.id !== i.id))}
-                      className="text-ink-faint hover:text-destructive text-xs"
+                      className="text-ink-faint hover:text-destructive ml-auto text-xs"
                     >
                       Remove
                     </button>
                   </div>
-                </div>
 
-                {isRevising && (
-                  <div className="mt-3 pt-3 border-t border-border/60">
-                    <p className="text-xs font-semibold text-foreground mb-2">
-                      How fluent was your recitation?
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                      {(["hard", "fair", "good", "strong"] as HifzRating[]).map((rating) => {
-                        const cfg = HIFZ_RATING_CONFIG[rating];
-                        return (
-                          <button
-                            key={rating}
-                            onClick={() => {
-                              const updated = recordHifzRevision(items, i.id, rating);
-                              setItems(updated);
-                              setActiveRevisionId(null);
-                            }}
-                            className="press flex flex-col items-start p-2 rounded-lg border border-border bg-card hover:bg-space-soft/80 text-left transition-colors"
-                          >
-                            <span className="text-xs font-medium text-foreground">
-                              {cfg.glyph} {cfg.label}
-                            </span>
-                            <span className="text-[0.66rem] text-muted-foreground mt-0.5 line-clamp-1">
-                              {cfg.description}
-                            </span>
-                          </button>
-                        );
-                      })}
+                  {(i.revisionHistory?.length ?? 0) > 0 && (
+                    <div className="mt-3">
+                      <Disclosure
+                        summary="Revision history"
+                        detail={`${i.revisionHistory!.length} recorded`}
+                      >
+                        <ul className="space-y-2">
+                          {i.revisionHistory!.slice(0, 8).map((log) => (
+                            <li
+                              key={log.id}
+                              className="text-ink-faint numeric flex items-baseline justify-between text-xs"
+                            >
+                              <span>{log.date}</span>
+                              <span>{HIFZ_RATING_CONFIG[log.rating].label}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </Disclosure>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <div className="mt-6">
+          <Disclosure summary="Add a portion" detail="A surah, a juz, or a range of ayahs">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!surah.trim()) return;
+                setItems([...items, { id: uid(), surah: surah.trim(), pct: 0 }]);
+                setSurah("");
+              }}
+              className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
+            >
+              <Field
+                label="What are you memorising?"
+                value={surah}
+                placeholder="Al-Mulk, Yasin, Juz 30…"
+                onChange={(e) => setSurah(e.target.value)}
+              />
+              <Action type="submit" variant="solid" className="h-[42px]">
+                Track it
+              </Action>
+            </form>
+          </Disclosure>
         </div>
-      )}
-    </Section>
+      </Section>
+    </div>
   );
 }
+
 
 export function Fasting() {
   const [fasts, setFasts] = useStore<Record<string, "obligatory" | "voluntary">>("fasting", {});

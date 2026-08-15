@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Shell } from "@/components/veedu/shell";
-import { SubTabs, Section, Meter } from "@/components/veedu/primitives";
+import { SubTabs, Section, EmptyState } from "@/components/veedu/primitives";
+import { TimeBand, ProgressLine, Status } from "@/components/veedu/phase4";
 import {
   Deeds,
   GroceryList,
@@ -20,7 +21,7 @@ import { useTab } from "@/lib/use-tab";
 import { todayKey, useNow, useStore } from "@/lib/store";
 import { useFamilyMigration } from "@/lib/family-model";
 import { calculateBudgetAnalytics } from "@/lib/budget-intelligence";
-import { buildDailyThread } from "@/lib/daily-surface";
+import { buildDailyThread, type DailyThreadItem } from "@/lib/daily-surface";
 import { useRamadanMode } from "@/lib/ramadan";
 import type { HifzItem } from "@/lib/hifz-scheduler";
 
@@ -140,6 +141,9 @@ function Today() {
     ]
   );
 
+  const bands = useMemo(() => groupThread(threadItems), [threadItems]);
+  const quietDay = threadItems.every((i) => i.done) || threadItems.length === 0;
+
   return (
     <div className="space-y-12">
       <header className="rise">
@@ -160,20 +164,26 @@ function Today() {
         </p>
       </header>
 
-      {/* The thread — Firdaus's signature: today read as one prioritized line, not a grid of cards */}
-      <section className="thread rise space-y-1">
-        {threadItems.map((item) => (
-          <ThreadItem
-            key={item.id}
-            active={item.active}
-            done={item.done}
-            label={item.label}
-            value={item.value}
-            detail={item.detail}
-            to={item.to}
-          />
-        ))}
-      </section>
+      {/* The thread — today read as one prioritised line, arranged now → next → today → later */}
+      {quietDay && bands.length === 0 ? (
+        <EmptyState
+          glyph="☾"
+          headline="A quiet day"
+          body="Nothing is due and nothing is waiting. When something arrives, it will appear here first."
+        />
+      ) : (
+        <div className="space-y-10">
+          {bands.map((band) => (
+            <TimeBand key={band.id} label={band.label} meta={band.meta}>
+              <section className="thread space-y-0.5">
+                {band.items.map((item, idx) => (
+                  <ThreadItem key={item.id} item={item} index={idx} lead={band.id === "now"} />
+                ))}
+              </section>
+            </TimeBand>
+          ))}
+        </div>
+      )}
 
       <Section
         eyebrow="How today looks"
@@ -185,13 +195,13 @@ function Today() {
         }
       >
         <div className="grid gap-6 sm:grid-cols-3">
-          <Stat
+          <ProgressLine
             label="Tasks"
             value={`${doneCount}/${dueToday.length}`}
             pct={dueToday.length ? (doneCount / dueToday.length) * 100 : 0}
           />
-          <Stat label="Salah" value={`${prayed}/5`} pct={(prayed / 5) * 100} />
-          <Stat
+          <ProgressLine label="Salah" value={`${prayed}/5`} pct={(prayed / 5) * 100} />
+          <ProgressLine
             label="Grocery"
             value={`${grocery.length - leftToBuy}/${grocery.length}`}
             pct={grocery.length ? ((grocery.length - leftToBuy) / grocery.length) * 100 : 0}
@@ -202,48 +212,78 @@ function Today() {
   );
 }
 
-function Stat({ label, value, pct }: { label: string; value: string; pct: number }) {
-  return (
-    <div>
-      <div className="mb-2 flex items-baseline justify-between">
-        <span className="eyebrow">{label}</span>
-        <span className="numeric font-display text-lg">{value}</span>
-      </div>
-      <Meter value={pct} />
-    </div>
-  );
+/**
+ * Presentation-only arrangement of the engine's already-prioritised thread into
+ * temporal bands. Priority scores come from buildDailyThread — nothing is
+ * recalculated here.
+ */
+type Band = { id: string; label: string; meta?: string | undefined; items: DailyThreadItem[] };
+
+function groupThread(items: DailyThreadItem[]): Band[] {
+  const now = items.filter((i) => !i.done && i.priority <= 2);
+  const next = items.filter((i) => !i.done && i.priority >= 3 && i.priority <= 4);
+  const today = items.filter((i) => !i.done && i.priority >= 5 && i.priority <= 7);
+  const later = items.filter((i) => !i.done && i.priority >= 8);
+  const behind = items.filter((i) => i.done);
+
+  return [
+    { id: "now", label: "Now", items: now },
+    { id: "next", label: "Next", items: next },
+    { id: "today", label: "Today", items: today },
+    { id: "later", label: "Later", items: later },
+    { id: "behind", label: "Behind you", items: behind },
+  ].filter((b) => b.items.length > 0);
 }
 
+const TONE_BY_BAND: Record<string, "urgent" | "attention" | "ambient" | "settled"> = {
+  prayer: "attention",
+  ramadan: "urgent",
+  reminder: "urgent",
+};
+
 function ThreadItem({
-  label,
-  value,
-  detail,
-  active,
-  done,
-  to,
+  item,
+  index,
+  lead,
 }: {
-  label: string;
-  value: string;
-  detail?: string | undefined;
-  active?: boolean | undefined;
-  done?: boolean | undefined;
-  to?: "/deen" | "/me" | "/budget" | "/review" | "/" | undefined;
+  item: DailyThreadItem;
+  index: number;
+  lead: boolean;
 }) {
+  const tone = item.active ? (TONE_BY_BAND[item.category] ?? "attention") : "ambient";
   const body = (
-    <div className="py-3">
-      <p className="eyebrow">{label}</p>
-      <p className={`mt-0.5 text-[1.02rem] ${done ? "text-ink-faint" : ""}`}>{value}</p>
-      {detail && <p className="text-ink-faint numeric mt-0.5 text-xs">{detail}</p>}
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 py-3">
+      <div className="min-w-0">
+        <p className="eyebrow">{item.label}</p>
+        <p
+          className={`mt-1 ${lead ? "thread-lead" : "text-[1.02rem]"} ${
+            item.done ? "text-ink-faint" : "text-foreground"
+          }`}
+        >
+          {item.value}
+        </p>
+        {item.detail && <p className="text-ink-faint numeric mt-1 text-xs">{item.detail}</p>}
+      </div>
+      {item.active && !item.done && (
+        <span className="shrink-0 pt-0.5">
+          <Status tone={tone}>{tone === "urgent" ? "Now" : "Soon"}</Status>
+        </span>
+      )}
     </div>
   );
+
   return (
     <div
-      className="thread-node"
-      data-active={active ? "true" : undefined}
-      data-done={done ? "true" : undefined}
+      className="thread-node thread-in"
+      style={{ "--i": index } as React.CSSProperties}
+      data-active={item.active ? "true" : undefined}
+      data-done={item.done ? "true" : undefined}
     >
-      {to ? (
-        <Link to={to} className="block">
+      {item.to ? (
+        <Link
+          to={item.to}
+          className="focus-visible:ring-space/40 block rounded-lg transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+        >
           {body}
         </Link>
       ) : (
