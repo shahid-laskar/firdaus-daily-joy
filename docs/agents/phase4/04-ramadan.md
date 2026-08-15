@@ -7,6 +7,7 @@ Create a focused Ramadan experience built from existing prayer, Quran, fasting, 
 ## Functional surface
 
 Include:
+
 - Suhur context
 - Iftar context
 - prayer context
@@ -20,6 +21,7 @@ Include:
 Ramadan mode should feel peaceful and purposeful, not like a gamified challenge.
 
 Avoid:
+
 - streak obsession
 - leaderboards
 - points
@@ -28,6 +30,7 @@ Avoid:
 ## Division of work
 
 Gemini:
+
 - calculations
 - dates
 - state
@@ -35,6 +38,7 @@ Gemini:
 - integration
 
 Lovable:
+
 - premium Ramadan surface
 - responsive composition
 - progress visualization

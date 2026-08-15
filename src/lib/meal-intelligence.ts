@@ -32,7 +32,7 @@ export function weekToAbsolute(weekKey: string): number {
 export function rankRecipes(
   recipes: Recipe[],
   history: Record<string, Record<string, string>>,
-  currentWeekKey: string
+  currentWeekKey: string,
 ): RecipeScore[] {
   if (recipes.length === 0) return [];
 
@@ -48,7 +48,7 @@ export function rankRecipes(
     const plan = history[week];
     for (const mealName of Object.values(plan ?? {})) {
       if (!mealName) continue;
-      
+
       const normalized = mealName.trim().toLowerCase();
       // If the meal name matches a known recipe, track its stats
       if (usageStats.has(normalized)) {
@@ -64,21 +64,21 @@ export function rankRecipes(
 
   const scores = recipes.map((recipe) => {
     const stats = usageStats.get(recipe.name.trim().toLowerCase())!;
-    
+
     // Default high recency value for completely unused recipes to encourage discovery
-    let weeksSinceUsed = 12; 
+    let weeksSinceUsed = 12;
     if (stats.lastWeekStr) {
       weeksSinceUsed = Math.max(0, currentAbs - weekToAbsolute(stats.lastWeekStr));
     }
-    
+
     // Scoring weights:
     // +2 points for every historical use (rewards family staples)
     // +1.5 points for every week since last use (rewards variety/cycling)
-    let score = (stats.count * 2) + (weeksSinceUsed * 1.5);
-    
+    let score = stats.count * 2 + weeksSinceUsed * 1.5;
+
     // Anti-fatigue: heavily penalize if used this week (0) or last week (1)
     if (stats.lastWeekStr && weeksSinceUsed <= 1) {
-      score -= 50; 
+      score -= 50;
     }
 
     const result: RecipeScore = {

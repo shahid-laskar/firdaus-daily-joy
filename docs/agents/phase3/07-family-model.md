@@ -11,6 +11,7 @@ Existing child records and chore behavior must survive migration.
 ## Conceptual model
 
 A family member may contain:
+
 - id
 - name
 - role

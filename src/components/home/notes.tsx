@@ -25,7 +25,9 @@ export function Notes() {
     const q = query.trim().toLowerCase();
     return [...notes]
       .filter((n) => !q || `${n.title} ${n.body}`.toLowerCase().includes(q))
-      .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.updated.localeCompare(a.updated));
+      .sort(
+        (a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.updated.localeCompare(a.updated),
+      );
   }, [notes, query]);
 
   const open = notes.find((n) => n.id === openId) ?? null;
@@ -90,7 +92,11 @@ export function Notes() {
     <Section
       eyebrow="Shared"
       title="Notes"
-      aside={<Action variant="solid" onClick={create}>New note</Action>}
+      aside={
+        <Action variant="solid" onClick={create}>
+          New note
+        </Action>
+      }
     >
       {notes.length > 3 && (
         <input
@@ -105,7 +111,11 @@ export function Notes() {
           glyph="◇"
           headline="No notes yet"
           body="Keep codes, lists and half-thoughts in separate notes instead of one long page."
-          action={<Action variant="solid" onClick={create}>Write the first one</Action>}
+          action={
+            <Action variant="solid" onClick={create}>
+              Write the first one
+            </Action>
+          }
         />
       ) : (
         <ul className="divide-border/70 divide-y">

@@ -104,7 +104,8 @@ export const themes: ThemeDefinition[] = [
   {
     id: "meridian",
     name: "Meridian Enterprise",
-    description: "Cool neutral greys with a confident corporate blue; calm, dense, dashboard-ready.",
+    description:
+      "Cool neutral greys with a confident corporate blue; calm, dense, dashboard-ready.",
     swatch: {
       bg: "oklch(0.982 0.003 250)",
       fg: "oklch(0.22 0.02 258)",
@@ -123,7 +124,8 @@ export const themes: ThemeDefinition[] = [
   {
     id: "obsidian",
     name: "Obsidian",
-    description: "Dark-first graphite with a cool platinum accent; the light mode is a muted mirror.",
+    description:
+      "Dark-first graphite with a cool platinum accent; the light mode is a muted mirror.",
     swatch: {
       bg: "oklch(0.95 0.004 260)",
       fg: "oklch(0.2 0.012 262)",
@@ -161,7 +163,8 @@ export const themes: ThemeDefinition[] = [
   {
     id: "lumen",
     name: "Lumen",
-    description: "Soft elegant blush neutrals, generous radii, muted mauve accent, feather shadows.",
+    description:
+      "Soft elegant blush neutrals, generous radii, muted mauve accent, feather shadows.",
     swatch: {
       bg: "oklch(0.98 0.008 40)",
       fg: "oklch(0.28 0.02 20)",
@@ -220,7 +223,8 @@ export const themes: ThemeDefinition[] = [
   {
     id: "terracotta",
     name: "Terracotta",
-    description: "Warm contemporary sun-baked clay and oat neutrals; friendly, tactile, midcentury.",
+    description:
+      "Warm contemporary sun-baked clay and oat neutrals; friendly, tactile, midcentury.",
     swatch: {
       bg: "oklch(0.968 0.014 70)",
       fg: "oklch(0.26 0.024 45)",

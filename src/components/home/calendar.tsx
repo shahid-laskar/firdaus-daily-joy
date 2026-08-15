@@ -57,7 +57,12 @@ export function UnifiedCalendar() {
   });
   const [selected, setSelected] = useState(todayKey());
   const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState<{ title: string; date: string; time: string; recur: Recurrence }>({
+  const [draft, setDraft] = useState<{
+    title: string;
+    date: string;
+    time: string;
+    recur: Recurrence;
+  }>({
     title: "",
     date: todayKey(),
     time: "",
@@ -69,7 +74,8 @@ export function UnifiedCalendar() {
     const offset = (first.getDay() + 6) % 7;
     const days: (string | null)[] = Array.from({ length: offset }, () => null);
     const last = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
-    for (let i = 1; i <= last; i++) days.push(isoOf(new Date(cursor.getFullYear(), cursor.getMonth(), i)));
+    for (let i = 1; i <= last; i++)
+      days.push(isoOf(new Date(cursor.getFullYear(), cursor.getMonth(), i)));
     while (days.length % 7 !== 0) days.push(null);
     return days;
   }, [cursor]);
@@ -137,19 +143,28 @@ export function UnifiedCalendar() {
                 onClick={() => setSelected(iso)}
                 className="press relative flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border text-[0.72rem] transition-colors"
                 style={{
-                  borderColor: isSel ? "var(--space-accent)" : isToday ? "var(--rule)" : "transparent",
+                  borderColor: isSel
+                    ? "var(--space-accent)"
+                    : isToday
+                      ? "var(--rule)"
+                      : "transparent",
                   background: isSel ? "var(--space-accent-soft)" : "transparent",
                 }}
               >
                 {hp && (
-                  <span 
-                    className="absolute top-1.5 right-1.5 text-[0.55rem] leading-none" 
-                    style={{ color: imarker ? "var(--clay)" : "var(--ink-faint)", opacity: imarker ? 1 : 0.5 }}
+                  <span
+                    className="absolute top-1.5 right-1.5 text-[0.55rem] leading-none"
+                    style={{
+                      color: imarker ? "var(--clay)" : "var(--ink-faint)",
+                      opacity: imarker ? 1 : 0.5,
+                    }}
                   >
                     {hp.day}
                   </span>
                 )}
-                <span className={`numeric mt-1 ${isToday ? "text-foreground font-semibold" : "text-ink-soft"}`}>
+                <span
+                  className={`numeric mt-1 ${isToday ? "text-foreground font-semibold" : "text-ink-soft"}`}
+                >
                   {iso.slice(8)}
                 </span>
                 <span className="flex h-1.5 items-center gap-[3px]">
@@ -157,12 +172,17 @@ export function UnifiedCalendar() {
                     <i className="size-[5px] rounded-full" style={{ background: "var(--clay)" }} />
                   )}
                   {dayEvents.length > 0 && (
-                    <i className="size-[5px] rounded-full" style={{ background: "var(--space-accent)" }} />
+                    <i
+                      className="size-[5px] rounded-full"
+                      style={{ background: "var(--space-accent)" }}
+                    />
                   )}
                   {dayTasks.length > 0 && (
                     <i className="size-[5px] rounded-full" style={{ background: "var(--brass)" }} />
                   )}
-                  {fasted && <i className="size-[5px] rounded-full" style={{ background: "var(--leaf)" }} />}
+                  {fasted && (
+                    <i className="size-[5px] rounded-full" style={{ background: "var(--leaf)" }} />
+                  )}
                   {hasMeal && !dayEvents.length && !dayTasks.length && !fasted && !imarker && (
                     <i className="bg-rule size-[5px] rounded-full" />
                   )}
@@ -182,12 +202,21 @@ export function UnifiedCalendar() {
 
       <Section
         eyebrow={hijriLabel(selDate) || selected}
-        title={selDate.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
+        title={selDate.toLocaleDateString(undefined, {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        })}
         aside={
           <Action
             variant={adding ? "quiet" : "solid"}
             onClick={() => {
-              setDraft({ title: "", date: selected, time: "", recur: { freq: "none", start: selected } });
+              setDraft({
+                title: "",
+                date: selected,
+                time: "",
+                recur: { freq: "none", start: selected },
+              });
               setAdding(!adding);
             }}
           >
@@ -196,7 +225,9 @@ export function UnifiedCalendar() {
         }
       >
         {marker && (
-          <p className="border-space/50 text-ink-soft mb-5 border-l-2 pl-4 text-sm italic">{marker}</p>
+          <p className="border-space/50 text-ink-soft mb-5 border-l-2 pl-4 text-sm italic">
+            {marker}
+          </p>
         )}
 
         {adding && (
@@ -211,7 +242,8 @@ export function UnifiedCalendar() {
                   title: draft.title.trim(),
                   date: draft.date,
                   time: draft.time || undefined,
-                  recur: draft.recur.freq === "none" ? undefined : { ...draft.recur, start: draft.date },
+                  recur:
+                    draft.recur.freq === "none" ? undefined : { ...draft.recur, start: draft.date },
                 },
               ]);
               setAdding(false);
@@ -219,13 +251,33 @@ export function UnifiedCalendar() {
             className="border-border/70 mb-7 space-y-4 rounded-2xl border p-4"
           >
             <div className="grid gap-2 sm:grid-cols-[1fr_140px_110px]">
-              <Field label="Event" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-              <Field label="Date" type="date" value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} />
-              <Field label="Time" type="time" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} />
+              <Field
+                label="Event"
+                value={draft.title}
+                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              />
+              <Field
+                label="Date"
+                type="date"
+                value={draft.date}
+                onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+              />
+              <Field
+                label="Time"
+                type="time"
+                value={draft.time}
+                onChange={(e) => setDraft({ ...draft, time: e.target.value })}
+              />
             </div>
-            <RecurrenceField value={draft.recur} onChange={(recur) => setDraft({ ...draft, recur })} compact />
+            <RecurrenceField
+              value={draft.recur}
+              onChange={(recur) => setDraft({ ...draft, recur })}
+              compact
+            />
             <div className="flex justify-end">
-              <Action type="submit" variant="solid">Save event</Action>
+              <Action type="submit" variant="solid">
+                Save event
+              </Action>
             </div>
           </form>
         )}
@@ -235,7 +287,11 @@ export function UnifiedCalendar() {
             <p className="text-muted-foreground py-3 text-sm">Nothing on this day.</p>
           )}
           {selEvents.map((e) => (
-            <div key={e.id} className="thread-node group flex items-baseline justify-between gap-3 py-3" data-active="true">
+            <div
+              key={e.id}
+              className="thread-node group flex items-baseline justify-between gap-3 py-3"
+              data-active="true"
+            >
               <div className="min-w-0">
                 <p className="eyebrow">{e.time ? e.time : "All day"}</p>
                 <p className="mt-0.5 text-[0.98rem]">{e.title}</p>

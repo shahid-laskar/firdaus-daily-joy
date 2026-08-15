@@ -7,6 +7,7 @@ Turn existing expense data into useful month-over-month and category-level feedb
 ## Functional requirements
 
 Support:
+
 - current-month total
 - previous-month comparison
 - percentage and absolute change
@@ -35,6 +36,7 @@ The existing Budget UI should remain functional.
 ## Lovable surface
 
 Lovable should handle only the premium presentation:
+
 - comparison summary
 - category trends
 - top insights

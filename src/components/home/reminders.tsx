@@ -21,7 +21,8 @@ export function useReminderEngine() {
   const now = useNow(30_000);
 
   useEffect(() => {
-    if (!now || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    if (!now || typeof Notification === "undefined" || Notification.permission !== "granted")
+      return;
     if (!prefs.prayers && !prefs.reminders) return;
 
     const ctx: ReminderContext = {
@@ -114,7 +115,9 @@ export function Reminders() {
                   key={m}
                   onClick={() => setPrefs({ ...prefs, leadMinutes: m })}
                   className={`press numeric rounded-full px-3 py-1 text-[0.74rem] ${
-                    prefs.leadMinutes === m ? "bg-space-soft text-foreground" : "text-muted-foreground"
+                    prefs.leadMinutes === m
+                      ? "bg-space-soft text-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {m}m
@@ -144,17 +147,37 @@ export function Reminders() {
           className="border-border/70 mb-7 space-y-4 rounded-2xl border p-4"
         >
           <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
-            <Field label="Remind me to" value={draft.title} placeholder="Give Yusuf his vitamins" onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-            <Field label="At" type="time" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} />
+            <Field
+              label="Remind me to"
+              value={draft.title}
+              placeholder="Give Yusuf his vitamins"
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            />
+            <Field
+              label="At"
+              type="time"
+              value={draft.time}
+              onChange={(e) => setDraft({ ...draft, time: e.target.value })}
+            />
           </div>
-          <RecurrenceField value={draft.recur} onChange={(recur) => setDraft({ ...draft, recur })} compact />
+          <RecurrenceField
+            value={draft.recur}
+            onChange={(recur) => setDraft({ ...draft, recur })}
+            compact
+          />
           <div className="flex justify-end">
-            <Action type="submit" variant="solid">Add reminder</Action>
+            <Action type="submit" variant="solid">
+              Add reminder
+            </Action>
           </div>
         </form>
 
         {reminders.length === 0 ? (
-          <EmptyState glyph="◦" headline="No reminders" body="Set the small repeating things you'd rather not hold in your head." />
+          <EmptyState
+            glyph="◦"
+            headline="No reminders"
+            body="Set the small repeating things you'd rather not hold in your head."
+          />
         ) : (
           <ul className="thread">
             {reminders.map((r) => {
@@ -222,7 +245,10 @@ function Toggle({
       >
         <span
           className="absolute top-[3px] size-[16px] rounded-full transition-all"
-          style={{ left: on ? "24px" : "4px", background: on ? "var(--background)" : "var(--ink-faint)" }}
+          style={{
+            left: on ? "24px" : "4px",
+            background: on ? "var(--background)" : "var(--ink-faint)",
+          }}
         />
       </button>
     </div>

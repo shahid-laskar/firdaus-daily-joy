@@ -11,15 +11,15 @@ describe("Family Model", () => {
       id: "p1",
       name: "Dad",
       role: "parent",
-      chores: []
+      chores: [],
     };
-    
+
     const child: FamilyMember = {
       id: "c1",
       name: "Yusuf",
       role: "child",
       age: "4",
-      chores: [{ id: "chore1", title: "Clean up", done: false }]
+      chores: [{ id: "chore1", title: "Clean up", done: false }],
     };
 
     assert.equal(parent.role, "parent");

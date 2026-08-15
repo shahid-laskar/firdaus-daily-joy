@@ -2,7 +2,9 @@
 
 const FMT = "en-u-ca-islamic-umalqura";
 
-export function hijriParts(d: Date): { day: number; month: number; monthName: string; year: number } | null {
+export function hijriParts(
+  d: Date,
+): { day: number; month: number; monthName: string; year: number } | null {
   try {
     const parts = new Intl.DateTimeFormat(FMT, {
       day: "numeric",

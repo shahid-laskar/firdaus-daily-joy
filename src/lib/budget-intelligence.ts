@@ -24,14 +24,14 @@ export function getPreviousMonthPrefix(monthPrefix: string): string {
   const [yearStr, monthStr] = monthPrefix.split("-");
   let year = parseInt(yearStr ?? "0", 10);
   let month = parseInt(monthStr ?? "0", 10);
-  
+
   if (month === 1) {
     year -= 1;
     month = 12;
   } else {
     month -= 1;
   }
-  
+
   return `${year}-${month.toString().padStart(2, "0")}`;
 }
 
@@ -44,15 +44,15 @@ export function getPreviousMonthPrefix(monthPrefix: string): string {
 export function calculateBudgetAnalytics(
   expenses: ExpenseRecord[],
   currentMonthPrefix: string,
-  daysElapsed: number = new Date().getDate()
+  daysElapsed: number = new Date().getDate(),
 ): BudgetAnalytics {
   const previousMonthPrefix = getPreviousMonthPrefix(currentMonthPrefix);
 
-  const currentMonthExpenses = expenses.filter(e => e.date.startsWith(currentMonthPrefix));
-  const previousMonthExpenses = expenses.filter(e => e.date.startsWith(previousMonthPrefix));
+  const currentMonthExpenses = expenses.filter((e) => e.date.startsWith(currentMonthPrefix));
+  const previousMonthExpenses = expenses.filter((e) => e.date.startsWith(previousMonthPrefix));
 
-  const currentMonthTotal = sum(currentMonthExpenses.map(e => e.amount));
-  const previousMonthTotal = sum(previousMonthExpenses.map(e => e.amount));
+  const currentMonthTotal = sum(currentMonthExpenses.map((e) => e.amount));
+  const previousMonthTotal = sum(previousMonthExpenses.map((e) => e.amount));
 
   const categoryTotals: Record<string, number> = {};
   for (const e of currentMonthExpenses) {
@@ -65,7 +65,10 @@ export function calculateBudgetAnalytics(
   }
 
   const categoryTrends: Record<string, { delta: number; percentage: number }> = {};
-  const allCategories = new Set([...Object.keys(categoryTotals), ...Object.keys(previousCategoryTotals)]);
+  const allCategories = new Set([
+    ...Object.keys(categoryTotals),
+    ...Object.keys(previousCategoryTotals),
+  ]);
   for (const cat of allCategories) {
     categoryTrends[cat] = trendDelta(categoryTotals[cat] ?? 0, previousCategoryTotals[cat] ?? 0);
   }
@@ -86,7 +89,7 @@ export function calculateBudgetAnalytics(
  */
 export function generateBudgetInsights(
   analytics: BudgetAnalytics,
-  limits: Record<string, number>
+  limits: Record<string, number>,
 ): Insight[] {
   const insights: Insight[] = [];
 

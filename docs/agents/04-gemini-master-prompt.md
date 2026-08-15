@@ -52,6 +52,7 @@ user data
 ## Product rule
 
 Firdaus should remain:
+
 - calm
 - private
 - practical
@@ -63,6 +64,7 @@ Do not transform the product into a generic analytics dashboard.
 ## Task execution
 
 When given a task specification from docs/agents/phase3 or docs/agents/phase4:
+
 - read it fully
 - inspect repository state
 - honor the task's dependency constraints

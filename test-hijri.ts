@@ -9,4 +9,3 @@ for (let i = 0; i < 400; i++) {
   }
 }
 if (!found) console.log("No markers found");
-

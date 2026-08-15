@@ -1,9 +1,24 @@
 import { useMemo } from "react";
-import { Area, AreaChart, Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { EmptyState, Section } from "@/components/veedu/primitives";
 import { useStore } from "@/lib/store";
 import { average, isoOffset } from "@/lib/intelligence";
-import { calculateMoodAnalytics, generateMoodInsights, type DailyActivityData } from "@/lib/mood-intelligence";
+import {
+  calculateMoodAnalytics,
+  generateMoodInsights,
+  type DailyActivityData,
+} from "@/lib/mood-intelligence";
 import { type SalahData } from "@/lib/salah-intelligence";
 
 type Metrics = Record<string, { water: number; weight: string; sleep: string }>;
@@ -61,7 +76,11 @@ export function Trends() {
   if (logged === 0) {
     return (
       <Section eyebrow="Two weeks" title="Trends">
-        <EmptyState glyph="◇" headline="Nothing to draw yet" body="Log water, sleep or weight for a few days and the shape of the fortnight appears here." />
+        <EmptyState
+          glyph="◇"
+          headline="Nothing to draw yet"
+          body="Log water, sleep or weight for a few days and the shape of the fortnight appears here."
+        />
       </Section>
     );
   }
@@ -117,9 +136,22 @@ export function Trends() {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
               <XAxis dataKey="day" tickLine={false} axisLine={false} {...axis} />
-              <YAxis width={34} domain={["auto", "auto"]} tickLine={false} axisLine={false} {...axis} />
+              <YAxis
+                width={34}
+                domain={["auto", "auto"]}
+                tickLine={false}
+                axisLine={false}
+                {...axis}
+              />
               <Tooltip {...tooltip} />
-              <Line dataKey="weight" type="monotone" dot={false} connectNulls stroke="var(--brass)" strokeWidth={2} />
+              <Line
+                dataKey="weight"
+                type="monotone"
+                dot={false}
+                connectNulls
+                stroke="var(--brass)"
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -131,7 +163,13 @@ export function Trends() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data}>
                 <XAxis dataKey="day" tickLine={false} axisLine={false} {...axis} />
-                <YAxis width={22} allowDecimals={false} tickLine={false} axisLine={false} {...axis} />
+                <YAxis
+                  width={22}
+                  allowDecimals={false}
+                  tickLine={false}
+                  axisLine={false}
+                  {...axis}
+                />
                 <Tooltip {...tooltip} />
                 <Bar dataKey="habits" radius={[4, 4, 0, 0]} fill="var(--leaf)" />
               </BarChart>

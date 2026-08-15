@@ -10,7 +10,7 @@ import {
   distribution,
   trendDelta,
   checkThreshold,
-  fillMissingData
+  fillMissingData,
 } from "./intelligence";
 
 describe("Intelligence Foundation", () => {
@@ -51,7 +51,7 @@ describe("Intelligence Foundation", () => {
     assert.equal(sum([1, 2, 3]), 6);
     assert.equal(average([1, 2, 3]), 2);
     assert.equal(average([]), 0);
-    
+
     const dist = distribution<string>(["a", "b", "a", "c"]);
     assert.equal(dist.get("a"), 2);
     assert.equal(dist.get("b"), 1);

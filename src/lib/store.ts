@@ -28,18 +28,24 @@ export function writeStore<T>(key: string, value: T) {
     /* quota — keep working in memory */
   }
   emit(key);
-  
+
   // Push to cloud if logged in
   supabase.auth.getSession().then(({ data: { session } }) => {
     if (session?.user) {
-      supabase.from("user_data").upsert({
-        user_id: session.user.id,
-        key: key,
-        value: value,
-        updated_at: new Date().toISOString()
-      }, { onConflict: "user_id,key" }).then(({ error }) => {
-        if (error) console.error("Sync push error for key", key, ":", error);
-      });
+      supabase
+        .from("user_data")
+        .upsert(
+          {
+            user_id: session.user.id,
+            key: key,
+            value: value,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,key" },
+        )
+        .then(({ error }) => {
+          if (error) console.error("Sync push error for key", key, ":", error);
+        });
     }
   });
 }
@@ -48,9 +54,7 @@ export async function syncFromCloud() {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session?.user) return;
 
-  const { data, error } = await supabase
-    .from("user_data")
-    .select("key, value");
+  const { data, error } = await supabase.from("user_data").select("key, value");
 
   if (error || !data) {
     console.error("Failed to sync pull from cloud:", error);
@@ -100,8 +104,7 @@ export function useStore<T>(key: string, initial: T) {
   const update = useCallback(
     (next: T | ((prev: T) => T)) => {
       setValue((prev) => {
-        const resolved =
-          typeof next === "function" ? (next as (p: T) => T)(prev) : next;
+        const resolved = typeof next === "function" ? (next as (p: T) => T)(prev) : next;
         writeStore(key, resolved);
         return resolved;
       });

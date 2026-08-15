@@ -7,6 +7,7 @@ Expand beyond the existing limited Quran corpus while retaining offline usabilit
 ## Inspect first
 
 Determine:
+
 - current Quran reader
 - current content source
 - bookmark model

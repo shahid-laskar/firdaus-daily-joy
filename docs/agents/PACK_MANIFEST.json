@@ -1,18 +1,9 @@
 {
   "project": "Firdaus / Sunnah Home",
   "purpose": "Phase 3 and Phase 4 multi-agent execution",
-  "agents": [
-    "ChatGPT",
-    "Claude Sonnet",
-    "Gemini Pro",
-    "Lovable"
-  ],
+  "agents": ["ChatGPT", "Claude Sonnet", "Gemini Pro", "Lovable"],
   "lovable_passes": 5,
   "phase3_tasks": 7,
   "phase4_tasks": 5,
-  "source_files_used": [
-    "firdous-research-plan(1).md",
-    "plan-01.md",
-    "tasks.md"
-  ]
+  "source_files_used": ["firdous-research-plan(1).md", "plan-01.md", "tasks.md"]
 }

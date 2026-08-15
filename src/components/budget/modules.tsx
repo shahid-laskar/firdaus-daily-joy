@@ -12,7 +12,11 @@ export function useExpenses() {
 }
 
 export function useLimits() {
-  return useStore<Record<string, number>>("limits", { Groceries: 8000, Transport: 3000, Home: 5000 });
+  return useStore<Record<string, number>>("limits", {
+    Groceries: 8000,
+    Transport: 3000,
+    Home: 5000,
+  });
 }
 
 export const money = (n: number) =>
@@ -71,7 +75,11 @@ export function QuickEntry() {
           </div>
           <div className="mt-5 flex items-end gap-2">
             <div className="flex-1">
-              <Field label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+              <Field
+                label="Note (optional)"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
             </div>
             <Action type="submit" variant="solid" className="h-[42px]">
               Record
@@ -82,7 +90,11 @@ export function QuickEntry() {
 
       <Section eyebrow="This month" title="Recent">
         {recent.length === 0 ? (
-          <EmptyState glyph="◈" headline="Nothing spent yet this month" body="A clean slate. Record the first expense above and the picture builds itself." />
+          <EmptyState
+            glyph="◈"
+            headline="Nothing spent yet this month"
+            body="A clean slate. Record the first expense above and the picture builds itself."
+          />
         ) : (
           <ul className="divide-border/70 divide-y">
             {recent.map((e) => (
@@ -124,10 +136,7 @@ export function Overview() {
     () => calculateBudgetAnalytics(expenses, currentMonth),
     [expenses, currentMonth],
   );
-  const insights = useMemo(
-    () => generateBudgetInsights(analytics, limits),
-    [analytics, limits],
-  );
+  const insights = useMemo(() => generateBudgetInsights(analytics, limits), [analytics, limits]);
 
   const total = analytics.currentMonthTotal;
   const cap = Object.values(limits).reduce((s, n) => s + n, 0);
@@ -144,9 +153,15 @@ export function Overview() {
         <p className="eyebrow">Spent this month</p>
         <p className="display-xl numeric mt-3">₹{money(total)}</p>
         <p className="text-muted-foreground mt-2 text-sm">
-          {cap ? `of ₹${money(cap)} planned · ₹${money(Math.max(0, cap - total))} left` : "No monthly limit set yet"}
+          {cap
+            ? `of ₹${money(cap)} planned · ₹${money(Math.max(0, cap - total))} left`
+            : "No monthly limit set yet"}
           {analytics.previousMonthTotal > 0 && (
-            <span> · {analytics.delta.delta >= 0 ? "▲" : "▼"} {Math.abs(Math.round(analytics.delta.percentage))}% vs last month</span>
+            <span>
+              {" "}
+              · {analytics.delta.delta >= 0 ? "▲" : "▼"}{" "}
+              {Math.abs(Math.round(analytics.delta.percentage))}% vs last month
+            </span>
           )}
         </p>
         <div className="mt-5">
@@ -156,7 +171,13 @@ export function Overview() {
           <div className="mt-4 space-y-1.5 border-border/70 border-t pt-3">
             {insights.slice(0, 2).map((ins) => (
               <p key={ins.id} className="text-ink-soft text-xs">
-                <span className={ins.severity === "warning" ? "text-destructive font-medium" : "text-space font-medium"}>
+                <span
+                  className={
+                    ins.severity === "warning"
+                      ? "text-destructive font-medium"
+                      : "text-space font-medium"
+                  }
+                >
                   {ins.title}:
                 </span>{" "}
                 {ins.explanation}
@@ -168,7 +189,11 @@ export function Overview() {
 
       <Section eyebrow="Where it went" title="Categories">
         {byCategory.length === 0 ? (
-          <EmptyState glyph="◦" headline="No categories in play" body="Once you log expenses, they group themselves here so you can see the shape of the month." />
+          <EmptyState
+            glyph="◦"
+            headline="No categories in play"
+            body="Once you log expenses, they group themselves here so you can see the shape of the month."
+          />
         ) : (
           <ul className="space-y-5">
             {byCategory.map(([cat, amt]) => {
@@ -200,8 +225,15 @@ export function Overview() {
           className="mt-8 grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-end"
         >
           <Field label="Category" value={newCat} onChange={(e) => setNewCat(e.target.value)} />
-          <Field label="Monthly limit" inputMode="decimal" value={newLimit} onChange={(e) => setNewLimit(e.target.value)} />
-          <Action type="submit" className="h-[42px]">Set</Action>
+          <Field
+            label="Monthly limit"
+            inputMode="decimal"
+            value={newLimit}
+            onChange={(e) => setNewLimit(e.target.value)}
+          />
+          <Action type="submit" className="h-[42px]">
+            Set
+          </Action>
         </form>
       </Section>
     </div>
@@ -211,17 +243,40 @@ export function Overview() {
 export function Zakat() {
   const [v, setV] = useStore("zakat", { cash: "", gold: "", business: "", debts: "" });
   const net =
-    (Number(v.cash) || 0) + (Number(v.gold) || 0) + (Number(v.business) || 0) - (Number(v.debts) || 0);
+    (Number(v.cash) || 0) +
+    (Number(v.gold) || 0) +
+    (Number(v.business) || 0) -
+    (Number(v.debts) || 0);
   const nisab = 65000;
   const due = net >= nisab ? net * 0.025 : 0;
 
   return (
     <Section eyebrow="Purification of wealth" title="Zakat">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Cash & savings" inputMode="decimal" value={v.cash} onChange={(e) => setV({ ...v, cash: e.target.value })} />
-        <Field label="Gold & silver value" inputMode="decimal" value={v.gold} onChange={(e) => setV({ ...v, gold: e.target.value })} />
-        <Field label="Business assets" inputMode="decimal" value={v.business} onChange={(e) => setV({ ...v, business: e.target.value })} />
-        <Field label="Debts owed" inputMode="decimal" value={v.debts} onChange={(e) => setV({ ...v, debts: e.target.value })} />
+        <Field
+          label="Cash & savings"
+          inputMode="decimal"
+          value={v.cash}
+          onChange={(e) => setV({ ...v, cash: e.target.value })}
+        />
+        <Field
+          label="Gold & silver value"
+          inputMode="decimal"
+          value={v.gold}
+          onChange={(e) => setV({ ...v, gold: e.target.value })}
+        />
+        <Field
+          label="Business assets"
+          inputMode="decimal"
+          value={v.business}
+          onChange={(e) => setV({ ...v, business: e.target.value })}
+        />
+        <Field
+          label="Debts owed"
+          inputMode="decimal"
+          value={v.debts}
+          onChange={(e) => setV({ ...v, debts: e.target.value })}
+        />
       </div>
 
       <div className="border-border/70 mt-8 border-t pt-6">

@@ -38,7 +38,8 @@ export function Tasks() {
     if (t.list !== list) return false;
     const done = isTaskDone(t, today);
     if (filter === "done") return done;
-    if (filter === "today") return !done && (isRepeating(t.recur) ? occursOn(t.recur, today) : t.date <= today);
+    if (filter === "today")
+      return !done && (isRepeating(t.recur) ? occursOn(t.recur, today) : t.date <= today);
     return true;
   });
 
@@ -76,7 +77,9 @@ export function Tasks() {
             key={f}
             onClick={() => setFilter(f)}
             className={`press rounded-full px-2.5 py-1 text-[0.72rem] capitalize ${
-              f === filter ? "text-foreground underline decoration-[var(--space-accent)] decoration-2 underline-offset-4" : "text-ink-faint"
+              f === filter
+                ? "text-foreground underline decoration-[var(--space-accent)] decoration-2 underline-offset-4"
+                : "text-ink-faint"
             }`}
           >
             {f}
@@ -142,12 +145,20 @@ export function Tasks() {
             const done = isTaskDone(t, today);
             const next = isRepeating(t.recur) ? nextOccurrence(t.recur, today) : null;
             return (
-              <li key={t.id} data-done={done} className="thread-node group flex items-start gap-3 py-2.5">
+              <li
+                key={t.id}
+                data-done={done}
+                className="thread-node group flex items-start gap-3 py-2.5"
+              >
                 <Tick done={done} label={t.title} onToggle={() => toggle(t)} />
                 <div className="min-w-0 flex-1">
-                  <p className={`text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>{t.title}</p>
+                  <p className={`text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>
+                    {t.title}
+                  </p>
                   <p className="text-ink-faint numeric text-xs">
-                    {[t.time, next && next !== today ? `next ${next}` : null].filter(Boolean).join(" · ")}
+                    {[t.time, next && next !== today ? `next ${next}` : null]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -174,7 +185,7 @@ const SLOTS = ["Breakfast", "Lunch", "Dinner"];
 type Plan = Record<string, string>;
 
 /** ISO-ish week key, e.g. 2026-W33 — used to keep a light history of meal plans. */
-function weekKey(offset = 0) {
+export function weekKey(offset = 0) {
   const d = new Date();
   d.setDate(d.getDate() + offset * 7);
   const start = new Date(d.getFullYear(), 0, 1);
@@ -185,7 +196,10 @@ function weekKey(offset = 0) {
 export function Meals() {
   const [plan, setPlan] = useStore<Plan>("meals", {});
   const [history, setHistory] = useStore<Record<string, Plan>>("mealsHistory", {});
-  const [recipes, setRecipes] = useStore<{ id: string; name: string; items: string }[]>("recipes", []);
+  const [recipes, setRecipes] = useStore<{ id: string; name: string; items: string }[]>(
+    "recipes",
+    [],
+  );
   const [name, setName] = useState("");
   const [items, setItems] = useState("");
   const thisWeek = weekKey(0);
@@ -268,7 +282,9 @@ export function Meals() {
         )}
 
         <datalist id="saved-recipes">
-          {rankedRecipes.map(r => <option key={r.recipe.id} value={r.recipe.name} />)}
+          {rankedRecipes.map((r) => (
+            <option key={r.recipe.id} value={r.recipe.name} />
+          ))}
         </datalist>
         <div className="overflow-x-auto no-scrollbar -mx-5 px-5">
           <table className="w-full min-w-[560px] border-separate border-spacing-y-1">
@@ -284,12 +300,20 @@ export function Meals() {
             </thead>
             <tbody>
               {DAYS.map((d) => {
-                const isToday = d === ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date().getDay()];
+                const isToday =
+                  d === ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date().getDay()];
                 return (
                   <tr key={d} className={isToday ? "bg-space-soft/30 rounded-lg" : ""}>
-                    <td className={`font-display pr-3 text-sm rounded-l-lg py-1 pl-2 ${isToday ? "text-foreground font-semibold" : "text-ink-soft"}`}>{d}</td>
+                    <td
+                      className={`font-display pr-3 text-sm rounded-l-lg py-1 pl-2 ${isToday ? "text-foreground font-semibold" : "text-ink-soft"}`}
+                    >
+                      {d}
+                    </td>
                     {SLOTS.map((s, i) => (
-                      <td key={s} className={`pr-2 ${i === SLOTS.length - 1 ? 'rounded-r-lg' : ''}`}>
+                      <td
+                        key={s}
+                        className={`pr-2 ${i === SLOTS.length - 1 ? "rounded-r-lg" : ""}`}
+                      >
                         <input
                           aria-label={`${d} ${s}`}
                           list="saved-recipes"
@@ -297,7 +321,9 @@ export function Meals() {
                           placeholder="—"
                           onChange={(e) => setPlan({ ...plan, [`${d}-${s}`]: e.target.value })}
                           className={`w-full border-b bg-transparent py-1.5 text-sm outline-none transition-colors ${
-                            isToday ? "border-border/80 focus:border-space" : "border-border/50 focus:border-space"
+                            isToday
+                              ? "border-border/80 focus:border-space"
+                              : "border-border/50 focus:border-space"
                           }`}
                         />
                       </td>
@@ -343,7 +369,9 @@ export function Meals() {
               <li key={r.id} className="flex items-baseline justify-between gap-4 py-3">
                 <div>
                   <p className="title-md">{r.name}</p>
-                  <p className="text-muted-foreground text-xs">{r.items || "No ingredients noted"}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {r.items || "No ingredients noted"}
+                  </p>
                 </div>
                 <button
                   onClick={() => setRecipes(recipes.filter((x) => x.id !== r.id))}
@@ -371,7 +399,11 @@ export function GroceryList() {
   const remaining = items.filter((i) => !i.got).length;
 
   function generate() {
-    const planned = new Set(Object.values(plan).map((v) => v.trim().toLowerCase()).filter(Boolean));
+    const planned = new Set(
+      Object.values(plan)
+        .map((v) => v.trim().toLowerCase())
+        .filter(Boolean),
+    );
     const derived: string[] = [];
     recipes.forEach((r) => {
       if (planned.has(r.name.trim().toLowerCase())) {
@@ -412,7 +444,11 @@ export function GroceryList() {
           glyph="◦"
           headline="The basket is empty"
           body="Add what's missing, or let Sunnah Home read this week's meal plan and fill it for you."
-          action={<Action variant="solid" onClick={generate}>Build from meal plan</Action>}
+          action={
+            <Action variant="solid" onClick={generate}>
+              Build from meal plan
+            </Action>
+          }
         />
       ) : (
         <>
@@ -425,9 +461,13 @@ export function GroceryList() {
                 <Tick
                   done={i.got}
                   label={i.name}
-                  onToggle={() => setItems(items.map((x) => (x.id === i.id ? { ...x, got: !x.got } : x)))}
+                  onToggle={() =>
+                    setItems(items.map((x) => (x.id === i.id ? { ...x, got: !x.got } : x)))
+                  }
                 />
-                <span className={`flex-1 text-[0.95rem] ${i.got ? "text-ink-faint line-through" : ""}`}>
+                <span
+                  className={`flex-1 text-[0.95rem] ${i.got ? "text-ink-faint line-through" : ""}`}
+                >
                   {i.name}
                 </span>
                 <button
@@ -475,8 +515,8 @@ function GroceryRun() {
     >
       <p className="eyebrow">Finished shopping</p>
       <p className="text-muted-foreground mt-1 mb-3 text-sm">
-        {picked.length} item{picked.length === 1 ? "" : "s"} in the basket. Log what it cost and Budget
-        picks it up.
+        {picked.length} item{picked.length === 1 ? "" : "s"} in the basket. Log what it cost and
+        Budget picks it up.
       </p>
       <div className="flex items-end gap-2">
         <div className="flex-1">
@@ -497,14 +537,13 @@ function GroceryRun() {
   );
 }
 
-
 export function isChoreDone(c: Chore, iso = todayKey()) {
   return isRepeating(c.recur) ? (c.completions ?? []).includes(iso) : c.done;
 }
 
 export function Kids() {
   const [family, setFamily] = useStore<FamilyMember[]>("family", []);
-  const kids = family.filter(f => f.role === "child");
+  const kids = family.filter((f) => f.role === "child");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const today = todayKey();
@@ -575,7 +614,9 @@ export function Kids() {
               </div>
               <ChoreList
                 kid={k}
-                onChange={(chores) => setFamily(family.map((x) => (x.id === k.id ? { ...x, chores } : x)))}
+                onChange={(chores) =>
+                  setFamily(family.map((x) => (x.id === k.id ? { ...x, chores } : x)))
+                }
               />
             </div>
           ))}
@@ -611,7 +652,11 @@ function ChoreList({ kid, onChange }: { kid: FamilyMember; onChange: (c: Chore[]
       {visible.map((c) => {
         const done = isChoreDone(c, today);
         return (
-          <div key={c.id} data-done={done} className="thread-node group flex items-center gap-3 py-2">
+          <div
+            key={c.id}
+            data-done={done}
+            className="thread-node group flex items-center gap-3 py-2"
+          >
             <Tick done={done} label={c.title} onToggle={() => toggle(c)} />
             <span className={`flex-1 text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>
               {c.title}
@@ -651,9 +696,11 @@ function ChoreList({ kid, onChange }: { kid: FamilyMember; onChange: (c: Chore[]
   );
 }
 
-
 export function Deeds() {
-  const [deeds, setDeeds] = useStore<{ id: string; who: string; what: string; date: string }[]>("deeds", []);
+  const [deeds, setDeeds] = useStore<{ id: string; who: string; what: string; date: string }[]>(
+    "deeds",
+    [],
+  );
   const [who, setWho] = useState("");
   const [what, setWhat] = useState("");
 
@@ -663,7 +710,10 @@ export function Deeds() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!what.trim()) return;
-          setDeeds([{ id: uid(), who: who.trim() || "Family", what: what.trim(), date: todayKey() }, ...deeds]);
+          setDeeds([
+            { id: uid(), who: who.trim() || "Family", what: what.trim(), date: todayKey() },
+            ...deeds,
+          ]);
           setWhat("");
         }}
         className="mb-6 grid gap-2 sm:grid-cols-[120px_1fr_auto] sm:items-end"
@@ -709,8 +759,13 @@ export function TodayGlance() {
         <Meter value={tasks.length ? (done / tasks.length) * 100 : 0} />
       </div>
       <div>
-        <Eyebrowed label="Grocery picked up" value={`${grocery.filter((g) => g.got).length}/${grocery.length || 0}`} />
-        <Meter value={grocery.length ? (grocery.filter((g) => g.got).length / grocery.length) * 100 : 0} />
+        <Eyebrowed
+          label="Grocery picked up"
+          value={`${grocery.filter((g) => g.got).length}/${grocery.length || 0}`}
+        />
+        <Meter
+          value={grocery.length ? (grocery.filter((g) => g.got).length / grocery.length) * 100 : 0}
+        />
       </div>
     </div>
   );

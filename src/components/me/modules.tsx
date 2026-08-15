@@ -65,7 +65,9 @@ export function SelfCare() {
                     })
                   }
                 />
-                <span className={`text-[0.95rem] ${isDone ? "text-ink-faint line-through" : ""}`}>{r}</span>
+                <span className={`text-[0.95rem] ${isDone ? "text-ink-faint line-through" : ""}`}>
+                  {r}
+                </span>
               </li>
             );
           })}
@@ -108,21 +110,30 @@ export function Habits() {
         }}
         className="mb-8 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end"
       >
-        <Field label="New habit" value={name} placeholder="Walk after Maghrib" onChange={(e) => setName(e.target.value)} />
-        <Action type="submit" variant="solid" className="h-[42px]">Add</Action>
+        <Field
+          label="New habit"
+          value={name}
+          placeholder="Walk after Maghrib"
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Action type="submit" variant="solid" className="h-[42px]">
+          Add
+        </Action>
       </form>
 
       {habits.length === 0 ? (
-        <EmptyState glyph="❋" headline="No habits yet" body="Start with one small thing you'd like to repeat. Streaks build themselves." />
+        <EmptyState
+          glyph="❋"
+          headline="No habits yet"
+          body="Start with one small thing you'd like to repeat. Streaks build themselves."
+        />
       ) : (
         <ul className="space-y-7">
           {habits.map((h) => (
             <li key={h.id}>
               <div className="mb-3 flex items-baseline justify-between">
                 <p className="title-md">{h.name}</p>
-                <span className="text-ink-faint numeric text-xs">
-                  {streak(h)} day streak
-                </span>
+                <span className="text-ink-faint numeric text-xs">{streak(h)} day streak</span>
               </div>
               <div className="flex gap-1.5">
                 {week.map((d) => {
@@ -162,7 +173,10 @@ export function Habits() {
 }
 
 export function Journal() {
-  const [entries, setEntries] = useStore<Record<string, { mood: string; text: string }>>("journal", {});
+  const [entries, setEntries] = useStore<Record<string, { mood: string; text: string }>>(
+    "journal",
+    {},
+  );
   const today = entries[todayKey()] ?? { mood: "", text: "" };
   const [saved, setSaved] = useState(false);
   const past = Object.entries(entries)
@@ -196,7 +210,9 @@ export function Journal() {
           className="focus:border-space/50 w-full resize-none rounded-2xl border border-transparent bg-[linear-gradient(transparent_calc(2rem_-_1px),var(--rule)_calc(2rem_-_1px))] bg-[size:100%_2rem] p-4 text-[0.98rem] leading-8 outline-none"
         />
         <div className="mt-3 flex items-center justify-between">
-          <span className="text-ink-faint text-xs">{saved ? "Saved for today" : "Kept privately on this device"}</span>
+          <span className="text-ink-faint text-xs">
+            {saved ? "Saved for today" : "Kept privately on this device"}
+          </span>
           <Action onClick={() => setSaved(true)}>Save</Action>
         </div>
       </Section>
@@ -218,9 +234,13 @@ export function Journal() {
 }
 
 export function Health() {
-  const [metrics, setMetrics] = useStore<Record<string, { water: number; weight: string; sleep: string }>>("health", {});
+  const [metrics, setMetrics] = useStore<
+    Record<string, { water: number; weight: string; sleep: string }>
+  >("health", {});
   const today = metrics[todayKey()] ?? { water: 0, weight: "", sleep: "" };
-  const [workouts, setWorkouts] = useStore<{ id: string; name: string; detail: string; date: string }[]>("workouts", []);
+  const [workouts, setWorkouts] = useStore<
+    { id: string; name: string; detail: string; date: string }[]
+  >("workouts", []);
   const [w, setW] = useState({ name: "", detail: "" });
 
   function set(patch: Partial<typeof today>) {
@@ -251,8 +271,18 @@ export function Health() {
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Weight (kg)" inputMode="decimal" value={today.weight} onChange={(e) => set({ weight: e.target.value })} />
-          <Field label="Sleep (hours)" inputMode="decimal" value={today.sleep} onChange={(e) => set({ sleep: e.target.value })} />
+          <Field
+            label="Weight (kg)"
+            inputMode="decimal"
+            value={today.weight}
+            onChange={(e) => set({ weight: e.target.value })}
+          />
+          <Field
+            label="Sleep (hours)"
+            inputMode="decimal"
+            value={today.sleep}
+            onChange={(e) => set({ sleep: e.target.value })}
+          />
         </div>
       </Section>
 
@@ -266,17 +296,33 @@ export function Health() {
           }}
           className="mb-5 grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
-          <Field label="Exercise" value={w.name} onChange={(e) => setW({ ...w, name: e.target.value })} />
-          <Field label="Sets / distance" value={w.detail} onChange={(e) => setW({ ...w, detail: e.target.value })} />
-          <Action type="submit" variant="solid" className="h-[42px]">Log</Action>
+          <Field
+            label="Exercise"
+            value={w.name}
+            onChange={(e) => setW({ ...w, name: e.target.value })}
+          />
+          <Field
+            label="Sets / distance"
+            value={w.detail}
+            onChange={(e) => setW({ ...w, detail: e.target.value })}
+          />
+          <Action type="submit" variant="solid" className="h-[42px]">
+            Log
+          </Action>
         </form>
         {workouts.length === 0 ? (
-          <EmptyState glyph="◇" headline="Nothing logged" body="Record a walk, a set, a swim — whatever counts as moving today." />
+          <EmptyState
+            glyph="◇"
+            headline="Nothing logged"
+            body="Record a walk, a set, a swim — whatever counts as moving today."
+          />
         ) : (
           <ul className="thread">
             {workouts.map((x) => (
               <li key={x.id} className="thread-node py-3">
-                <p className="text-[0.95rem]">{x.name} <span className="text-ink-faint">{x.detail}</span></p>
+                <p className="text-[0.95rem]">
+                  {x.name} <span className="text-ink-faint">{x.detail}</span>
+                </p>
                 <p className="text-ink-faint numeric text-xs">{x.date}</p>
               </li>
             ))}
@@ -288,7 +334,10 @@ export function Health() {
 }
 
 export function Cycle() {
-  const [data, setData] = useStore<{ last: string; length: number }>("cycle", { last: "", length: 28 });
+  const [data, setData] = useStore<{ last: string; length: number }>("cycle", {
+    last: "",
+    length: 28,
+  });
   const next = data.last
     ? new Date(new Date(data.last).getTime() + data.length * 864e5).toISOString().slice(0, 10)
     : "";
@@ -297,7 +346,12 @@ export function Cycle() {
   return (
     <Section eyebrow="Private" title="Cycle">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Last period started" type="date" value={data.last} onChange={(e) => setData({ ...data, last: e.target.value })} />
+        <Field
+          label="Last period started"
+          type="date"
+          value={data.last}
+          onChange={(e) => setData({ ...data, last: e.target.value })}
+        />
         <Field
           label="Cycle length (days)"
           inputMode="numeric"
@@ -310,15 +364,23 @@ export function Cycle() {
           <p className="eyebrow">Next expected</p>
           <p className="display-lg numeric mt-1">{next}</p>
           <p className="text-muted-foreground mt-2 text-sm">
-            {daysAway !== null && daysAway >= 0 ? `${daysAway} days away` : "Overdue — this is often normal."}
+            {daysAway !== null && daysAway >= 0
+              ? `${daysAway} days away`
+              : "Overdue — this is often normal."}
           </p>
           <div className="mt-5">
-            <Meter value={daysAway !== null ? Math.max(0, 100 - (daysAway / data.length) * 100) : 0} />
+            <Meter
+              value={daysAway !== null ? Math.max(0, 100 - (daysAway / data.length) * 100) : 0}
+            />
           </div>
         </div>
       ) : (
         <div className="mt-8">
-          <EmptyState glyph="❋" headline="Nothing tracked yet" body="Add the date your last period started and Sunnah Home will keep the rest quiet and simple." />
+          <EmptyState
+            glyph="❋"
+            headline="Nothing tracked yet"
+            body="Add the date your last period started and Sunnah Home will keep the rest quiet and simple."
+          />
         </div>
       )}
     </Section>

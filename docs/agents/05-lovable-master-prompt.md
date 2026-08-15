@@ -9,6 +9,7 @@ Your job is to improve or add the visual and interaction layer for a narrowly sc
 ## Hard boundary
 
 Unless the task explicitly says otherwise, DO NOT:
+
 - redesign the whole app
 - replace the state architecture
 - change persistence
@@ -23,6 +24,7 @@ Unless the task explicitly says otherwise, DO NOT:
 ## Visual direction
 
 Preserve the established Firdaus/Sunnah Home philosophy:
+
 - calm
 - premium
 - intentional
@@ -32,6 +34,7 @@ Preserve the established Firdaus/Sunnah Home philosophy:
 - low cognitive load
 
 Do not default to:
+
 - generic SaaS cards
 - excessive gradients
 - gamification
@@ -43,6 +46,7 @@ Do not default to:
 ## Implementation approach
 
 Before editing:
+
 1. inspect existing components
 2. inspect design tokens/theme system
 3. inspect responsive patterns
@@ -53,6 +57,7 @@ Before editing:
 ## Quality bar
 
 Check:
+
 - mobile first
 - desktop responsiveness
 - touch targets

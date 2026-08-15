@@ -17,6 +17,7 @@ Avoid:
 ## Requirements
 
 Support:
+
 - mood distribution
 - activity grouping
 - basic conditional averages/distributions

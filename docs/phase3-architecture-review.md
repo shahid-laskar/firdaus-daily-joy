@@ -29,14 +29,14 @@ src/lib/meal-intelligence.ts   → standalone (no imports needed) ✓
 
 **But across all UI routes and components, zero imports of these libraries exist:**
 
-| Surface | Expected to use | Actually uses |
-|---|---|---|
-| `routes/review.tsx` | `salah-intelligence`, `budget-intelligence`, `mood-intelligence` | Raw inline math, ad-hoc `useMemo` |
-| `components/budget/modules.tsx` (Overview) | `budget-intelligence` | Inline `reduce`, ad-hoc `useMemo` |
-| `components/me/trends.tsx` | `mood-intelligence` | Inline `reduce`, 14-day raw loop |
-| `components/deen/modules.tsx` (Salah) | `salah-intelligence` | Inline per-prayer counters |
-| `components/home/modules.tsx` (Meals) | `meal-intelligence` (rankRecipes) | Raw `<datalist>` without ranking |
-| `routes/index.tsx` | `reminder-engine` | Imports `Reminders` component only; no engine integration |
+| Surface                                    | Expected to use                                                  | Actually uses                                             |
+| ------------------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| `routes/review.tsx`                        | `salah-intelligence`, `budget-intelligence`, `mood-intelligence` | Raw inline math, ad-hoc `useMemo`                         |
+| `components/budget/modules.tsx` (Overview) | `budget-intelligence`                                            | Inline `reduce`, ad-hoc `useMemo`                         |
+| `components/me/trends.tsx`                 | `mood-intelligence`                                              | Inline `reduce`, 14-day raw loop                          |
+| `components/deen/modules.tsx` (Salah)      | `salah-intelligence`                                             | Inline per-prayer counters                                |
+| `components/home/modules.tsx` (Meals)      | `meal-intelligence` (rankRecipes)                                | Raw `<datalist>` without ranking                          |
+| `routes/index.tsx`                         | `reminder-engine`                                                | Imports `Reminders` component only; no engine integration |
 
 The intelligence libraries **exist only in `src/lib/` and in tests**. They have never been connected to the UI.
 
@@ -50,26 +50,26 @@ Rule 6: "Do not calculate the same metric in multiple pages using different form
 
 ### Budget — three independent implementations
 
-| Location | Formula |
-|---|---|
-| `budget-intelligence.ts` | `calculateBudgetAnalytics()` with proper `daysElapsed` |
+| Location                          | Formula                                                   |
+| --------------------------------- | --------------------------------------------------------- |
+| `budget-intelligence.ts`          | `calculateBudgetAnalytics()` with proper `daysElapsed`    |
 | `budget/modules.tsx` `Overview()` | `expenses.filter(startsWith(month())).reduce(...)` inline |
-| `routes/review.tsx` | Separate inline weekly/prev-week reduce |
-| `routes/index.tsx` `Today()` | Yet another inline monthly reduce |
+| `routes/review.tsx`               | Separate inline weekly/prev-week reduce                   |
+| `routes/index.tsx` `Today()`      | Yet another inline monthly reduce                         |
 
 ### Salah — two independent implementations
 
-| Location | Logic |
-|---|---|
-| `salah-intelligence.ts` | `calculateSalahAnalytics()` with per-prayer breakdown |
-| `routes/review.tsx` | Raw `Object.values().filter()` with a hardcoded 35-prayer target |
+| Location                | Logic                                                            |
+| ----------------------- | ---------------------------------------------------------------- |
+| `salah-intelligence.ts` | `calculateSalahAnalytics()` with per-prayer breakdown            |
+| `routes/review.tsx`     | Raw `Object.values().filter()` with a hardcoded 35-prayer target |
 
 ### Mood — two independent implementations
 
-| Location | Logic |
-|---|---|
+| Location               | Logic                                                      |
+| ---------------------- | ---------------------------------------------------------- |
 | `mood-intelligence.ts` | Full correlation engine (sleep/water/workout/salah/habits) |
-| `routes/review.tsx` | `dominantMood` via raw `Map` count of `checkins` values |
+| `routes/review.tsx`    | `dominantMood` via raw `Map` count of `checkins` values    |
 
 ---
 
@@ -92,7 +92,7 @@ The `Reminders` component manages preference toggles and reminder CRUD, but ther
 The only notification that fires is the one-shot confirmation when the toggle is enabled:
 
 ```ts
-new Notification("Sunnah Home", { body: "Prayer reminders are on." })
+new Notification("Sunnah Home", { body: "Prayer reminders are on." });
 ```
 
 There is no periodic loop (e.g., `useNow` + `evaluateReminders()` on a 60-second tick) to actually fire reminders. **The engine cannot work without one.**
@@ -109,9 +109,12 @@ export function useFamilyMigration() {
   const [family, setFamily] = useStore<FamilyMember[]>("family", []);
   useEffect(() => {
     if (kids.length > 0 && family.length === 0) {
-      const migrated = kids.map(k => ({
-        id: k.id, name: k.name, role: "child",
-        age: k.age || "", chores: k.chores || []
+      const migrated = kids.map((k) => ({
+        id: k.id,
+        name: k.name,
+        role: "child",
+        age: k.age || "",
+        chores: k.chores || [],
       }));
       setFamily(migrated);
     }
@@ -135,6 +138,7 @@ Existing users will see seamless migration. The `kids` localStorage key can be l
 ### Finding: No functional regressions, but build-blocking TypeScript errors exist
 
 Phase 0–2 features are intact:
+
 - ✅ Tasks with recurrence, completions, lists
 - ✅ Salah prayer logging, prayer times (adhan library)
 - ✅ Budget quick entry, overview, history, zakat
@@ -148,16 +152,16 @@ Phase 0–2 features are intact:
 
 **TypeScript errors surfaced by `tsc --noEmit`:**
 
-| File | Error | Severity |
-|---|---|---|
-| `mood-intelligence.ts:78-98` | `CorrelationResult | undefined` not assignable with `exactOptionalPropertyTypes` | **Build-blocking** |
-| `meal-intelligence.ts:23` | `.split("-")` destructured elements possibly `undefined` | **Build-blocking** |
-| `meal-intelligence.ts:49` | `Object.values(plan)` — plan possibly `undefined` | **Build-blocking** |
-| `meal-intelligence.ts:94` | `lastUsedWeek: string | undefined` return type mismatch | **Build-blocking** |
-| `budget-intelligence.ts:25,26` | `.split("-")` destructured elements possibly `undefined` | **Build-blocking** |
-| `intelligence.test.ts:45,46` | `fillMissingData` not exported from `intelligence.ts` | Test only |
-| `family-model.test.ts:3` | `@testing-library/react` not installed | Test only |
-| `reminder-engine.test.ts:27` | `result[0]` possibly undefined | Test only |
+| File                           | Error                                                    | Severity                                                  |
+| ------------------------------ | -------------------------------------------------------- | --------------------------------------------------------- |
+| `mood-intelligence.ts:78-98`   | `CorrelationResult                                       | undefined`not assignable with`exactOptionalPropertyTypes` | **Build-blocking** |
+| `meal-intelligence.ts:23`      | `.split("-")` destructured elements possibly `undefined` | **Build-blocking**                                        |
+| `meal-intelligence.ts:49`      | `Object.values(plan)` — plan possibly `undefined`        | **Build-blocking**                                        |
+| `meal-intelligence.ts:94`      | `lastUsedWeek: string                                    | undefined` return type mismatch                           | **Build-blocking** |
+| `budget-intelligence.ts:25,26` | `.split("-")` destructured elements possibly `undefined` | **Build-blocking**                                        |
+| `intelligence.test.ts:45,46`   | `fillMissingData` not exported from `intelligence.ts`    | Test only                                                 |
+| `family-model.test.ts:3`       | `@testing-library/react` not installed                   | Test only                                                 |
+| `reminder-engine.test.ts:27`   | `result[0]` possibly undefined                           | Test only                                                 |
 
 > [!WARNING]
 > `mood-intelligence.ts` and `meal-intelligence.ts` have build-blocking TypeScript errors under `exactOptionalPropertyTypes: true`. Any Lovable build or strict Vite type-check pass will fail.
@@ -198,23 +202,23 @@ The one failure: `fillMissingData is not defined` in `intelligence.test.ts`. The
 
 ### Blockers (must fix before Lovable)
 
-| # | Issue | Location |
-|---|---|---|
-| B1 | TypeScript errors in `mood-intelligence.ts` (5 errors) | `src/lib/mood-intelligence.ts` |
-| B2 | TypeScript errors in `meal-intelligence.ts` (4 errors) | `src/lib/meal-intelligence.ts` |
-| B3 | TypeScript errors in `budget-intelligence.ts` (2 errors) | `src/lib/budget-intelligence.ts` |
-| B4 | `fillMissingData` not exported | `src/lib/intelligence.ts` |
-| B5 | Reminder engine has no runtime loop | `src/components/home/reminders.tsx` |
-| B6 | Intelligence libs not used by any UI surface | Wire-up hooks → components |
+| #   | Issue                                                    | Location                            |
+| --- | -------------------------------------------------------- | ----------------------------------- |
+| B1  | TypeScript errors in `mood-intelligence.ts` (5 errors)   | `src/lib/mood-intelligence.ts`      |
+| B2  | TypeScript errors in `meal-intelligence.ts` (4 errors)   | `src/lib/meal-intelligence.ts`      |
+| B3  | TypeScript errors in `budget-intelligence.ts` (2 errors) | `src/lib/budget-intelligence.ts`    |
+| B4  | `fillMissingData` not exported                           | `src/lib/intelligence.ts`           |
+| B5  | Reminder engine has no runtime loop                      | `src/components/home/reminders.tsx` |
+| B6  | Intelligence libs not used by any UI surface             | Wire-up hooks → components          |
 
 ### Non-blockers (can be done in Lovable session)
 
-| # | Issue |
-|---|---|
-| N1 | `family-model.test.ts` uses `@testing-library/react` (not installed) |
-| N2 | `reminder-engine.test.ts` has loose `result[0]` undefined check |
-| N3 | `review.tsx` duplicates budget/salah math inline |
-| N4 | Mood trends page doesn't use mood-intelligence correlation insights |
+| #   | Issue                                                                |
+| --- | -------------------------------------------------------------------- |
+| N1  | `family-model.test.ts` uses `@testing-library/react` (not installed) |
+| N2  | `reminder-engine.test.ts` has loose `result[0]` undefined check      |
+| N3  | `review.tsx` duplicates budget/salah math inline                     |
+| N4  | Mood trends page doesn't use mood-intelligence correlation insights  |
 
 ---
 
@@ -254,18 +258,18 @@ With the above complete, Lovable can build the unified Insights surface renderin
 
 ## Key Risk Summary
 
-| Risk | Severity | Status |
-|---|---|---|
-| Intelligence libs unused in UI | 🔴 High | Unresolved |
-| TypeScript build errors (5 blocking) | 🔴 High | Unresolved |
-| Reminder engine has no runtime | 🔴 High | Unresolved |
-| Analytics duplicated with different formulas | 🟡 Medium | Unresolved |
-| `fillMissingData` missing from exports | 🟡 Medium | Easy 1-line fix |
-| Family migration data safety | 🟢 Low | Resolved — safe |
-| Phase 0–2 regressions | 🟢 Low | None detected |
-| Test coverage | 🟢 Low | 39/40 pass (1 is export bug) |
-| Recurrence consistency | 🟢 Low | Single engine, reused correctly |
-| Store/persistence safety | 🟢 Low | Offline-first, Supabase sync correct |
+| Risk                                         | Severity  | Status                               |
+| -------------------------------------------- | --------- | ------------------------------------ |
+| Intelligence libs unused in UI               | 🔴 High   | Unresolved                           |
+| TypeScript build errors (5 blocking)         | 🔴 High   | Unresolved                           |
+| Reminder engine has no runtime               | 🔴 High   | Unresolved                           |
+| Analytics duplicated with different formulas | 🟡 Medium | Unresolved                           |
+| `fillMissingData` missing from exports       | 🟡 Medium | Easy 1-line fix                      |
+| Family migration data safety                 | 🟢 Low    | Resolved — safe                      |
+| Phase 0–2 regressions                        | 🟢 Low    | None detected                        |
+| Test coverage                                | 🟢 Low    | 39/40 pass (1 is export bug)         |
+| Recurrence consistency                       | 🟢 Low    | Single engine, reused correctly      |
+| Store/persistence safety                     | 🟢 Low    | Offline-first, Supabase sync correct |
 
 ---
 

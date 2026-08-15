@@ -21,7 +21,7 @@ describe("Reminder Engine", () => {
       ...baseContext,
       nextPrayer: { next: { name: "Dhuhr", time: "12:30" }, hours: 0, mins: 5 },
     };
-    
+
     const result = evaluateReminders(ctx, [prayerRule]);
     assert.equal(result.length, 1);
     const first = result[0];
@@ -56,7 +56,7 @@ describe("Reminder Engine", () => {
     // Instead we'll construct a date and mock local hours.
     const now = new Date();
     now.setHours(10, 5, 0, 0);
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
     const ctx: ReminderContext = {
       ...baseContext,
@@ -66,9 +66,9 @@ describe("Reminder Engine", () => {
           id: "test1",
           title: "Buy milk",
           time: "10:00",
-          recur: { freq: "daily", start: dateStr }
-        }
-      ]
+          recur: { freq: "daily", start: dateStr },
+        },
+      ],
     };
 
     const result = evaluateReminders(ctx, [customReminderRule]);
@@ -85,9 +85,9 @@ describe("Reminder Engine", () => {
       history: { "prayer-dhuhr-2026-08-14": "2026-08-14T09:55:00Z" },
       nextPrayer: { next: { name: "Dhuhr", time: "12:30" }, hours: 0, mins: 5 },
       // let's force the engine to generate that exact key by mocking current time
-      currentTime: new Date("2026-08-14T10:00:00Z")
+      currentTime: new Date("2026-08-14T10:00:00Z"),
     };
-    
+
     // In our implementation, dateStr is built from local time. To ensure this test
     // passes regardless of runner timezone, we check what it actually outputs.
     const generated = prayerRule(ctx);
@@ -107,9 +107,9 @@ describe("Reminder Engine", () => {
           id: "bad1",
           title: "Bad time format",
           time: "invalid", // should skip safely
-          recur: { freq: "daily", start: "2023-01-01" }
-        }
-      ]
+          recur: { freq: "daily", start: "2023-01-01" },
+        },
+      ],
     };
     const result = evaluateReminders(ctx, [customReminderRule]);
     assert.equal(result.length, 0);

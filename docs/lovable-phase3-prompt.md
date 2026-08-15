@@ -5,6 +5,7 @@ The engineering/data layer for Phase 3 is ALREADY COMPLETE and verified.
 DO NOT rebuild the intelligence logic.
 
 DO NOT change:
+
 - analytics formulas
 - reminder engine
 - recurrence engine
@@ -69,12 +70,14 @@ PRIMARY GOAL
 Create a unified Firdaus "Insights" / "Reflection" experience.
 
 It should NOT feel like:
+
 - a corporate analytics dashboard
 - a financial reporting application
 - a generic AI dashboard
 - a collection of charts
 
 It should feel like:
+
 - quiet reflection
 - useful understanding
 - gentle awareness
@@ -101,6 +104,7 @@ Do NOT hardcode fake numbers.
 Do NOT reimplement calculations inside React components.
 
 Prefer the existing:
+
 - Insight[]
 - DailySignal[]
 - Budget analytics
@@ -126,21 +130,25 @@ A calm opening summary
 Then:
 
 Spiritual
+
 - Salah consistency
 - improvement
 - prayer pattern
 
 Money
+
 - spending trend
 - category movement
 - useful budget signal
 
 Wellbeing
+
 - mood
 - sleep/activity pattern
 - sufficient-data messaging
 
 Daily life
+
 - useful reminders
 - meal suggestions
 - relevant family context where appropriate
@@ -154,6 +162,7 @@ VERY IMPORTANT: COGNITIVE LOAD
 ==================================================
 
 Do NOT produce:
+
 - 15 cards
 - giant dashboards
 - excessive KPI tiles
@@ -167,11 +176,11 @@ Use progressive disclosure.
 For example:
 
 Main insight
-   ↓
+↓
 short explanation
-   ↓
+↓
 optional detail
-   ↓
+↓
 optional deeper chart
 
 ==================================================
@@ -181,6 +190,7 @@ VISUAL DIRECTION
 Preserve Firdaus's existing design language and theme system.
 
 Make it feel:
+
 - premium
 - restrained
 - elegant
@@ -190,6 +200,7 @@ Make it feel:
 - personal
 
 Avoid:
+
 - SaaS dashboard aesthetics
 - excessive gradients
 - neon colors
@@ -212,6 +223,7 @@ This is critical.
 The page must work exceptionally well on mobile.
 
 Prioritize:
+
 - thumb-friendly actions
 - readable charts
 - compact summaries
@@ -244,6 +256,7 @@ PRIVACY
 Do not surface private information merely because it exists.
 
 Especially do not expose:
+
 - journal text
 - cycle information
 - detailed private content
@@ -275,12 +288,14 @@ ANIMATION
 Use subtle motion only where it improves comprehension.
 
 Examples:
+
 - insight cards gently entering
 - chart transitions
 - expanding detail
 - progress movement
 
 Avoid:
+
 - looping animations
 - distracting particles
 - excessive sparkle
@@ -291,6 +306,7 @@ ACCESSIBILITY
 ==================================================
 
 Verify:
+
 - keyboard navigation
 - visible focus
 - semantic headings
@@ -308,6 +324,7 @@ This is ONE focused Lovable pass.
 Prioritize the unified Insights experience.
 
 Do NOT redesign:
+
 - entire Home
 - entire Budget
 - entire Deen

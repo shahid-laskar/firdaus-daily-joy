@@ -2,7 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Shell } from "@/components/veedu/shell";
 import { SubTabs, Section, Meter } from "@/components/veedu/primitives";
-import { Deeds, GroceryList, Kids, Meals, Tasks, isTaskDone, type Task } from "@/components/home/modules";
+import {
+  Deeds,
+  GroceryList,
+  Kids,
+  Meals,
+  Tasks,
+  isTaskDone,
+  type Task,
+} from "@/components/home/modules";
 import { Notes } from "@/components/home/notes";
 import { UnifiedCalendar, eventsOn, type CalEvent } from "@/components/home/calendar";
 import { Reminders, useReminderEngine } from "@/components/home/reminders";
@@ -72,7 +80,9 @@ function Today() {
 
   const hour = now?.getHours() ?? 8;
   // Repeating tasks only count on the days they actually fall on.
-  const dueToday = tasks.filter((t) => (isRepeating(t.recur) ? occursOn(t.recur, todayKey()) : !t.done));
+  const dueToday = tasks.filter((t) =>
+    isRepeating(t.recur) ? occursOn(t.recur, todayKey()) : !t.done,
+  );
   const open = dueToday.filter((t) => !isTaskDone(t));
   const doneCount = dueToday.length - open.length;
   const todayEvents = eventsOn(events, todayKey());
@@ -84,17 +94,20 @@ function Today() {
   const water = health[todayKey()]?.water ?? 0;
   const mood = checkins[todayKey()];
   const month = todayKey().slice(0, 7);
-  const budgetAnalytics = useMemo(() => calculateBudgetAnalytics(expenses as any, month), [expenses, month]);
+  const budgetAnalytics = useMemo(
+    () => calculateBudgetAnalytics(expenses as any, month),
+    [expenses, month],
+  );
   const spent = budgetAnalytics.currentMonthTotal;
   const cap = Object.values(limits).reduce((s, n) => s + n, 0);
   const overBudget = cap > 0 && spent / cap > 0.8;
-
 
   return (
     <div className="space-y-12">
       <header className="rise">
         <p className="eyebrow">
-          {now?.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) ?? " "}
+          {now?.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) ??
+            " "}
         </p>
         <h1 className="display-xl mt-3">
           {greeting(hour)}
@@ -115,7 +128,11 @@ function Today() {
           active
           label="Next prayer"
           value={countdown ? `${countdown.next.name} · ${countdown.next.time}` : "—"}
-          detail={countdown ? `in ${countdown.hours ? `${countdown.hours}h ` : ""}${countdown.mins}m · ${prayed}/5 logged` : undefined}
+          detail={
+            countdown
+              ? `in ${countdown.hours ? `${countdown.hours}h ` : ""}${countdown.mins}m · ${prayed}/5 logged`
+              : undefined
+          }
           to="/deen"
         />
         {open.slice(0, 3).map((t) => (
@@ -125,20 +142,20 @@ function Today() {
           <ThreadItem key={e.id} label="Today" value={e.title} to="/" />
         ))}
         {dinner && <ThreadItem label="Dinner" value={dinner} detail="From this week's plan" />}
-        {leftToBuy > 0 && (
-          <ThreadItem label="Grocery" value={`${leftToBuy} still to pick up`} />
-        )}
+        {leftToBuy > 0 && <ThreadItem label="Grocery" value={`${leftToBuy} still to pick up`} />}
         {habits.length > 0 && (
           <ThreadItem
             label="Habits"
             value={`${habitsHit} of ${habits.length} kept today`}
-            detail={habitsHit < habits.length ? habits.filter((h) => !h.days.includes(todayKey()))[0]?.name : "All of them"}
+            detail={
+              habitsHit < habits.length
+                ? habits.filter((h) => !h.days.includes(todayKey()))[0]?.name
+                : "All of them"
+            }
             to="/me"
           />
         )}
-        {water < 8 && (
-          <ThreadItem label="Water" value={`${water} of 8 glasses`} to="/me" />
-        )}
+        {water < 8 && <ThreadItem label="Water" value={`${water} of 8 glasses`} to="/me" />}
         {!mood && <ThreadItem label="Check in" value="How are you today?" to="/me" />}
         {overBudget && (
           <ThreadItem
@@ -176,7 +193,6 @@ function Today() {
           />
         </div>
       </Section>
-
     </div>
   );
 }
@@ -216,7 +232,11 @@ function ThreadItem({
     </div>
   );
   return (
-    <div className="thread-node" data-active={active ? "true" : undefined} data-done={done ? "true" : undefined}>
+    <div
+      className="thread-node"
+      data-active={active ? "true" : undefined}
+      data-done={done ? "true" : undefined}
+    >
       {to ? (
         <Link to={to} className="block">
           {body}
@@ -226,7 +246,6 @@ function ThreadItem({
       )}
     </div>
   );
-
 }
 
 function HomePage() {

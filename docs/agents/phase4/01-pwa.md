@@ -7,6 +7,7 @@ Make Firdaus installable and provide robust offline application-shell behavior u
 ## Inspect first
 
 Determine:
+
 - framework/runtime
 - current deployment
 - current offline/localStorage behavior

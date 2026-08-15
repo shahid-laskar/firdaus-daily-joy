@@ -9,13 +9,13 @@ import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from "adhan";
 
 export function usePrayers(date = new Date()) {
   const [profile] = useStore("profile", {
-    name: "", 
-    city: "Kozhikode", 
+    name: "",
+    city: "Kozhikode",
     gender: "",
     lat: 11.2588,
     lng: 75.7804,
     madhab: "shafi",
-    method: "MuslimWorldLeague"
+    method: "MuslimWorldLeague",
   });
 
   return useMemo(() => {
@@ -25,15 +25,15 @@ export function usePrayers(date = new Date()) {
     const pMadhab = profile.madhab ?? "shafi";
 
     const coordinates = new Coordinates(pLat, pLng);
-    let params = (CalculationMethod as any)[pMethod] 
-      ? (CalculationMethod as any)[pMethod]() 
+    let params = (CalculationMethod as any)[pMethod]
+      ? (CalculationMethod as any)[pMethod]()
       : CalculationMethod.MuslimWorldLeague();
     params.madhab = pMadhab === "hanafi" ? Madhab.Hanafi : Madhab.Shafi;
-    
+
     const prayerTimes = new PrayerTimes(coordinates, date, params);
-    
+
     const formatTime = (d: Date) => {
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
     };
 
     return [
@@ -127,7 +127,10 @@ export function DailyVerse() {
             Another
           </button>
           {offset !== 0 && (
-            <button onClick={() => setOffset(0)} className="text-ink-faint hover:text-foreground text-xs">
+            <button
+              onClick={() => setOffset(0)}
+              className="text-ink-faint hover:text-foreground text-xs"
+            >
               Today's
             </button>
           )}
@@ -146,7 +149,6 @@ export function DailyVerse() {
     </section>
   );
 }
-
 
 export function Salah() {
   const [log, setLog] = useSalah();
@@ -347,7 +349,9 @@ export function Tasbih() {
           </button>
         ))}
         <Action onClick={() => setCount(0)}>Reset</Action>
-        <Action onClick={() => setHaptic(!haptic)}>{haptic ? "Feedback on" : "Feedback off"}</Action>
+        <Action onClick={() => setHaptic(!haptic)}>
+          {haptic ? "Feedback on" : "Feedback off"}
+        </Action>
       </div>
     </Section>
   );
@@ -359,13 +363,33 @@ const SURAHS = [
     name: "Al-Fatihah",
     meaning: "The Opening",
     ayahs: [
-      { n: 1, ar: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", en: "In the name of Allah, the Entirely Merciful, the Especially Merciful." },
-      { n: 2, ar: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ", en: "All praise is due to Allah, Lord of the worlds." },
-      { n: 3, ar: "الرَّحْمَٰنِ الرَّحِيمِ", en: "The Entirely Merciful, the Especially Merciful." },
+      {
+        n: 1,
+        ar: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        en: "In the name of Allah, the Entirely Merciful, the Especially Merciful.",
+      },
+      {
+        n: 2,
+        ar: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+        en: "All praise is due to Allah, Lord of the worlds.",
+      },
+      {
+        n: 3,
+        ar: "الرَّحْمَٰنِ الرَّحِيمِ",
+        en: "The Entirely Merciful, the Especially Merciful.",
+      },
       { n: 4, ar: "مَالِكِ يَوْمِ الدِّينِ", en: "Sovereign of the Day of Recompense." },
-      { n: 5, ar: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", en: "It is You we worship and You we ask for help." },
+      {
+        n: 5,
+        ar: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+        en: "It is You we worship and You we ask for help.",
+      },
       { n: 6, ar: "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ", en: "Guide us to the straight path." },
-      { n: 7, ar: "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ", en: "The path of those upon whom You have bestowed favour, not of those who have earned Your anger, nor of those who go astray." },
+      {
+        n: 7,
+        ar: "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
+        en: "The path of those upon whom You have bestowed favour, not of those who have earned Your anger, nor of those who go astray.",
+      },
     ],
   },
   {
@@ -384,11 +408,27 @@ const SURAHS = [
     name: "Al-Falaq",
     meaning: "The Daybreak",
     ayahs: [
-      { n: 1, ar: "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ", en: "Say, I seek refuge in the Lord of daybreak." },
+      {
+        n: 1,
+        ar: "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",
+        en: "Say, I seek refuge in the Lord of daybreak.",
+      },
       { n: 2, ar: "مِن شَرِّ مَا خَلَقَ", en: "From the evil of that which He created." },
-      { n: 3, ar: "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ", en: "And from the evil of darkness when it settles." },
-      { n: 4, ar: "وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ", en: "And from the evil of the blowers in knots." },
-      { n: 5, ar: "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ", en: "And from the evil of an envier when he envies." },
+      {
+        n: 3,
+        ar: "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",
+        en: "And from the evil of darkness when it settles.",
+      },
+      {
+        n: 4,
+        ar: "وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",
+        en: "And from the evil of the blowers in knots.",
+      },
+      {
+        n: 5,
+        ar: "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+        en: "And from the evil of an envier when he envies.",
+      },
     ],
   },
 ];
@@ -397,7 +437,9 @@ export function Quran() {
   const [openSurah, setOpenSurah] = useState<number | null>(null);
   const [bookmarks, setBookmarks] = useStore<string[]>("quran-bookmarks", []);
   const [translation, setTranslation] = useStore("quran-translation", true);
-  const [sessions, setSessions] = useStore<{ id: string; surah: string; range: string; mins: string; date: string }[]>("quran-log", []);
+  const [sessions, setSessions] = useStore<
+    { id: string; surah: string; range: string; mins: string; date: string }[]
+  >("quran-log", []);
   const [form, setForm] = useState({ surah: "", range: "", mins: "" });
   const surah = SURAHS.find((s) => s.n === openSurah);
 
@@ -405,7 +447,10 @@ export function Quran() {
     return (
       <div className="rise">
         <div className="mb-8 flex items-center justify-between">
-          <button onClick={() => setOpenSurah(null)} className="text-ink-soft hover:text-foreground text-sm">
+          <button
+            onClick={() => setOpenSurah(null)}
+            className="text-ink-soft hover:text-foreground text-sm"
+          >
             ← Surahs
           </button>
           <button
@@ -439,10 +484,15 @@ export function Quran() {
                     {a.en}
                   </p>
                 )}
-                <div dir="ltr" className="mt-3 flex gap-3 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                <div
+                  dir="ltr"
+                  className="mt-3 flex gap-3 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
+                >
                   <button
                     onClick={() =>
-                      setBookmarks(marked ? bookmarks.filter((b) => b !== key) : [...bookmarks, key])
+                      setBookmarks(
+                        marked ? bookmarks.filter((b) => b !== key) : [...bookmarks, key],
+                      )
                     }
                     className="text-ink-faint hover:text-foreground text-xs"
                   >
@@ -497,13 +547,31 @@ export function Quran() {
           }}
           className="mb-5 grid gap-2 sm:grid-cols-[1fr_1fr_90px_auto] sm:items-end"
         >
-          <Field label="Surah" value={form.surah} onChange={(e) => setForm({ ...form, surah: e.target.value })} />
-          <Field label="Ayah range" value={form.range} onChange={(e) => setForm({ ...form, range: e.target.value })} />
-          <Field label="Minutes" value={form.mins} onChange={(e) => setForm({ ...form, mins: e.target.value })} />
-          <Action type="submit" variant="solid" className="h-[42px]">Log</Action>
+          <Field
+            label="Surah"
+            value={form.surah}
+            onChange={(e) => setForm({ ...form, surah: e.target.value })}
+          />
+          <Field
+            label="Ayah range"
+            value={form.range}
+            onChange={(e) => setForm({ ...form, range: e.target.value })}
+          />
+          <Field
+            label="Minutes"
+            value={form.mins}
+            onChange={(e) => setForm({ ...form, mins: e.target.value })}
+          />
+          <Action type="submit" variant="solid" className="h-[42px]">
+            Log
+          </Action>
         </form>
         {sessions.length === 0 ? (
-          <EmptyState glyph="☾" headline="No sessions logged" body="Log what you read today — even a few ayahs are worth keeping track of." />
+          <EmptyState
+            glyph="☾"
+            headline="No sessions logged"
+            body="Log what you read today — even a few ayahs are worth keeping track of."
+          />
         ) : (
           <ul className="thread">
             {sessions.map((s) => (
@@ -524,10 +592,26 @@ export function Quran() {
 }
 
 const DUAS = [
-  { ar: "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً", en: "Our Lord, give us good in this world and good in the Hereafter.", when: "Anytime" },
-  { ar: "اللَّهُمَّ بِاسْمِكَ أَمُوتُ وَأَحْيَا", en: "O Allah, in Your name I die and I live.", when: "Before sleep" },
-  { ar: "بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ", en: "In the name of Allah, I place my trust in Allah.", when: "Leaving home" },
-  { ar: "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا", en: "O Allah, I ask You for beneficial knowledge.", when: "Studying" },
+  {
+    ar: "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً",
+    en: "Our Lord, give us good in this world and good in the Hereafter.",
+    when: "Anytime",
+  },
+  {
+    ar: "اللَّهُمَّ بِاسْمِكَ أَمُوتُ وَأَحْيَا",
+    en: "O Allah, in Your name I die and I live.",
+    when: "Before sleep",
+  },
+  {
+    ar: "بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ",
+    en: "In the name of Allah, I place my trust in Allah.",
+    when: "Leaving home",
+  },
+  {
+    ar: "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا",
+    en: "O Allah, I ask You for beneficial knowledge.",
+    when: "Studying",
+  },
 ];
 
 export function Duas() {
@@ -561,10 +645,16 @@ export function Hifz() {
         className="mb-6 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end"
       >
         <Field label="Surah in progress" value={surah} onChange={(e) => setSurah(e.target.value)} />
-        <Action type="submit" variant="solid" className="h-[42px]">Track</Action>
+        <Action type="submit" variant="solid" className="h-[42px]">
+          Track
+        </Action>
       </form>
       {items.length === 0 ? (
-        <EmptyState glyph="◈" headline="Nothing in progress" body="Add a surah you're memorising and move it forward a little each day." />
+        <EmptyState
+          glyph="◈"
+          headline="Nothing in progress"
+          body="Add a surah you're memorising and move it forward a little each day."
+        />
       ) : (
         <div className="space-y-6">
           {items.map((i) => (
@@ -575,8 +665,28 @@ export function Hifz() {
               </div>
               <Meter value={i.pct} />
               <div className="mt-2 flex gap-2">
-                <Action onClick={() => setItems(items.map((x) => (x.id === i.id ? { ...x, pct: Math.max(0, x.pct - 10) } : x)))}>−10%</Action>
-                <Action onClick={() => setItems(items.map((x) => (x.id === i.id ? { ...x, pct: Math.min(100, x.pct + 10) } : x)))}>+10%</Action>
+                <Action
+                  onClick={() =>
+                    setItems(
+                      items.map((x) =>
+                        x.id === i.id ? { ...x, pct: Math.max(0, x.pct - 10) } : x,
+                      ),
+                    )
+                  }
+                >
+                  −10%
+                </Action>
+                <Action
+                  onClick={() =>
+                    setItems(
+                      items.map((x) =>
+                        x.id === i.id ? { ...x, pct: Math.min(100, x.pct + 10) } : x,
+                      ),
+                    )
+                  }
+                >
+                  +10%
+                </Action>
               </div>
             </div>
           ))}
@@ -611,7 +721,12 @@ export function Fasting() {
               aria-label={`${d} ${s ?? "not fasted"}`}
               className="press numeric grid aspect-square place-items-center rounded-lg border text-[0.68rem]"
               style={{
-                background: s === "obligatory" ? "var(--space-accent)" : s === "voluntary" ? "var(--space-accent-soft)" : "transparent",
+                background:
+                  s === "obligatory"
+                    ? "var(--space-accent)"
+                    : s === "voluntary"
+                      ? "var(--space-accent-soft)"
+                      : "transparent",
                 color: s === "obligatory" ? "var(--background)" : "var(--ink-faint)",
                 borderColor: s ? "transparent" : "var(--rule)",
               }}
@@ -640,7 +755,9 @@ export function Qibla() {
   }, []);
 
   async function request() {
-    const anyDO = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
+    const anyDO = DeviceOrientationEvent as unknown as {
+      requestPermission?: () => Promise<string>;
+    };
     if (anyDO.requestPermission) await anyDO.requestPermission();
     ref.current = true;
   }
@@ -667,8 +784,22 @@ export function Qibla() {
               </text>
             );
           })}
-          <g style={{ transform: `rotate(${rotation}deg)`, transformOrigin: "100px 100px", transition: "transform 400ms cubic-bezier(.2,.8,.2,1)" }}>
-            <line x1="100" y1="100" x2="100" y2="26" stroke="var(--space-accent)" strokeWidth="2" strokeLinecap="round" />
+          <g
+            style={{
+              transform: `rotate(${rotation}deg)`,
+              transformOrigin: "100px 100px",
+              transition: "transform 400ms cubic-bezier(.2,.8,.2,1)",
+            }}
+          >
+            <line
+              x1="100"
+              y1="100"
+              x2="100"
+              y2="26"
+              stroke="var(--space-accent)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
             <circle cx="100" cy="24" r="6" fill="var(--space-accent)" />
           </g>
           <circle cx="100" cy="100" r="3" fill="var(--ink)" />

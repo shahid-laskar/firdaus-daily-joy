@@ -9,6 +9,7 @@ Suggest meals from the user's own recipe repository using historical usage and v
 Use deterministic ranking, not an LLM.
 
 Possible ranking signals:
+
 - recipes used less recently
 - recipes repeatedly selected in historical plans
 - variety

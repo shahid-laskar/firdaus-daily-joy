@@ -28,7 +28,7 @@ export interface ReminderContext {
   currentTime: Date;
   prefs: { prayers: boolean; reminders: boolean; leadMinutes: number };
   history: Record<string, string>; // dedupeKey -> ISO timestamp fired
-  
+
   nextPrayer: NextPrayerContext | null;
   customReminders: CustomReminderContext[];
 }
@@ -39,9 +39,12 @@ export type ReminderRule = (context: ReminderContext) => ReminderSignal[];
  * Core engine evaluator. Takes the context and a list of rules,
  * outputs the deduplicated, prioritized signals that should fire NOW.
  */
-export function evaluateReminders(context: ReminderContext, rules: ReminderRule[]): ReminderSignal[] {
+export function evaluateReminders(
+  context: ReminderContext,
+  rules: ReminderRule[],
+): ReminderSignal[] {
   const signals: ReminderSignal[] = [];
-  
+
   for (const rule of rules) {
     try {
       const generated = rule(context);
@@ -55,7 +58,7 @@ export function evaluateReminders(context: ReminderContext, rules: ReminderRule[
   }
 
   // Filter out those already present in history (deduplication)
-  const filtered = signals.filter(sig => !context.history[sig.dedupeKey]);
+  const filtered = signals.filter((sig) => !context.history[sig.dedupeKey]);
 
   // Priority sort mapping
   const weights = { high: 3, medium: 2, low: 1 };
@@ -64,7 +67,7 @@ export function evaluateReminders(context: ReminderContext, rules: ReminderRule[
   // Final dedupe by dedupeKey in case a single run produced multiple identical keys
   const seen = new Set<string>();
   const deduplicated: ReminderSignal[] = [];
-  
+
   for (const sig of filtered) {
     if (!seen.has(sig.dedupeKey)) {
       seen.add(sig.dedupeKey);
@@ -83,7 +86,7 @@ export const prayerRule: ReminderRule = (context) => {
   if (!context.prefs.prayers || !context.nextPrayer) return [];
 
   const { hours, mins, next } = context.nextPrayer;
-  
+
   // If it's within lead time
   if (hours === 0 && mins <= context.prefs.leadMinutes && mins >= 0) {
     // Construct dedupe key for today + this prayer
@@ -92,18 +95,20 @@ export const prayerRule: ReminderRule = (context) => {
     const mm = String(context.currentTime.getMonth() + 1).padStart(2, "0");
     const dd = String(context.currentTime.getDate()).padStart(2, "0");
     const dateStr = `${yyyy}-${mm}-${dd}`;
-    
-    return [{
-      id: `prayer-${next.name.toLowerCase()}`,
-      category: "prayer",
-      priority: "high",
-      message: `${next.name} is in ${mins} minute${mins !== 1 ? 's' : ''}`,
-      source: "deen",
-      timestamp: context.currentTime.toISOString(),
-      dedupeKey: `prayer-${next.name.toLowerCase()}-${dateStr}`,
-    }];
+
+    return [
+      {
+        id: `prayer-${next.name.toLowerCase()}`,
+        category: "prayer",
+        priority: "high",
+        message: `${next.name} is in ${mins} minute${mins !== 1 ? "s" : ""}`,
+        source: "deen",
+        timestamp: context.currentTime.toISOString(),
+        dedupeKey: `prayer-${next.name.toLowerCase()}-${dateStr}`,
+      },
+    ];
   }
-  
+
   return [];
 };
 
@@ -120,19 +125,19 @@ export const customReminderRule: ReminderRule = (context) => {
     if (occursOn(r.recur, dateStr)) {
       const curH = context.currentTime.getHours();
       const curM = context.currentTime.getMinutes();
-      
+
       const parts = r.time.split(":");
       if (parts.length !== 2) continue;
-      
+
       const rH = parseInt(parts[0] ?? "0", 10);
       const rM = parseInt(parts[1] ?? "0", 10);
-      
+
       // Is past due?
       const isPast = curH > rH || (curH === rH && curM >= rM);
       // Let's give it a 2-hour window so we don't spam them with yesterday's overdue stuff
-      const elapsedMins = (curH * 60 + curM) - (rH * 60 + rM);
+      const elapsedMins = curH * 60 + curM - (rH * 60 + rM);
       const isWithinWindow = elapsedMins >= 0 && elapsedMins <= 120;
-      
+
       if (isPast && isWithinWindow) {
         signals.push({
           id: `custom-${r.id}`,

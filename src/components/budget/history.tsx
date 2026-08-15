@@ -11,12 +11,16 @@ export function History() {
 
   const months = useMemo(() => {
     const map = new Map<string, number>();
-    expenses.forEach((e) => map.set(e.date.slice(0, 7), (map.get(e.date.slice(0, 7)) ?? 0) + e.amount));
+    expenses.forEach((e) =>
+      map.set(e.date.slice(0, 7), (map.get(e.date.slice(0, 7)) ?? 0) + e.amount),
+    );
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).slice(-6);
   }, [expenses]);
 
   const active = months[months.length - 1 - offset]?.[0] ?? new Date().toISOString().slice(0, 7);
-  const rows = expenses.filter((e) => e.date.startsWith(active)).sort((a, b) => b.date.localeCompare(a.date));
+  const rows = expenses
+    .filter((e) => e.date.startsWith(active))
+    .sort((a, b) => b.date.localeCompare(a.date));
   const total = rows.reduce((s, e) => s + e.amount, 0);
   const cap = Object.values(limits).reduce((s, n) => s + n, 0);
   const peak = Math.max(1, ...months.map(([, v]) => v));
@@ -35,7 +39,11 @@ export function History() {
   if (months.length === 0) {
     return (
       <Section eyebrow="Looking back" title="History">
-        <EmptyState glyph="◈" headline="No history yet" body="Once a few months of expenses exist, the trend shows up here." />
+        <EmptyState
+          glyph="◈"
+          headline="No history yet"
+          body="Once a few months of expenses exist, the trend shows up here."
+        />
       </Section>
     );
   }
@@ -53,7 +61,9 @@ export function History() {
                 className="press group flex flex-1 flex-col items-center gap-2"
                 aria-label={`${label(m)} — ₹${money(v)}`}
               >
-                <span className="numeric text-ink-faint text-[0.62rem]">{Math.round(v / 1000)}k</span>
+                <span className="numeric text-ink-faint text-[0.62rem]">
+                  {Math.round(v / 1000)}k
+                </span>
                 <span
                   className="w-full rounded-t-md transition-all"
                   style={{
@@ -61,7 +71,11 @@ export function History() {
                     background: activeBar ? "var(--space-accent)" : "var(--space-accent-soft)",
                   }}
                 />
-                <span className={`text-[0.66rem] ${activeBar ? "text-foreground" : "text-ink-faint"}`}>{label(m)}</span>
+                <span
+                  className={`text-[0.66rem] ${activeBar ? "text-foreground" : "text-ink-faint"}`}
+                >
+                  {label(m)}
+                </span>
               </button>
             );
           })}
@@ -80,7 +94,14 @@ export function History() {
         </p>
         {cap > 0 && (
           <div className="mt-5">
-            <Meter value={(total / cap) * 100} label={total > cap ? `₹${money(total - cap)} over plan` : `₹${money(cap - total)} left in plan`} />
+            <Meter
+              value={(total / cap) * 100}
+              label={
+                total > cap
+                  ? `₹${money(total - cap)} over plan`
+                  : `₹${money(cap - total)} left in plan`
+              }
+            />
           </div>
         )}
       </section>

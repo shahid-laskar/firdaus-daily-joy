@@ -24,19 +24,19 @@ Before implementing anything:
 
 Inspect:
 
-* current Git branch
-* recent commits
-* changed files
-* existing routes
-* components
-* state/data model
-* localStorage
-* Supabase integration
-* theme system
-* existing prototype features
-* current navigation
-* current UI
-* existing tests/build configuration
+- current Git branch
+- recent commits
+- changed files
+- existing routes
+- components
+- state/data model
+- localStorage
+- Supabase integration
+- theme system
+- existing prototype features
+- current navigation
+- current UI
+- existing tests/build configuration
 
 Determine the actual state of the project.
 
@@ -72,13 +72,13 @@ Verify everything from the code.
 
 The previous prototype reportedly added:
 
-* Multi-note Notes
-* Unified Calendar
-* Recurring Tasks
-* Reminders/Notifications tab
-* Budget History
-* Health Trends
-* Weekly Review page at `/review`
+- Multi-note Notes
+- Unified Calendar
+- Recurring Tasks
+- Reminders/Notifications tab
+- Budget History
+- Health Trends
+- Weekly Review page at `/review`
 
 Treat these as **potentially completed prototype work** and verify them.
 
@@ -94,11 +94,11 @@ The attached research report is the product roadmap.
 
 Use it to determine:
 
-* what should be implemented next
-* feature dependencies
-* architectural improvements
-* UX priorities
-* cross-module integrations
+- what should be implemented next
+- feature dependencies
+- architectural improvements
+- UX priorities
+- cross-module integrations
 
 The research specifically identifies recurring items, notifications, weekly review and calendar integration as high-leverage investments.
 
@@ -112,36 +112,36 @@ After auditing the repository, continue implementation in this order unless the 
 
 Complete any missing:
 
-* Multiple Notes
-* Daily Kid Chore Reset
-* Calendar Time Support
-* Budget History
-* Data Export
-* Meal Plan "Copy Last Week"
+- Multiple Notes
+- Daily Kid Chore Reset
+- Calendar Time Support
+- Budget History
+- Data Export
+- Meal Plan "Copy Last Week"
 
 ## Phase 1 — Daily Workflow
 
 Complete:
 
-* Recurring Tasks
-* Real prayer/browser notifications
-* Weekly Review
-* Health Trends
-* Habit visibility on Home
-* Enhanced Home thread
+- Recurring Tasks
+- Real prayer/browser notifications
+- Weekly Review
+- Health Trends
+- Habit visibility on Home
+- Enhanced Home thread
 
 ## Phase 2 — Integration
 
 Implement:
 
-* Unified Calendar refinement
-* Task ↔ Calendar integration
-* Recurring Calendar Events
-* Islamic/Hijri Calendar
-* Recurring Kid Routines
-* Grocery → Budget connection
-* Global Search
-* General reminders
+- Unified Calendar refinement
+- Task ↔ Calendar integration
+- Recurring Calendar Events
+- Islamic/Hijri Calendar
+- Recurring Kid Routines
+- Grocery → Budget connection
+- Global Search
+- General reminders
 
 Only proceed to later phases once the earlier foundations are solid.
 
@@ -155,19 +155,19 @@ Preserve Sunnah Home's existing philosophy:
 
 The product should remain:
 
-* calm
-* private
-* minimal
-* practical
-* integrated
-* low-cognitive-load
+- calm
+- private
+- minimal
+- practical
+- integrated
+- low-cognitive-load
 
 Do NOT turn it into:
 
-* a generic SaaS dashboard
-* a gamified habit app
-* a social network
-* a generic AI assistant
+- a generic SaaS dashboard
+- a gamified habit app
+- a social network
+- a generic AI assistant
 
 Do not add unnecessary features simply because they are technically possible.
 
@@ -213,12 +213,12 @@ Unlike the earlier prototype phase, now focus on actual maintainable implementat
 
 Before introducing new architecture:
 
-* reuse existing components
-* reuse existing data models where sensible
-* reuse existing theme tokens
-* reuse existing state management
-* minimize dependencies
-* avoid unnecessary rewrites
+- reuse existing components
+- reuse existing data models where sensible
+- reuse existing theme tokens
+- reuse existing state management
+- minimize dependencies
+- avoid unnecessary rewrites
 
 When a data migration is necessary, make it backward-compatible with existing localStorage data.
 
@@ -248,10 +248,10 @@ Do not implement recurrence independently for every feature.
 
 Create a consistent recurrence model that can eventually support:
 
-* tasks
-* calendar events
-* kid chores
-* routines
+- tasks
+- calendar events
+- kid chores
+- routines
 
 Avoid four separate incompatible recurrence systems.
 
@@ -265,10 +265,10 @@ Do not casually replace this architecture.
 
 Before changing persistence:
 
-* understand existing keys
-* preserve existing user data
-* provide migrations where necessary
-* ensure old users do not lose information
+- understand existing keys
+- preserve existing user data
+- provide migrations where necessary
+- ensure old users do not lose information
 
 If Supabase synchronization needs to be extended, do so carefully.
 
@@ -280,18 +280,18 @@ Do not stop at technically working functionality.
 
 For every feature, verify:
 
-* empty state
-* loading state
-* error state
-* success feedback
-* mobile layout
-* keyboard accessibility
-* destructive actions
-* editing
-* deleting
-* persistence
-* refresh behavior
-* edge cases
+- empty state
+- loading state
+- error state
+- success feedback
+- mobile layout
+- keyboard accessibility
+- destructive actions
+- editing
+- deleting
+- persistence
+- refresh behavior
+- edge cases
 
 The new functionality must feel native to the existing Sunnah Home design.
 
@@ -301,12 +301,12 @@ The new functionality must feel native to the existing Sunnah Home design.
 
 After each significant feature:
 
-* run the application
-* test the workflow
-* verify persistence
-* test responsive behavior
-* check existing functionality
-* run the relevant build/type checks
+- run the application
+- test the workflow
+- verify persistence
+- test responsive behavior
+- check existing functionality
+- run the relevant build/type checks
 
 Do not leave broken prototype code behind.
 
@@ -316,11 +316,11 @@ Do not leave broken prototype code behind.
 
 Prefer logical commits such as:
 
-* `feat: complete recurring task system`
-* `feat: add prayer notification engine`
-* `feat: improve unified calendar`
-* `feat: add weekly review`
-* `feat: add data export`
+- `feat: complete recurring task system`
+- `feat: add prayer notification engine`
+- `feat: improve unified calendar`
+- `feat: add weekly review`
+- `feat: add data export`
 
 Avoid one enormous commit containing unrelated changes.
 

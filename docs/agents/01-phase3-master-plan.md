@@ -7,6 +7,7 @@ Turn Firdaus from a strong logging/productivity application into a system that l
 ## Product principle
 
 Phase 3 intelligence should initially be:
+
 - deterministic
 - explainable
 - privacy-conscious
@@ -32,6 +33,7 @@ The ordering intentionally differs from simple roadmap numbering because reusabl
 ## Shared intelligence foundation
 
 Create reusable primitives for:
+
 - date ranges
 - week/month aggregation
 - trend calculations
@@ -45,6 +47,7 @@ Create reusable primitives for:
 Example conceptual layers:
 
 src/lib/analytics/
+
 - dateRange
 - aggregates
 - budget
@@ -55,6 +58,7 @@ src/lib/analytics/
 - quran
 
 src/lib/intelligence/
+
 - signals
 - insights
 - reminders
@@ -65,6 +69,7 @@ Do not assume these exact paths or APIs; inspect the repository first and adapt 
 ## Phase 3 acceptance criteria
 
 Phase 3 is complete only when:
+
 - existing Phase 0–2 features still work
 - user data survives refresh and migration
 - analytics are deterministic and explainable
@@ -78,22 +83,29 @@ Phase 3 is complete only when:
 ## Features
 
 ### P3.1 Intelligence Foundation
+
 Build the reusable analytics/signal layer.
 
 ### P3.2 Budget Insights
+
 Provide month-over-month comparison, category trends, overspend detection, and useful explanations.
 
 ### P3.3 Salah Analysis
+
 Provide monthly consistency, on-time/late ratios, trend/improvement tracking.
 
 ### P3.4 Mood + Activity Correlation
+
 Cross-reference logged mood with sleep, prayer, exercise, and related activity. Phrase results as observations, not causation.
 
 ### P3.5 Smart Reminders
+
 Build a rule engine that can evaluate prayer, tasks, habits, fasting patterns, upcoming events, budget thresholds, and other contextual signals.
 
 ### P3.6 Smart Meal Suggestions
+
 Recommend recipes from the user's own repository using history/recency/variety. Do not introduce an LLM dependency unless explicitly justified.
 
 ### P3.7 Family Member Model
+
 Transition from a Kids-only list toward a shared family entity model while preserving existing child/chores data.

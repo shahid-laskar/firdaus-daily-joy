@@ -39,7 +39,7 @@ const TABS = [
 function MePage() {
   const [profile] = useStore("profile", { name: "", city: "Kozhikode", gender: "" });
   const [tab, setTab] = useTab("care");
-  
+
   const availableTabs = TABS.filter((t) => t.id !== "cycle" || profile.gender === "female");
   return (
     <Shell space="me">

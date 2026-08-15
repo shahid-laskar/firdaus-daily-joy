@@ -44,11 +44,7 @@ export function SubTabs({
 }) {
   return (
     <div className="-mx-5 px-5">
-      <div
-        role="tablist"
-        aria-label="Sections"
-        className="flex flex-wrap gap-1.5 pb-px"
-      >
+      <div role="tablist" aria-label="Sections" className="flex flex-wrap gap-1.5 pb-px">
         {tabs.map((t) => {
           const active = t.id === value;
           return (
@@ -167,7 +163,15 @@ export function Meter({ value, label }: { value: number; label?: string }) {
 }
 
 /** Quietly rewarding completion tick — draws itself, no confetti. */
-export function Tick({ done, onToggle, label }: { done: boolean; onToggle: () => void; label: string }) {
+export function Tick({
+  done,
+  onToggle,
+  label,
+}: {
+  done: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
   const [burst, setBurst] = useState(false);
   return (
     <button
@@ -186,9 +190,7 @@ export function Tick({ done, onToggle, label }: { done: boolean; onToggle: () =>
         background: done ? "var(--space-accent)" : "transparent",
       }}
     >
-      {burst && (
-        <span className="border-space pulse-ring absolute inset-0 rounded-full border" />
-      )}
+      {burst && <span className="border-space pulse-ring absolute inset-0 rounded-full border" />}
       <svg viewBox="0 0 24 24" className="size-3.5" fill="none">
         <path
           d="M5 12.5l4.5 4.5L19 7"

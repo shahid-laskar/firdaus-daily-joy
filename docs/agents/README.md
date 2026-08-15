@@ -7,6 +7,7 @@ This pack is the execution layer for the Firdaus/Sunnah Home roadmap.
 Use the current GitHub repository as the implementation source of truth.
 
 The supplied roadmap identifies:
+
 - Phase 3 — Intelligence & Automation
   - Smart weekly meal suggestions
   - Budget insights
@@ -26,7 +27,9 @@ The current task tracker marks Phase 0–2 work as completed and Phase 3–4 as 
 ## Agent roles
 
 ### ChatGPT
+
 Use for:
+
 - product decomposition
 - research
 - prompt creation
@@ -35,7 +38,9 @@ Use for:
 - final product QA
 
 ### Claude Sonnet
+
 Use for:
+
 - architecture review
 - code review
 - migration/risk analysis
@@ -43,7 +48,9 @@ Use for:
 - identifying hidden regressions
 
 ### Gemini Pro
+
 Primary implementation agent:
+
 - repository inspection
 - core engineering
 - data models
@@ -55,7 +62,9 @@ Primary implementation agent:
 - integration
 
 ### Lovable
+
 Scarce UI/UX accelerator:
+
 - premium interaction design
 - visual polish
 - dashboards
@@ -68,6 +77,7 @@ Lovable should not be the default agent for data-model refactors, algorithms, pe
 ## Lovable credit strategy
 
 Reserve the five Lovable passes for:
+
 1. Insights / analytics experience
 2. Family experience
 3. Ramadan mode
@@ -81,6 +91,7 @@ Each Lovable task must have a narrow scope and explicit "do not modify" boundari
 Never let unrelated agents work directly on main.
 
 Recommended branches:
+
 - phase3/intelligence-foundation
 - phase3/budget-insights
 - phase3/salah-analysis

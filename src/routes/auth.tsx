@@ -29,8 +29,16 @@ type Mode = "signin" | "register" | "magic" | "reset";
 
 const COPY: Record<Mode, { title: string; body: string; cta: string }> = {
   signin: { title: "Welcome back", body: "Your home, exactly as you left it.", cta: "Sign in" },
-  register: { title: "Make it yours", body: "One account keeps Sunnah Home with you across devices.", cta: "Create account" },
-  magic: { title: "No password", body: "We'll send a link that signs you straight in.", cta: "Send link" },
+  register: {
+    title: "Make it yours",
+    body: "One account keeps Sunnah Home with you across devices.",
+    cta: "Create account",
+  },
+  magic: {
+    title: "No password",
+    body: "We'll send a link that signs you straight in.",
+    cta: "Send link",
+  },
   reset: { title: "Reset password", body: "We'll email you a way back in.", cta: "Send reset" },
 };
 
@@ -39,13 +47,24 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [account, setAccount] = useStore<{ email: string } | null>("account", null);
-  const [profile] = useStore("profile", { name: "", city: "Kozhikode", gender: "", lat: 11.2588, lng: 75.7804, madhab: "shafi", method: "MuslimWorldLeague" });
+  const [profile] = useStore("profile", {
+    name: "",
+    city: "Kozhikode",
+    gender: "",
+    lat: 11.2588,
+    lng: 75.7804,
+    madhab: "shafi",
+    method: "MuslimWorldLeague",
+  });
   const [sent, setSent] = useState(false);
   const navigate = useNavigate();
   const copy = COPY[mode];
 
   return (
-    <div data-space="home" className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16">
+    <div
+      data-space="home"
+      className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16"
+    >
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 flex items-baseline gap-2">
           <span className="font-display text-xl">Sunnah Home</span>
@@ -62,10 +81,14 @@ function AuthPage() {
               <Action variant="solid" onClick={() => navigate({ to: "/" })}>
                 Go home
               </Action>
-              <Action onClick={async () => {
-                await supabase.auth.signOut();
-                setAccount(null);
-              }}>Sign out</Action>
+              <Action
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  setAccount(null);
+                }}
+              >
+                Sign out
+              </Action>
             </div>
           </div>
         ) : (
@@ -73,7 +96,7 @@ function AuthPage() {
             onSubmit={async (e) => {
               e.preventDefault();
               if (!email.trim()) return;
-              
+
               if (mode === "magic") {
                 const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
                 if (!error) setSent(true);
@@ -111,12 +134,12 @@ function AuthPage() {
                   return;
                 }
                 if (data.user) setAccount({ email: data.user.email! });
-                
+
                 await syncFromCloud();
-                
+
                 const rawProfile = window.localStorage.getItem("veedu:profile");
                 const freshProfile = rawProfile ? JSON.parse(rawProfile) : {};
-                
+
                 if (freshProfile.name) {
                   navigate({ to: "/" });
                 } else {
@@ -126,7 +149,12 @@ function AuthPage() {
             }}
             className="mt-8 space-y-4"
           >
-            <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Field
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
             {(mode === "signin" || mode === "register") && (
               <Field
                 label="Password"
@@ -157,7 +185,13 @@ function AuthPage() {
                 }}
                 className="text-muted-foreground hover:text-foreground"
               >
-                {m === "signin" ? "Sign in" : m === "register" ? "Create account" : m === "magic" ? "Magic link" : "Forgot password"}
+                {m === "signin"
+                  ? "Sign in"
+                  : m === "register"
+                    ? "Create account"
+                    : m === "magic"
+                      ? "Magic link"
+                      : "Forgot password"}
               </button>
             ))}
         </div>

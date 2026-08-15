@@ -4,7 +4,7 @@ import {
   categorizeMood,
   calculateMoodAnalytics,
   generateMoodInsights,
-  type DailyActivityData
+  type DailyActivityData,
 } from "./mood-intelligence";
 
 describe("Mood Intelligence", () => {
@@ -18,26 +18,82 @@ describe("Mood Intelligence", () => {
   });
 
   const baseData: DailyActivityData[] = [
-    { date: "1", mood: "bright", sleepHours: 8, waterGlasses: 7, workedOut: true, salahOnTimePct: 100, habitsCompleted: 4 },
-    { date: "2", mood: "bright", sleepHours: 7, waterGlasses: 6, workedOut: true, salahOnTimePct: 80, habitsCompleted: 3 },
-    { date: "3", mood: "steady", sleepHours: 7.5, waterGlasses: 5, workedOut: false, salahOnTimePct: 100, habitsCompleted: 2 },
-    { date: "4", mood: "grateful", sleepHours: 6, waterGlasses: 8, workedOut: true, salahOnTimePct: 100, habitsCompleted: 5 },
-    { date: "5", mood: "tired", sleepHours: 5, waterGlasses: 3, workedOut: false, salahOnTimePct: 40, habitsCompleted: 1 },
-    { date: "6", mood: "heavy", sleepHours: 6, waterGlasses: 2, workedOut: false, salahOnTimePct: 60, habitsCompleted: 1 },
-    { date: "7", mood: "bright", sleepHours: 7, waterGlasses: 6, workedOut: true, salahOnTimePct: 100, habitsCompleted: 4 },
+    {
+      date: "1",
+      mood: "bright",
+      sleepHours: 8,
+      waterGlasses: 7,
+      workedOut: true,
+      salahOnTimePct: 100,
+      habitsCompleted: 4,
+    },
+    {
+      date: "2",
+      mood: "bright",
+      sleepHours: 7,
+      waterGlasses: 6,
+      workedOut: true,
+      salahOnTimePct: 80,
+      habitsCompleted: 3,
+    },
+    {
+      date: "3",
+      mood: "steady",
+      sleepHours: 7.5,
+      waterGlasses: 5,
+      workedOut: false,
+      salahOnTimePct: 100,
+      habitsCompleted: 2,
+    },
+    {
+      date: "4",
+      mood: "grateful",
+      sleepHours: 6,
+      waterGlasses: 8,
+      workedOut: true,
+      salahOnTimePct: 100,
+      habitsCompleted: 5,
+    },
+    {
+      date: "5",
+      mood: "tired",
+      sleepHours: 5,
+      waterGlasses: 3,
+      workedOut: false,
+      salahOnTimePct: 40,
+      habitsCompleted: 1,
+    },
+    {
+      date: "6",
+      mood: "heavy",
+      sleepHours: 6,
+      waterGlasses: 2,
+      workedOut: false,
+      salahOnTimePct: 60,
+      habitsCompleted: 1,
+    },
+    {
+      date: "7",
+      mood: "bright",
+      sleepHours: 7,
+      waterGlasses: 6,
+      workedOut: true,
+      salahOnTimePct: 100,
+      habitsCompleted: 4,
+    },
   ];
 
   test("calculateMoodAnalytics - basic distributions", () => {
     const analytics = calculateMoodAnalytics(baseData);
     assert.equal(analytics.totalLoggedDays, 7);
     assert.equal(analytics.positiveDays, 4); // bright, bright, grateful, bright
-    assert.equal(analytics.neutralDays, 1);  // steady
+    assert.equal(analytics.neutralDays, 1); // steady
     assert.equal(analytics.negativeDays, 2); // tired, heavy
   });
 
   test("calculateMoodAnalytics - correlations", () => {
     const analytics = calculateMoodAnalytics(baseData);
-    
+
     // Sleep: 4 days with 7+ hours (d1, d2, d3, d7)
     // d1: bright(pos), d2: bright(pos), d3: steady(neu), d7: bright(pos) -> 3/4 = 75%
     // but sample size is 4, which is < 5 (MIN_SAMPLE_SIZE), so undefined
@@ -49,9 +105,9 @@ describe("Mood Intelligence", () => {
       { date: "8", mood: "bright", sleepHours: 7.5, workedOut: true },
       { date: "9", mood: "bright", sleepHours: 8, workedOut: true },
     ];
-    
+
     const a2 = calculateMoodAnalytics(expandedData);
-    
+
     assert.ok(a2.sleepCorrelation);
     assert.equal(a2.sleepCorrelation?.sampleSize, 6); // d1, d2, d3, d7, d8, d9
     // pos = d1, d2, d7, d8, d9 (5). neu = d3 (1). 5/6 = 83.33%
@@ -74,7 +130,7 @@ describe("Mood Intelligence", () => {
       { date: "6", mood: "bright", sleepHours: 7 },
       { date: "7", mood: "bright", sleepHours: 7 },
     ];
-    
+
     const a = calculateMoodAnalytics(data);
     assert.equal(a.totalLoggedDays, 6);
     assert.equal(a.sleepCorrelation?.sampleSize, 5);
@@ -82,12 +138,10 @@ describe("Mood Intelligence", () => {
   });
 
   test("generateMoodInsights - insufficient data", () => {
-    const data: DailyActivityData[] = [
-      { date: "1", mood: "bright" },
-    ];
+    const data: DailyActivityData[] = [{ date: "1", mood: "bright" }];
     const analytics = calculateMoodAnalytics(data);
     const insights = generateMoodInsights(analytics);
-    
+
     assert.equal(insights.length, 1);
     assert.equal(insights[0]?.id, "mood-insufficient");
   });
@@ -103,7 +157,7 @@ describe("Mood Intelligence", () => {
     ];
     const analytics = calculateMoodAnalytics(data);
     const insights = generateMoodInsights(analytics);
-    
+
     assert.equal(insights.length, 1);
     assert.equal(insights[0]?.id, "mood-baseline");
   });
@@ -118,8 +172,8 @@ describe("Mood Intelligence", () => {
     ];
     const analytics = calculateMoodAnalytics(data);
     const insights = generateMoodInsights(analytics);
-    
-    assert.ok(insights.find(i => i.id === "mood-corr-sleep"));
-    assert.equal(insights.find(i => i.id === "mood-corr-sleep")?.title, "A positive pattern");
+
+    assert.ok(insights.find((i) => i.id === "mood-corr-sleep"));
+    assert.equal(insights.find((i) => i.id === "mood-corr-sleep")?.title, "A positive pattern");
   });
 });

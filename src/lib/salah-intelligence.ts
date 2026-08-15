@@ -38,7 +38,7 @@ export function calculateSalahAnalytics(data: SalahData, dates: string[]): Salah
     dhuhr: { logged: 0, onTime: 0 },
     asr: { logged: 0, onTime: 0 },
     maghrib: { logged: 0, onTime: 0 },
-    isha: { logged: 0, onTime: 0 }
+    isha: { logged: 0, onTime: 0 },
   };
 
   for (const date of dates) {
@@ -65,7 +65,7 @@ export function calculateSalahAnalytics(data: SalahData, dates: string[]): Salah
   for (const [prayer, stat] of Object.entries(prayerStats)) {
     perPrayerConsistency[prayer] = {
       ...stat,
-      percentage: stat.logged > 0 ? (stat.onTime / stat.logged) * 100 : 0
+      percentage: stat.logged > 0 ? (stat.onTime / stat.logged) * 100 : 0,
     };
   }
 
@@ -74,7 +74,7 @@ export function calculateSalahAnalytics(data: SalahData, dates: string[]): Salah
     onTimeCount,
     lateCount,
     onTimePercentage: totalLogged > 0 ? (onTimeCount / totalLogged) * 100 : 0,
-    perPrayerConsistency
+    perPrayerConsistency,
   };
 }
 
@@ -84,7 +84,7 @@ export function calculateSalahAnalytics(data: SalahData, dates: string[]): Salah
 export function compareSalahPeriods(
   data: SalahData,
   currentDates: string[],
-  previousDates: string[]
+  previousDates: string[],
 ): SalahPeriodComparison {
   const current = calculateSalahAnalytics(data, currentDates);
   const previous = calculateSalahAnalytics(data, previousDates);
@@ -93,13 +93,17 @@ export function compareSalahPeriods(
     current,
     previous,
     // Using simple subtraction for percentage point difference
-    trend: { 
+    trend: {
       delta: current.onTimePercentage - previous.onTimePercentage,
       // Traditional percentage change of the percentage
-      percentage: previous.onTimePercentage > 0 
-        ? ((current.onTimePercentage - previous.onTimePercentage) / previous.onTimePercentage) * 100 
-        : current.onTimePercentage > 0 ? 100 : 0
-    }
+      percentage:
+        previous.onTimePercentage > 0
+          ? ((current.onTimePercentage - previous.onTimePercentage) / previous.onTimePercentage) *
+            100
+          : current.onTimePercentage > 0
+            ? 100
+            : 0,
+    },
   };
 }
 

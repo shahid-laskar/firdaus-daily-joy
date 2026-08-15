@@ -5,6 +5,7 @@ These rules apply to Gemini, Lovable, and Claude.
 ## 1. Repository first
 
 Before modifying code:
+
 - inspect current branch
 - inspect recent commits
 - inspect changed files
@@ -23,6 +24,7 @@ Never trust a previous agent's summary when the repository can answer the questi
 ## 2. Preserve existing behavior
 
 Do not:
+
 - reset the repository
 - replace the existing architecture casually
 - recreate existing features
@@ -33,6 +35,7 @@ Do not:
 ## 3. Data safety
 
 If a schema changes:
+
 - support old data
 - migrate deterministically
 - preserve unknown/legacy fields where practical
@@ -42,6 +45,7 @@ If a schema changes:
 ## 4. Reuse
 
 Prefer:
+
 - existing components
 - existing hooks
 - existing state/store patterns
@@ -68,6 +72,7 @@ Centralize analytics and reuse them.
 ## 7. UX quality
 
 Every feature must consider:
+
 - empty state
 - loading state
 - error state
@@ -89,6 +94,7 @@ Journal and other private content must remain private unless the existing produc
 ## 9. Build validation
 
 Before declaring a task complete:
+
 - run type checks
 - run relevant tests
 - run production build
@@ -100,6 +106,7 @@ Before declaring a task complete:
 Only modify what the task requires.
 
 Avoid:
+
 - broad refactors
 - unrelated formatting changes
 - speculative redesigns
@@ -111,6 +118,7 @@ Avoid:
 Prefer one logical commit per feature.
 
 Commit message examples:
+
 - feat: add intelligence foundation
 - feat: add budget insights
 - feat: add salah consistency analysis
@@ -121,6 +129,7 @@ Commit message examples:
 ## 12. Reporting
 
 At the end of each task report:
+
 - files changed
 - data-model changes
 - migrations

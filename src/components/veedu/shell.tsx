@@ -22,14 +22,14 @@ export function Shell({
 }) {
   const online = useOnline();
   const [settings, setSettings] = useState(false);
-  const [profile, setProfile] = useStore("profile", { 
-    name: "", 
-    city: "Kozhikode", 
+  const [profile, setProfile] = useStore("profile", {
+    name: "",
+    city: "Kozhikode",
     gender: "",
     lat: 11.2588,
     lng: 75.7804,
     madhab: "shafi",
-    method: "MuslimWorldLeague"
+    method: "MuslimWorldLeague",
   });
   const [account] = useStore<{ email: string } | null>("account", null);
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -53,7 +53,11 @@ export function Shell({
       <header className="border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.gif" alt="Sunnah Home Logo" className="animate-butterfly size-10 object-cover rounded-xl shadow-sm" />
+            <img
+              src="/logo.gif"
+              alt="Sunnah Home Logo"
+              className="animate-butterfly size-10 object-cover rounded-xl shadow-sm"
+            />
             <span className="font-cursive text-3xl tracking-wide text-foreground">Sunnah Home</span>
           </Link>
           <div className="flex items-center gap-1.5">
@@ -63,7 +67,13 @@ export function Shell({
               title="Search everything (⌘K)"
               className="press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
             >
-              <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-[18px]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              >
                 <circle cx="11" cy="11" r="6.5" />
                 <path d="M16 16l4.5 4.5" strokeLinecap="round" />
               </svg>
@@ -84,9 +94,18 @@ export function Shell({
               aria-label="Settings"
               className="press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
             >
-              <svg viewBox="0 0 24 24" className="size-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <svg
+                viewBox="0 0 24 24"
+                className="size-[18px]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              >
                 <circle cx="12" cy="12" r="3" />
-                <path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" strokeLinecap="round" />
+                <path
+                  d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
             <Link
@@ -146,21 +165,27 @@ export function Shell({
           <div className="flex items-center justify-between">
             <div>
               <p className="title-md">Location Coordinates</p>
-              <p className="text-muted-foreground text-xs">{(profile.lat ?? 11.2588).toFixed(4)}, {(profile.lng ?? 75.7804).toFixed(4)}</p>
+              <p className="text-muted-foreground text-xs">
+                {(profile.lat ?? 11.2588).toFixed(4)}, {(profile.lng ?? 75.7804).toFixed(4)}
+              </p>
             </div>
-            <Action onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                  setProfile({ ...profile, lat: pos.coords.latitude, lng: pos.coords.longitude });
-                });
-              }
-            }}>Detect</Action>
+            <Action
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition((pos) => {
+                    setProfile({ ...profile, lat: pos.coords.latitude, lng: pos.coords.longitude });
+                  });
+                }
+              }}
+            >
+              Detect
+            </Action>
           </div>
           <div className="space-y-2">
             <label className="text-foreground/80 block text-[0.8rem] font-semibold tracking-wide">
               Madhab (Asr Method)
             </label>
-            <select 
+            <select
               value={profile.madhab ?? "shafi"}
               onChange={(e) => setProfile({ ...profile, madhab: e.target.value })}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
@@ -173,7 +198,7 @@ export function Shell({
             <label className="text-foreground/80 block text-[0.8rem] font-semibold tracking-wide">
               Calculation Method
             </label>
-            <select 
+            <select
               value={profile.method ?? "MuslimWorldLeague"}
               onChange={(e) => setProfile({ ...profile, method: e.target.value })}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
@@ -225,8 +250,8 @@ export function Shell({
           </div>
           <div className="rule-line" />
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Everything you write lives on this device first. When you're online it quietly
-            syncs — nothing is ever lost while you wait.
+            Everything you write lives on this device first. When you're online it quietly syncs —
+            nothing is ever lost while you wait.
           </p>
         </div>
       </Sheet>
@@ -234,5 +259,4 @@ export function Shell({
       <GlobalSearch open={search} onClose={() => setSearch(false)} />
     </div>
   );
-
 }

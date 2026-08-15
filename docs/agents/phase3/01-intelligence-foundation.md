@@ -11,6 +11,7 @@ Budget, Salah, mood, reminders, and the future Intelligent Daily Surface should 
 ## Inspect first
 
 Find the current:
+
 - state/store utilities
 - localStorage schema
 - date utilities
@@ -23,6 +24,7 @@ Find the current:
 ## Deliverables
 
 Create or extend a reusable analytics layer supporting:
+
 - date ranges
 - week/month comparisons
 - aggregate counts
@@ -33,6 +35,7 @@ Create or extend a reusable analytics layer supporting:
 - threshold signals
 
 Create an insight representation suitable for:
+
 - title
 - explanation
 - severity
@@ -41,6 +44,7 @@ Create an insight representation suitable for:
 - source
 
 Create a daily-signal representation suitable for:
+
 - category
 - priority
 - reason

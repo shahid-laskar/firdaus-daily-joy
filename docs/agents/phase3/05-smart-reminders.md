@@ -21,6 +21,7 @@ Create one context-aware reminder rule engine instead of independent reminder lo
 Reuse existing notification/nudge infrastructure if present.
 
 A rule should conceptually produce:
+
 - whether it applies
 - priority
 - message
@@ -33,6 +34,7 @@ A rule should conceptually produce:
 Do not make reminders noisy.
 
 Introduce:
+
 - priority
 - deduplication
 - cooldown/once-per-window behavior where appropriate
@@ -41,6 +43,7 @@ Introduce:
 ## Browser behavior
 
 Verify whether existing notifications are:
+
 - UI only
 - local scheduling
 - Notification API

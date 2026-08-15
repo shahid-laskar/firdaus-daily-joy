@@ -13,6 +13,7 @@ Do not show every metric.
 ## Inputs
 
 Potential signals:
+
 - next prayer
 - overdue/high-priority tasks
 - upcoming events
@@ -37,6 +38,7 @@ Do not recalculate metrics independently inside the UI.
 Create a transparent priority strategy.
 
 Example conceptual order:
+
 1. time-sensitive immediate item
 2. overdue/high-impact item
 3. prayer context
@@ -49,16 +51,18 @@ The exact ranking must be justified from existing product behavior and validated
 ## Privacy
 
 Do not surface:
+
 - private journal text
 - cycle data
 - detailed Hifz information
-unless the existing product explicitly defines that as appropriate for Home.
+  unless the existing product explicitly defines that as appropriate for Home.
 
 ## Lovable
 
 This is the flagship Lovable task.
 
 Focus on:
+
 - premium composition
 - hierarchy
 - calm motion

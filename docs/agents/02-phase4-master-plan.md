@@ -28,16 +28,21 @@ The Daily Operating Surface is intentionally last because it should consume the 
 ## Features
 
 ### P4.1 PWA + service worker
+
 Implement installability, application shell caching, appropriate offline behavior, and background capabilities supported by the existing architecture.
 
 ### P4.2 Quran API
+
 Integrate full Quran content through an appropriate API and cache bookmarked/recent content offline. Do not make network availability a prerequisite for bookmarked reading.
 
 ### P4.3 Hifz revision scheduler
+
 Create a revision queue driven by memorization history and a spaced-repetition-style scheduling algorithm. Keep the algorithm transparent and adjustable.
 
 ### P4.4 Ramadan mode
+
 Provide:
+
 - Suhur/Iftar context
 - Quran tracking
 - Taraweeh logging
@@ -45,7 +50,9 @@ Provide:
 - Ramadan-aware daily surface
 
 ### P4.5 Intelligent Daily Operating Surface
+
 Use:
+
 - prayer context
 - tasks
 - calendar

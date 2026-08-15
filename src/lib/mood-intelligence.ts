@@ -45,12 +45,12 @@ const MIN_SAMPLE_SIZE = 5;
  * This is strictly observational (e.g., finding the % of positive days given a condition).
  */
 export function calculateMoodAnalytics(data: DailyActivityData[]): MoodAnalytics {
-  const withMood = data.filter(d => !!d.mood);
+  const withMood = data.filter((d) => !!d.mood);
   const total = withMood.length;
 
-  const positive = withMood.filter(d => categorizeMood(d.mood!) === "positive").length;
-  const neutral = withMood.filter(d => categorizeMood(d.mood!) === "neutral").length;
-  const negative = withMood.filter(d => categorizeMood(d.mood!) === "negative").length;
+  const positive = withMood.filter((d) => categorizeMood(d.mood!) === "positive").length;
+  const neutral = withMood.filter((d) => categorizeMood(d.mood!) === "neutral").length;
+  const negative = withMood.filter((d) => categorizeMood(d.mood!) === "negative").length;
 
   const analytics: MoodAnalytics = {
     totalLoggedDays: total,
@@ -61,11 +61,11 @@ export function calculateMoodAnalytics(data: DailyActivityData[]): MoodAnalytics
 
   const calculateCorrelation = (
     conditionName: string,
-    filterFn: (d: DailyActivityData) => boolean
+    filterFn: (d: DailyActivityData) => boolean,
   ): CorrelationResult | undefined => {
     const matchingDays = withMood.filter(filterFn);
     if (matchingDays.length >= MIN_SAMPLE_SIZE) {
-      const pos = matchingDays.filter(d => categorizeMood(d.mood!) === "positive").length;
+      const pos = matchingDays.filter((d) => categorizeMood(d.mood!) === "positive").length;
       return {
         condition: conditionName,
         percentagePositive: (pos / matchingDays.length) * 100,
@@ -77,31 +77,28 @@ export function calculateMoodAnalytics(data: DailyActivityData[]): MoodAnalytics
 
   const sleepCorr = calculateCorrelation(
     "7+ hours of sleep",
-    d => d.sleepHours !== undefined && d.sleepHours >= 7
+    (d) => d.sleepHours !== undefined && d.sleepHours >= 7,
   );
   if (sleepCorr) analytics.sleepCorrelation = sleepCorr;
 
   const waterCorr = calculateCorrelation(
     "6+ glasses of water",
-    d => d.waterGlasses !== undefined && d.waterGlasses >= 6
+    (d) => d.waterGlasses !== undefined && d.waterGlasses >= 6,
   );
   if (waterCorr) analytics.waterCorrelation = waterCorr;
 
-  const workoutCorr = calculateCorrelation(
-    "a workout",
-    d => !!d.workedOut
-  );
+  const workoutCorr = calculateCorrelation("a workout", (d) => !!d.workedOut);
   if (workoutCorr) analytics.workoutCorrelation = workoutCorr;
 
   const salahCorr = calculateCorrelation(
     "mostly on-time Salah",
-    d => d.salahOnTimePct !== undefined && d.salahOnTimePct >= 80
+    (d) => d.salahOnTimePct !== undefined && d.salahOnTimePct >= 80,
   );
   if (salahCorr) analytics.salahCorrelation = salahCorr;
 
   const habitCorr = calculateCorrelation(
     "completing multiple habits",
-    d => d.habitsCompleted !== undefined && d.habitsCompleted >= 3
+    (d) => d.habitsCompleted !== undefined && d.habitsCompleted >= 3,
   );
   if (habitCorr) analytics.habitCorrelation = habitCorr;
 
@@ -118,7 +115,8 @@ export function generateMoodInsights(analytics: MoodAnalytics): Insight[] {
     insights.push({
       id: "mood-insufficient",
       title: "Keep checking in",
-      explanation: "There is not enough mood data yet to identify reliable patterns. Keep logging to build the picture.",
+      explanation:
+        "There is not enough mood data yet to identify reliable patterns. Keep logging to build the picture.",
       severity: "info",
       source: "mood",
     });
@@ -148,7 +146,8 @@ export function generateMoodInsights(analytics: MoodAnalytics): Insight[] {
     insights.push({
       id: "mood-baseline",
       title: "Patterns forming",
-      explanation: "You've built a solid baseline, but no strong activity patterns have emerged just yet.",
+      explanation:
+        "You've built a solid baseline, but no strong activity patterns have emerged just yet.",
       severity: "info",
       source: "mood",
     });

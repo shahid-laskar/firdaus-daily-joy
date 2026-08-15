@@ -7,6 +7,7 @@ Create a monthly Salah analysis using existing Salah records.
 ## Metrics
 
 At minimum:
+
 - logged prayers
 - on-time count
 - late count
@@ -29,6 +30,7 @@ Do not imply religious judgment beyond what the recorded data supports.
 ## UI
 
 Lovable may polish:
+
 - monthly summary
 - prayer-by-prayer chart
 - trend view

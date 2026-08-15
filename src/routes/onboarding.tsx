@@ -5,9 +5,7 @@ import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
-    meta: [
-      { title: "Welcome to Sunnah Home" },
-    ],
+    meta: [{ title: "Welcome to Sunnah Home" }],
   }),
   component: OnboardingPage,
 });
@@ -25,16 +23,24 @@ function OnboardingPage() {
   };
 
   return (
-    <div data-space="home" className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16">
+    <div
+      data-space="home"
+      className="relative z-[1] flex min-h-dvh flex-col justify-center px-6 py-16"
+    >
       <div className="mx-auto w-full max-w-sm">
         <div className="mb-10 flex items-center gap-3">
-          <img src="/logo.gif" alt="Sunnah Home Logo" className="animate-butterfly size-10 object-cover rounded-xl shadow-sm" />
+          <img
+            src="/logo.gif"
+            alt="Sunnah Home Logo"
+            className="animate-butterfly size-10 object-cover rounded-xl shadow-sm"
+          />
           <span className="font-cursive text-4xl tracking-wide text-foreground">Sunnah Home</span>
         </div>
 
         <h1 className="display-lg">Welcome to Sunnah Home</h1>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          Let's personalize your experience. Your location helps us tailor your experience, and gender helps us activate specific features like female-only cycle tracking.
+          Let's personalize your experience. Your location helps us tailor your experience, and
+          gender helps us activate specific features like female-only cycle tracking.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -50,7 +56,7 @@ function OnboardingPage() {
             onChange={(e) => setLocalProfile({ ...localProfile, city: e.target.value })}
             placeholder="e.g. Kozhikode, India"
           />
-          
+
           <div className="space-y-2">
             <label className="text-foreground/80 block text-[0.8rem] font-semibold tracking-wide">
               Gender
@@ -61,8 +67,10 @@ function OnboardingPage() {
                 onClick={() => setLocalProfile({ ...localProfile, gender: "female" })}
                 className="press flex items-center justify-center rounded-lg border py-2.5 text-sm"
                 style={{
-                  background: localProfile.gender === "female" ? "var(--space-accent-soft)" : "transparent",
-                  borderColor: localProfile.gender === "female" ? "var(--space-accent)" : "var(--rule)",
+                  background:
+                    localProfile.gender === "female" ? "var(--space-accent-soft)" : "transparent",
+                  borderColor:
+                    localProfile.gender === "female" ? "var(--space-accent)" : "var(--rule)",
                 }}
               >
                 Female
@@ -72,8 +80,10 @@ function OnboardingPage() {
                 onClick={() => setLocalProfile({ ...localProfile, gender: "male" })}
                 className="press flex items-center justify-center rounded-lg border py-2.5 text-sm"
                 style={{
-                  background: localProfile.gender === "male" ? "var(--space-accent-soft)" : "transparent",
-                  borderColor: localProfile.gender === "male" ? "var(--space-accent)" : "var(--rule)",
+                  background:
+                    localProfile.gender === "male" ? "var(--space-accent-soft)" : "transparent",
+                  borderColor:
+                    localProfile.gender === "male" ? "var(--space-accent)" : "var(--rule)",
                 }}
               >
                 Male

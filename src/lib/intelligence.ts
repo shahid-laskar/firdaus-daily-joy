@@ -16,8 +16,12 @@ export function getMonthRange(endDate: string | Date): string[] {
   return [...Array(30)].map((_, i) => isoOffset(endDate, -(29 - i)));
 }
 
-export function fillMissingData(range: string[], data: Record<string, number>, fallback = 0): number[] {
-  return range.map(date => data[date] ?? fallback);
+export function fillMissingData(
+  range: string[],
+  data: Record<string, number>,
+  fallback = 0,
+): number[] {
+  return range.map((date) => data[date] ?? fallback);
 }
 
 export function sum(values: number[]): number {
@@ -37,19 +41,30 @@ export function distribution<T extends string | number>(items: T[]): Map<T, numb
   return map;
 }
 
-export function trendDelta(current: number, previous: number): { delta: number, percentage: number } {
+export function trendDelta(
+  current: number,
+  previous: number,
+): { delta: number; percentage: number } {
   if (previous === 0) return { delta: current, percentage: current > 0 ? 100 : 0 };
   const delta = current - previous;
   const percentage = (delta / previous) * 100;
   return { delta, percentage };
 }
 
-export function checkThreshold(value: number, threshold: number, condition: "gt" | "gte" | "lt" | "lte"): boolean {
+export function checkThreshold(
+  value: number,
+  threshold: number,
+  condition: "gt" | "gte" | "lt" | "lte",
+): boolean {
   switch (condition) {
-    case "gt": return value > threshold;
-    case "gte": return value >= threshold;
-    case "lt": return value < threshold;
-    case "lte": return value <= threshold;
+    case "gt":
+      return value > threshold;
+    case "gte":
+      return value >= threshold;
+    case "lt":
+      return value < threshold;
+    case "lte":
+      return value <= threshold;
   }
 }
 

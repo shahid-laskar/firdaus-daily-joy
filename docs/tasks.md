@@ -5,10 +5,12 @@ This document tracks the progress of the Sunnah Home application against the pro
 ## ✅ Completed Tasks
 
 ### Prototype Integration
+
 - [x] Audit the current codebase and Lovable prototype files
 - [x] Merge Lovable prototype components into the main repository securely
 
 ### Phase 0 — Foundation Fixes
+
 - [x] **Multiple notes:** Replaced the single scratchpad with a robust multi-note system (`notes.tsx`).
 - [x] **Daily kid chore reset:** Updated the core logic to ensure kid chores reset automatically based on their assigned recurrence rule.
 - [x] **Calendar time support:** Event system now supports time scheduling, not just dates.
@@ -17,6 +19,7 @@ This document tracks the progress of the Sunnah Home application against the pro
 - [x] **Meal plan "copy last week":** Added a one-click button to carry forward previous meal structures.
 
 ### Phase 1 — Immediate Improvements
+
 - [x] **Recurring tasks:** Tasks can now repeat daily, weekly, or on specific days, auto-generating instances.
 - [x] **Browser prayer notifications:** Engineered a `useNudges` hook utilizing the native `Notification` API to send alerts for prayer times (with lead times).
 - [x] **Custom Reminders:** Integrated custom recurring push notifications alongside prayer times.
@@ -25,16 +28,16 @@ This document tracks the progress of the Sunnah Home application against the pro
 - [x] **Enhanced Home thread:** The main thread on the "Today" page now smartly displays health summaries (like water and sleep tracking).
 - [x] **Habit visibility on Home:** The "Today" thread now surfaces completion stats for your top 3 habits.
 
-
 ---
-
 
 ## ⏳ Pending Tasks
 
 ### Phase 0 — Leftovers
+
 - [x] **More daily verses:** Expand the hardcoded list of verses in the Deen module from 3 to 30+ verses to ensure a rotating variety.
 
 ### Phase 2 — Workflow Integration (4–8 weeks)
+
 - [x] **Unified visual calendar:** Upgrade the current calendar view to a month/week grid showing tasks, events, meals, fasting, and Islamic dates all in one place.
 - [x] **Task ↔ Calendar sync:** Tasks with dates should appear on the calendar; calendar events should surface as tasks.
 - [x] **Islamic calendar overlay:** Integrate Hijri dates into the calendar and highlight key Islamic events (Ramadan, Eid, Ashura).
@@ -44,6 +47,7 @@ This document tracks the progress of the Sunnah Home application against the pro
 - [x] **Search:** Implement full-text global search across tasks, notes, journals, recipes, and expenses.
 
 ### Phase 3 — Intelligence & Automation (8–16 weeks)
+
 - [ ] **Smart weekly meal suggestions:** Auto-suggest meals from the recipe repository based on historical meal plans.
 - [ ] **Budget insights:** Month-over-month comparison, category trends, and overspend alerts.
 - [ ] **Salah consistency analysis:** Generate a monthly report showing on-time vs. late ratio and improvement tracking.
@@ -52,6 +56,7 @@ This document tracks the progress of the Sunnah Home application against the pro
 - [ ] **Family member model:** Transition from a "Kids" list to a shared family entity model, assigning tasks and responsibilities to distinct members.
 
 ### Phase 4 — Differentiation (16+ weeks)
+
 - [ ] **Ramadan mode:** Specialized dashboard showing Suhur/Iftar times, daily Quran tracking, Taraweeh logging, and charity tracking.
 - [ ] **Quran API integration:** Pull in full Quran text via an external API and cache bookmarked Surahs offline.
 - [ ] **Hifz revision scheduler:** Spaced repetition algorithm for memorized Surahs with daily revision prompts.

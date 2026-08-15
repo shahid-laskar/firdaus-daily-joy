@@ -1,6 +1,7 @@
 # Execution Checklist
 
 ## Before each task
+
 - [ ] Correct branch created
 - [ ] Repository audited
 - [ ] Existing implementation verified
@@ -9,6 +10,7 @@
 - [ ] Task packet read
 
 ## Gemini implementation
+
 - [ ] Core logic implemented
 - [ ] Persistence preserved
 - [ ] Migration added if required
@@ -17,6 +19,7 @@
 - [ ] Build passes
 
 ## Lovable pass
+
 - [ ] Scope explicitly restricted
 - [ ] Real data/state used
 - [ ] Mobile verified
@@ -24,6 +27,7 @@
 - [ ] No unrelated architecture changes
 
 ## Claude review
+
 - [ ] Architecture reviewed
 - [ ] Data integrity reviewed
 - [ ] Algorithms reviewed
@@ -31,6 +35,7 @@
 - [ ] Required fixes addressed
 
 ## Final acceptance
+
 - [ ] Existing Phase 0–2 behavior verified
 - [ ] Target workflow works end-to-end
 - [ ] Persistence survives refresh

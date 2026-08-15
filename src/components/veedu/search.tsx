@@ -10,14 +10,21 @@ type Hit = { id: string; label: string; where: string; to: string };
 export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [q, setQ] = useState("");
   const navigate = useNavigate();
-  const [tasks] = useStore<{ id: string; title: string; list: string; done: boolean }[]>("tasks", []);
+  const [tasks] = useStore<{ id: string; title: string; list: string; done: boolean }[]>(
+    "tasks",
+    [],
+  );
   const [notes] = useStore<Note[]>("notesList", []);
   const [events] = useStore<CalEvent[]>("events", []);
   const [recipes] = useStore<{ id: string; name: string; items: string }[]>("recipes", []);
   const [grocery] = useStore<{ id: string; name: string; got: boolean }[]>("grocery", []);
-  const [expenses] = useStore<{ id: string; category: string; note: string; amount: number; date: string }[]>("expenses", []);
+  const [expenses] = useStore<
+    { id: string; category: string; note: string; amount: number; date: string }[]
+  >("expenses", []);
   const [habits] = useStore<{ id: string; name: string }[]>("habits", []);
-  const [family] = useStore<{ id: string; name: string; role: string; chores: { id: string; title: string }[] }[]>("family", []);
+  const [family] = useStore<
+    { id: string; name: string; role: string; chores: { id: string; title: string }[] }[]
+  >("family", []);
 
   useEffect(() => {
     if (!open) setQ("");
@@ -27,15 +34,52 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     const term = q.trim().toLowerCase();
     if (term.length < 2) return [];
     const all: Hit[] = [
-      ...tasks.map((t) => ({ id: `t${t.id}`, label: t.title, where: `Task · ${t.list}`, to: "/?tab=tasks" })),
-      ...notes.map((n) => ({ id: `n${n.id}`, label: n.title || "Untitled", where: "Note", to: "/?tab=notes" })),
-      ...events.map((e) => ({ id: `e${e.id}`, label: e.title, where: `Calendar · ${e.date}`, to: "/?tab=calendar" })),
-      ...recipes.map((r) => ({ id: `r${r.id}`, label: r.name, where: "Recipe", to: "/?tab=meals" })),
-      ...grocery.map((g) => ({ id: `g${g.id}`, label: g.name, where: "Grocery", to: "/?tab=grocery" })),
-      ...habits.map((h) => ({ id: `h${h.id}`, label: h.name, where: "Habit", to: "/me?tab=habits" })),
-      ...family.filter((f) => f.role === "child").flatMap((k) =>
-        k.chores.map((c) => ({ id: `c${c.id}`, label: c.title, where: `${k.name}'s routine`, to: "/?tab=kids" })),
-      ),
+      ...tasks.map((t) => ({
+        id: `t${t.id}`,
+        label: t.title,
+        where: `Task · ${t.list}`,
+        to: "/?tab=tasks",
+      })),
+      ...notes.map((n) => ({
+        id: `n${n.id}`,
+        label: n.title || "Untitled",
+        where: "Note",
+        to: "/?tab=notes",
+      })),
+      ...events.map((e) => ({
+        id: `e${e.id}`,
+        label: e.title,
+        where: `Calendar · ${e.date}`,
+        to: "/?tab=calendar",
+      })),
+      ...recipes.map((r) => ({
+        id: `r${r.id}`,
+        label: r.name,
+        where: "Recipe",
+        to: "/?tab=meals",
+      })),
+      ...grocery.map((g) => ({
+        id: `g${g.id}`,
+        label: g.name,
+        where: "Grocery",
+        to: "/?tab=grocery",
+      })),
+      ...habits.map((h) => ({
+        id: `h${h.id}`,
+        label: h.name,
+        where: "Habit",
+        to: "/me?tab=habits",
+      })),
+      ...family
+        .filter((f) => f.role === "child")
+        .flatMap((k) =>
+          k.chores.map((c) => ({
+            id: `c${c.id}`,
+            label: c.title,
+            where: `${k.name}'s routine`,
+            to: "/?tab=kids",
+          })),
+        ),
       ...expenses.map((e) => ({
         id: `x${e.id}`,
         label: `${e.category}${e.note ? ` — ${e.note}` : ""} · ₹${e.amount}`,
@@ -56,7 +100,11 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]">
-      <button aria-label="Close search" onClick={onClose} className="absolute inset-0 bg-black/25 backdrop-blur-[2px]" />
+      <button
+        aria-label="Close search"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+      />
       <div className="bg-card rise relative w-full max-w-lg overflow-hidden rounded-3xl border shadow-[var(--shadow-float)]">
         <input
           autoFocus
