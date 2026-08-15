@@ -14,7 +14,7 @@
 
 import { isoDate } from "./intelligence";
 import { isRepeating, occursOn } from "./recurrence";
-import type { HifzItem } from "./hifz-scheduler";
+import { generateHifzRevisionQueue, type HifzItem } from "./hifz-scheduler";
 import type { ReminderSignal } from "./reminder-engine";
 import type { DailySurfaceData, TaskRecord, CalEventRecord } from "./daily-surface";
 
@@ -421,27 +421,62 @@ export function inferBlockForItem(
 
   const titleLower = (item.title ?? "").toLowerCase();
 
-  // 3. Text heuristics with prayer names
-  if (titleLower.includes("fajr") || titleLower.includes("duha") || titleLower.includes("morning")) {
-    if (titleLower.includes("before fajr") || titleLower.includes("tahajjud") || titleLower.includes("suhur")) {
-      return "night";
-    }
+  // 3. Text heuristics with prayer names and spiritual rhythm markers
+  if (
+    titleLower.includes("tahajjud") ||
+    titleLower.includes("suhur") ||
+    titleLower.includes("qiyam") ||
+    titleLower.includes("before fajr")
+  ) {
+    return "night";
+  }
+
+  if (
+    titleLower.includes("fajr") ||
+    titleLower.includes("duha") ||
+    titleLower.includes("morning") ||
+    titleLower.includes("ishraq") ||
+    titleLower.includes("before dhuhr")
+  ) {
     return "morning";
   }
-  if (titleLower.includes("dhuhr") || titleLower.includes("noon") || titleLower.includes("qaylulah") || titleLower.includes("lunch")) {
-    if (titleLower.includes("before dhuhr")) return "morning";
+
+  if (
+    titleLower.includes("dhuhr") ||
+    titleLower.includes("noon") ||
+    titleLower.includes("qaylulah") ||
+    titleLower.includes("lunch") ||
+    titleLower.includes("before asr")
+  ) {
     return "afternoon";
   }
-  if (titleLower.includes("asr")) {
-    if (titleLower.includes("before asr")) return "afternoon";
+
+  if (
+    titleLower.includes("asr") ||
+    titleLower.includes("late afternoon") ||
+    titleLower.includes("before maghrib")
+  ) {
     return "lateAfternoon";
   }
-  if (titleLower.includes("maghrib") || titleLower.includes("sunset") || titleLower.includes("iftar") || titleLower.includes("dinner")) {
-    if (titleLower.includes("before maghrib")) return "lateAfternoon";
+
+  if (
+    titleLower.includes("maghrib") ||
+    titleLower.includes("sunset") ||
+    titleLower.includes("iftar") ||
+    titleLower.includes("dinner") ||
+    titleLower.includes("before isha")
+  ) {
     return "evening";
   }
-  if (titleLower.includes("isha") || titleLower.includes("night") || titleLower.includes("sleep") || titleLower.includes("bed") || titleLower.includes("taraweeh")) {
-    if (titleLower.includes("before isha")) return "evening";
+
+  if (
+    titleLower.includes("isha") ||
+    titleLower.includes("night") ||
+    titleLower.includes("sleep") ||
+    titleLower.includes("bed") ||
+    titleLower.includes("taraweeh") ||
+    titleLower.includes("winding down")
+  ) {
     return "night";
   }
 
@@ -653,14 +688,14 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
 
   // 3. Hifz portions due today
   if (input.hifzItems && input.hifzItems.length > 0) {
-    const dueCount = input.hifzItems.filter((h) => h.due).length;
-    if (dueCount > 0) {
-      const firstDue = input.hifzItems.find((h) => h.due);
+    const queue = generateHifzRevisionQueue(input.hifzItems, dateStr);
+    if (queue.dueToday.length > 0) {
+      const firstDue = queue.dueToday[0]!;
       blockItemsMap.morning.push({
         id: "hifz-revision",
         category: "hifz",
-        title: `Muraja'ah (${dueCount} due)`,
-        detail: firstDue ? `Portion: ${firstDue.surah}` : undefined,
+        title: `Muraja'ah (${queue.dueToday.length} due)`,
+        detail: `Portion: ${firstDue.surah}`,
         relativeAnchor: { prayer: "fajr", relation: "after" },
         blockId: "morning",
         priority: 4,
@@ -671,7 +706,9 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
 
   // 4. Calendar events
   if (input.events) {
-    const todayEvents = input.events.filter((e) => e.date === dateStr || occursOn(e.recur, dateStr));
+    const todayEvents = input.events.filter((e) =>
+      e.date === dateStr || (Boolean((e as any).recur) && occursOn((e as any).recur, dateStr))
+    );
     for (const ev of todayEvents) {
       const bId = inferBlockForItem({ title: ev.title, time: ev.time, category: "event" }, prayerMap);
       blockItemsMap[bId].push({
@@ -691,7 +728,9 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
   // 5. Tasks due today
   if (input.tasks) {
     const dueTasks = input.tasks.filter((t) =>
-      isRepeating(t.recur) ? occursOn(t.recur, dateStr) : t.date === dateStr || !t.done
+      isRepeating(t.recur)
+        ? occursOn(t.recur, dateStr)
+        : ((t as any).date ? (t as any).date === dateStr : !t.done)
     );
 
     for (const t of dueTasks) {
