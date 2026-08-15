@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 const rawUrl = import.meta.env["VITE_SUPABASE_URL"] ?? "";
 const rawKey = import.meta.env["VITE_SUPABASE_ANON_KEY"] ?? "";
@@ -11,4 +12,9 @@ export const cloudEnabled = valid;
 export const supabase = createClient(
   valid ? rawUrl : "http://localhost:54321",
   valid ? rawKey : "public-anon-key",
+  {
+    realtime: {
+      transport: typeof WebSocket !== "undefined" ? WebSocket : (ws as any),
+    },
+  },
 );
