@@ -84,7 +84,7 @@ function Today() {
   const countdown = useNextPrayer();
   const prayers = usePrayers();
   const { isActive: isRamadan, ramadanDay } = useRamadanMode();
-  useReminderEngine();
+  const activeReminders = useReminderEngine();
 
   const hour = now?.getHours() ?? 8;
   const dueToday = tasks.filter((t) =>
@@ -116,6 +116,7 @@ function Today() {
         checkins,
         expenses,
         limits,
+        activeReminders,
       }),
     [
       now,
@@ -135,6 +136,7 @@ function Today() {
       checkins,
       expenses,
       limits,
+      activeReminders,
     ]
   );
 
