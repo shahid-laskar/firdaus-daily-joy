@@ -1,8 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
 
-const rawUrl = import.meta.env["VITE_SUPABASE_URL"] ?? "";
-const rawKey = import.meta.env["VITE_SUPABASE_ANON_KEY"] ?? "";
+const rawUrl =
+  (typeof import.meta !== "undefined" && import.meta.env
+    ? import.meta.env["VITE_SUPABASE_URL"]
+    : typeof process !== "undefined"
+      ? process.env?.["VITE_SUPABASE_URL"]
+      : "") ?? "";
+const rawKey =
+  (typeof import.meta !== "undefined" && import.meta.env
+    ? import.meta.env["VITE_SUPABASE_ANON_KEY"]
+    : typeof process !== "undefined"
+      ? process.env?.["VITE_SUPABASE_ANON_KEY"]
+      : "") ?? "";
 
 const valid = /^https?:\/\//.test(rawUrl) && rawKey.length > 0;
 

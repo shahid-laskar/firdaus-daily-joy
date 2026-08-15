@@ -4,6 +4,8 @@ import { todayKey, uid, useNow, useStore } from "@/lib/store";
 import { VERSES, verseOfDay } from "@/lib/verses";
 import { getWeekRange } from "@/lib/intelligence";
 import { calculateSalahAnalytics } from "@/lib/salah-intelligence";
+import { ALL_SURAHS, searchSurahs } from "@/lib/quran-data";
+import { useSurah, preloadBookmarkedSurahs, isSurahCached } from "@/lib/quran-service";
 
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from "adhan";
 
@@ -357,183 +359,230 @@ export function Tasbih() {
   );
 }
 
-const SURAHS = [
-  {
-    n: 1,
-    name: "Al-Fatihah",
-    meaning: "The Opening",
-    ayahs: [
-      {
-        n: 1,
-        ar: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-        en: "In the name of Allah, the Entirely Merciful, the Especially Merciful.",
-      },
-      {
-        n: 2,
-        ar: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
-        en: "All praise is due to Allah, Lord of the worlds.",
-      },
-      {
-        n: 3,
-        ar: "الرَّحْمَٰنِ الرَّحِيمِ",
-        en: "The Entirely Merciful, the Especially Merciful.",
-      },
-      { n: 4, ar: "مَالِكِ يَوْمِ الدِّينِ", en: "Sovereign of the Day of Recompense." },
-      {
-        n: 5,
-        ar: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
-        en: "It is You we worship and You we ask for help.",
-      },
-      { n: 6, ar: "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ", en: "Guide us to the straight path." },
-      {
-        n: 7,
-        ar: "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ",
-        en: "The path of those upon whom You have bestowed favour, not of those who have earned Your anger, nor of those who go astray.",
-      },
-    ],
-  },
-  {
-    n: 112,
-    name: "Al-Ikhlas",
-    meaning: "Sincerity",
-    ayahs: [
-      { n: 1, ar: "قُلْ هُوَ اللَّهُ أَحَدٌ", en: "Say, He is Allah, One." },
-      { n: 2, ar: "اللَّهُ الصَّمَدُ", en: "Allah, the Eternal Refuge." },
-      { n: 3, ar: "لَمْ يَلِدْ وَلَمْ يُولَدْ", en: "He neither begets nor is born." },
-      { n: 4, ar: "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ", en: "Nor is there to Him any equivalent." },
-    ],
-  },
-  {
-    n: 113,
-    name: "Al-Falaq",
-    meaning: "The Daybreak",
-    ayahs: [
-      {
-        n: 1,
-        ar: "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",
-        en: "Say, I seek refuge in the Lord of daybreak.",
-      },
-      { n: 2, ar: "مِن شَرِّ مَا خَلَقَ", en: "From the evil of that which He created." },
-      {
-        n: 3,
-        ar: "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",
-        en: "And from the evil of darkness when it settles.",
-      },
-      {
-        n: 4,
-        ar: "وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",
-        en: "And from the evil of the blowers in knots.",
-      },
-      {
-        n: 5,
-        ar: "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
-        en: "And from the evil of an envier when he envies.",
-      },
-    ],
-  },
-];
-
 export function Quran() {
   const [openSurah, setOpenSurah] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
   const [bookmarks, setBookmarks] = useStore<string[]>("quran-bookmarks", []);
   const [translation, setTranslation] = useStore("quran-translation", true);
   const [sessions, setSessions] = useStore<
     { id: string; surah: string; range: string; mins: string; date: string }[]
   >("quran-log", []);
   const [form, setForm] = useState({ surah: "", range: "", mins: "" });
-  const surah = SURAHS.find((s) => s.n === openSurah);
 
-  if (surah) {
-    return (
-      <div className="rise">
-        <div className="mb-8 flex items-center justify-between">
+  const { surah, loading, error, retry } = useSurah(openSurah);
+
+  // Background preload for bookmarked surahs
+  useEffect(() => {
+    preloadBookmarkedSurahs(bookmarks);
+  }, [bookmarks]);
+
+  const filteredSurahs = useMemo(() => searchSurahs(search), [search]);
+
+  if (openSurah !== null) {
+    if (loading && !surah) {
+      return (
+        <div className="rise py-16 text-center">
+          <div className="mx-auto size-8 animate-spin rounded-full border-2 border-[var(--space-accent)] border-t-transparent mb-4" />
+          <p className="title-md">Loading Surah {openSurah}…</p>
+          <p className="text-muted-foreground text-xs mt-1">
+            Retrieving and caching text for offline reading
+          </p>
           <button
             onClick={() => setOpenSurah(null)}
-            className="text-ink-soft hover:text-foreground text-sm"
+            className="mt-6 text-ink-soft hover:text-foreground text-xs underline"
           >
-            ← Surahs
-          </button>
-          <button
-            onClick={() => setTranslation(!translation)}
-            className="text-ink-faint hover:text-foreground text-xs"
-          >
-            {translation ? "Arabic only" : "Show translation"}
+            ← Back to Surahs
           </button>
         </div>
+      );
+    }
 
-        <div className="mb-10 text-center">
-          <p className="eyebrow">Surah {surah.n}</p>
-          <h1 className="display-lg mt-2">{surah.name}</h1>
-          <p className="text-ink-faint text-sm">{surah.meaning}</p>
+    if (error && !surah) {
+      return (
+        <div className="rise py-16 text-center">
+          <p className="title-md text-destructive">Could not load Surah {openSurah}</p>
+          <p className="text-muted-foreground text-xs mt-2 max-w-sm mx-auto">
+            {error.includes("Failed to fetch") || error.includes("offline")
+              ? "This Surah is not cached on this device yet. Connect to the internet once to cache it."
+              : error}
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Action onClick={retry}>Try again</Action>
+            <Action onClick={() => setOpenSurah(null)}>Back to Surahs</Action>
+          </div>
         </div>
+      );
+    }
 
-        <div dir="rtl" className="space-y-8">
-          {surah.ayahs.map((a) => {
-            const key = `${surah.n}:${a.n}`;
-            const marked = bookmarks.includes(key);
-            return (
-              <article key={a.n} className="group">
-                <p className="arabic text-[1.75rem] sm:text-[2rem]">
-                  {a.ar}
-                  <span className="text-ink-faint mr-2 inline-grid size-7 place-items-center rounded-full border border-[var(--rule)] align-middle text-[0.7rem]">
-                    {a.n}
-                  </span>
-                </p>
+    if (surah) {
+      return (
+        <div className="rise">
+          <div className="mb-8 flex items-center justify-between">
+            <button
+              onClick={() => setOpenSurah(null)}
+              className="text-ink-soft hover:text-foreground text-sm"
+            >
+              ← Surahs
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                {surah.n > 1 && (
+                  <button
+                    onClick={() => setOpenSurah(surah.n - 1)}
+                    className="press text-ink-faint hover:text-foreground px-2 py-1 text-xs rounded border border-border"
+                  >
+                    Prev
+                  </button>
+                )}
+                {surah.n < 114 && (
+                  <button
+                    onClick={() => setOpenSurah(surah.n + 1)}
+                    className="press text-ink-faint hover:text-foreground px-2 py-1 text-xs rounded border border-border"
+                  >
+                    Next
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setTranslation(!translation)}
+                className="text-ink-faint hover:text-foreground text-xs"
+              >
+                {translation ? "Arabic only" : "Show translation"}
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-10 text-center">
+            <p className="eyebrow">
+              Surah {surah.n} · {surah.revelationType} · {surah.numberOfAyahs} Ayahs
+            </p>
+            <h1 className="display-lg mt-2 flex items-center justify-center gap-3">
+              <span>{surah.name}</span>
+              <span className="arabic text-3xl text-ink-soft font-normal">{surah.arabicName}</span>
+            </h1>
+            <p className="text-ink-faint text-sm mt-1">{surah.meaning}</p>
+
+            {/* Noble Bismillah for all surahs except Al-Fatihah (which includes it as Ayah 1) and At-Tawbah (Surah 9) */}
+            {surah.n !== 1 && surah.n !== 9 && (
+              <div className="my-8 py-4 border-y border-border/50">
+                <p className="arabic text-2xl text-ink-soft">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
                 {translation && (
-                  <p dir="ltr" className="text-ink-soft mt-3 text-[0.95rem] leading-relaxed">
-                    {a.en}
+                  <p className="text-ink-faint text-xs mt-1.5">
+                    In the name of Allah, the Entirely Merciful, the Especially Merciful.
                   </p>
                 )}
-                <div
-                  dir="ltr"
-                  className="mt-3 flex gap-3 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
-                >
-                  <button
-                    onClick={() =>
-                      setBookmarks(
-                        marked ? bookmarks.filter((b) => b !== key) : [...bookmarks, key],
-                      )
-                    }
-                    className="text-ink-faint hover:text-foreground text-xs"
+              </div>
+            )}
+          </div>
+
+          <div dir="rtl" className="space-y-8">
+            {surah.ayahs.map((a) => {
+              const key = `${surah.n}:${a.n}`;
+              const marked = bookmarks.includes(key);
+              return (
+                <article key={a.n} className="group">
+                  <p className="arabic text-[1.75rem] sm:text-[2rem] leading-loose">
+                    {a.ar}
+                    <span className="text-ink-faint mr-2 inline-grid size-7 place-items-center rounded-full border border-[var(--rule)] align-middle text-[0.7rem]">
+                      {a.n}
+                    </span>
+                  </p>
+                  {translation && (
+                    <p dir="ltr" className="text-ink-soft mt-3 text-[0.95rem] leading-relaxed">
+                      {a.en}
+                    </p>
+                  )}
+                  <div
+                    dir="ltr"
+                    className="mt-3 flex gap-3 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100"
                   >
-                    {marked ? "Bookmarked" : "Bookmark"}
-                  </button>
-                  <button
-                    onClick={() => navigator.clipboard?.writeText(`${a.ar}\n${a.en}`)}
-                    className="text-ink-faint hover:text-foreground text-xs"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+                    <button
+                      onClick={() =>
+                        setBookmarks(
+                          marked ? bookmarks.filter((b) => b !== key) : [...bookmarks, key],
+                        )
+                      }
+                      className={`text-xs ${
+                        marked ? "text-foreground font-semibold" : "text-ink-faint hover:text-foreground"
+                      }`}
+                    >
+                      {marked ? "★ Bookmarked" : "☆ Bookmark"}
+                    </button>
+                    <button
+                      onClick={() => navigator.clipboard?.writeText(`${a.ar}\n${a.en}`)}
+                      className="text-ink-faint hover:text-foreground text-xs"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      onClick={() => {
+                        setForm({ surah: surah.name, range: `Ayah ${a.n}`, mins: "5" });
+                        setOpenSurah(null);
+                      }}
+                      className="text-ink-faint hover:text-foreground text-xs"
+                    >
+                      Log reading
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   return (
     <div className="space-y-10">
       <Section eyebrow="Read" title="Quran">
-        <div className="divide-border/70 divide-y">
-          {SURAHS.map((s) => (
-            <button
-              key={s.n}
-              onClick={() => setOpenSurah(s.n)}
-              className="group flex w-full items-center gap-4 py-4 text-left"
-            >
-              <span className="text-ink-faint numeric w-6 text-sm">{s.n}</span>
-              <span className="flex-1">
-                <span className="title-md block">{s.name}</span>
-                <span className="text-ink-faint text-xs">{s.meaning}</span>
-              </span>
-              <span className="arabic text-ink-soft text-lg">{s.ayahs.length} آيات</span>
-            </button>
-          ))}
+        <div className="mb-4">
+          <Field
+            label="Search Surahs"
+            value={search}
+            placeholder="Search by name, meaning or number (e.g. Kahf, 18, Ya-Sin)…"
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
+
+        <div className="divide-border/70 divide-y max-h-[540px] overflow-y-auto pr-1">
+          {filteredSurahs.map((s) => {
+            const cached = isSurahCached(s.n);
+            return (
+              <button
+                key={s.n}
+                onClick={() => setOpenSurah(s.n)}
+                className="group flex w-full items-center gap-4 py-3.5 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.02] px-2 rounded-lg transition-colors"
+              >
+                <span className="text-ink-faint numeric w-7 text-sm font-medium">{s.n}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="title-md flex items-baseline gap-2">
+                    <span className="group-hover:text-foreground">{s.name}</span>
+                    <span className="text-[0.7rem] text-ink-faint font-normal uppercase tracking-wider">
+                      {s.revelationType}
+                    </span>
+                  </span>
+                  <span className="text-ink-faint text-xs truncate block">{s.meaning}</span>
+                </span>
+                <span className="text-right shrink-0">
+                  <span className="arabic text-ink-soft text-lg block">{s.arabicName}</span>
+                  <span className="text-ink-faint text-[0.7rem] block numeric">
+                    {s.numberOfAyahs} آيات {cached && "· on device"}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {filteredSurahs.length === 0 && (
+          <p className="text-ink-faint text-center py-6 text-sm">No Surah matches "{search}".</p>
+        )}
+
         {bookmarks.length > 0 && (
-          <p className="text-ink-faint mt-4 text-xs">{bookmarks.length} bookmarked ayah(s)</p>
+          <p className="text-ink-faint mt-4 text-xs">
+            {bookmarks.length} bookmarked ayah(s) automatically cached on device
+          </p>
         )}
       </Section>
 
