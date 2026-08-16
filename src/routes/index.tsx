@@ -485,7 +485,7 @@ function VibrantToday({
   bands: Band[];
   quietDay: boolean;
   isRamadan: boolean;
-  ramadanDay: number;
+  ramadanDay: number | null;
   spentToday: number;
   mealToday?: string | undefined;
   water: number;

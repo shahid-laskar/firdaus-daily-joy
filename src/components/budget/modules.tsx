@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
+import { ShoppingBasket, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { Action, EmptyState, Field, Meter, Section } from "@/components/veedu/primitives";
+import { PageHero, HeroFigure, type HeroPill } from "@/components/veedu/page-hero";
+import { useExperience } from "@/lib/theme-provider";
 import { todayKey, uid, useStore } from "@/lib/store";
 import { calculateBudgetAnalytics, generateBudgetInsights } from "@/lib/budget-intelligence";
 
@@ -65,7 +68,7 @@ export function QuickEntry() {
                 key={c}
                 type="button"
                 onClick={() => setCategory(c)}
-                className={`press shrink-0 rounded-full px-3 py-1.5 text-[0.78rem] ${
+                className={`press shrink-0 rounded-full px-3.5 py-1.5 text-[0.78rem] ${
                   c === category ? "bg-space-soft text-foreground" : "text-muted-foreground"
                 }`}
               >
@@ -126,6 +129,7 @@ export function QuickEntry() {
 }
 
 export function Overview() {
+  const { experience } = useExperience();
   const [expenses] = useExpenses();
   const [limits, setLimits] = useLimits();
   const [newCat, setNewCat] = useState("");
@@ -146,6 +150,136 @@ export function Overview() {
     Object.keys(limits).forEach((k) => !map.has(k) && map.set(k, 0));
     return [...map.entries()].sort((a, b) => b[1] - a[1]);
   }, [analytics.categoryTotals, limits]);
+
+  const categorySection = (
+    <Section eyebrow="Where it went" title="Categories">
+      {byCategory.length === 0 ? (
+        <EmptyState
+          glyph="◦"
+          headline="No categories in play"
+          body="Once you log expenses, they group themselves here so you can see the shape of the month."
+        />
+      ) : (
+        <ul className="space-y-5">
+          {byCategory.map(([cat, amt]) => {
+            const limit = limits[cat];
+            return (
+              <li key={cat}>
+                <div className="mb-2 flex items-baseline justify-between">
+                  <span className="text-[0.95rem]">{cat}</span>
+                  <span className="numeric text-ink-soft text-sm">
+                    ₹{money(amt)}
+                    {limit ? <span className="text-ink-faint"> / {money(limit)}</span> : null}
+                  </span>
+                </div>
+                <Meter value={limit ? (amt / limit) * 100 : total ? (amt / total) * 100 : 0} />
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!newCat.trim()) return;
+          setLimits({ ...limits, [newCat.trim()]: Number(newLimit) || 0 });
+          setNewCat("");
+          setNewLimit("");
+        }}
+        className="mt-8 grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-end"
+      >
+        <Field label="Category" value={newCat} onChange={(e) => setNewCat(e.target.value)} />
+        <Field
+          label="Monthly limit"
+          inputMode="decimal"
+          value={newLimit}
+          onChange={(e) => setNewLimit(e.target.value)}
+        />
+        <Action type="submit" className="h-[42px]">
+          Set
+        </Action>
+      </form>
+    </Section>
+  );
+
+  if (experience === "vibrant") {
+    const pctUsed = cap ? Math.round((total / cap) * 100) : 0;
+    const remaining = cap ? Math.max(0, cap - total) : 0;
+    const currentMonthLabel = new Date().toLocaleDateString(undefined, {
+      month: "long",
+      year: "numeric",
+    });
+
+    const pills: HeroPill[] = [
+      {
+        id: "daily-avg",
+        icon: Wallet,
+        label: `₹${money(Math.round(analytics.dailyAverage))}/day pace`,
+      },
+      ...(analytics.previousMonthTotal > 0
+        ? [
+            {
+              id: "trend",
+              icon: analytics.delta.delta >= 0 ? TrendingUp : TrendingDown,
+              label: `${analytics.delta.delta >= 0 ? "+" : "−"}${Math.abs(
+                Math.round(analytics.delta.percentage),
+              )}% vs last mo`,
+            },
+          ]
+        : []),
+      ...(byCategory.length > 0 && byCategory[0] && byCategory[0][1] > 0
+        ? [
+            {
+              id: "top-category",
+              icon: ShoppingBasket,
+              label: `Top: ${byCategory[0][0]} (₹${money(byCategory[0][1])})`,
+            },
+          ]
+        : []),
+    ];
+
+    return (
+      <div className="space-y-10">
+        <PageHero
+          variant="budget"
+          eyebrow={`Spent this month · ${currentMonthLabel}`}
+          title={`₹${money(total)}`}
+          subtitle={
+            cap
+              ? `₹${money(remaining)} remaining of ₹${money(cap)} planned limit`
+              : "Track expenses mindfully with no spreadsheets or anxiety"
+          }
+          pills={pills}
+          aside={<HeroFigure value={cap ? `${pctUsed}%` : "—"} label="Used" />}
+        />
+
+        <section className="rise -mt-4">
+          <Meter value={cap ? (total / cap) * 100 : 0} />
+          {insights.length > 0 && (
+            <div className="mt-4 space-y-1.5 border-border/70 border-t pt-3">
+              {insights.slice(0, 2).map((ins) => (
+                <p key={ins.id} className="text-ink-soft text-xs">
+                  <span
+                    className={
+                      ins.severity === "warning"
+                        ? "text-destructive font-medium"
+                        : "text-space font-medium"
+                    }
+                  >
+                    {ins.title}:
+                  </span>{" "}
+                  {ins.explanation}
+                </p>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {categorySection}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
@@ -187,55 +321,7 @@ export function Overview() {
         )}
       </section>
 
-      <Section eyebrow="Where it went" title="Categories">
-        {byCategory.length === 0 ? (
-          <EmptyState
-            glyph="◦"
-            headline="No categories in play"
-            body="Once you log expenses, they group themselves here so you can see the shape of the month."
-          />
-        ) : (
-          <ul className="space-y-5">
-            {byCategory.map(([cat, amt]) => {
-              const limit = limits[cat];
-              return (
-                <li key={cat}>
-                  <div className="mb-2 flex items-baseline justify-between">
-                    <span className="text-[0.95rem]">{cat}</span>
-                    <span className="numeric text-ink-soft text-sm">
-                      ₹{money(amt)}
-                      {limit ? <span className="text-ink-faint"> / {money(limit)}</span> : null}
-                    </span>
-                  </div>
-                  <Meter value={limit ? (amt / limit) * 100 : total ? (amt / total) * 100 : 0} />
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!newCat.trim()) return;
-            setLimits({ ...limits, [newCat.trim()]: Number(newLimit) || 0 });
-            setNewCat("");
-            setNewLimit("");
-          }}
-          className="mt-8 grid gap-2 sm:grid-cols-[1fr_140px_auto] sm:items-end"
-        >
-          <Field label="Category" value={newCat} onChange={(e) => setNewCat(e.target.value)} />
-          <Field
-            label="Monthly limit"
-            inputMode="decimal"
-            value={newLimit}
-            onChange={(e) => setNewLimit(e.target.value)}
-          />
-          <Action type="submit" className="h-[42px]">
-            Set
-          </Action>
-        </form>
-      </Section>
+      {categorySection}
     </div>
   );
 }

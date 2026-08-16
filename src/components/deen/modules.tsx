@@ -17,6 +17,10 @@ import {
 } from "@/lib/hifz-scheduler";
 
 import { Coordinates, CalculationMethod, PrayerTimes, Madhab } from "adhan";
+import { CheckCircle2, Moon, Sparkles } from "lucide-react";
+import { useExperience } from "@/lib/theme-provider";
+import { useRamadanMode } from "@/lib/ramadan";
+import { PageHero, HeroFigure, type HeroPill } from "@/components/veedu/page-hero";
 
 export function usePrayers(date = new Date()) {
   const [profile] = useStore("profile", {
@@ -82,12 +86,83 @@ export function useNextPrayer() {
 }
 
 export function DeenHero() {
+  const { experience } = useExperience();
   const [log] = useSalah();
   const [profile] = useStore("profile", { name: "", city: "Kozhikode" });
   const countdown = useNextPrayer();
   const today = log[todayKey()] ?? {};
   const count = Object.keys(today).length;
   const isFriday = new Date().getDay() === 5;
+  const { isActive: isRamadan, ramadanDay } = useRamadanMode();
+
+  if (experience === "vibrant") {
+    const pills: HeroPill[] = [
+      ...(countdown
+        ? [
+            {
+              id: "next",
+              icon: Moon,
+              label: `${countdown.next.name} · ${countdown.next.time}`,
+            },
+          ]
+        : [
+            {
+              id: "completed",
+              icon: CheckCircle2,
+              label: "All 5 prayers completed",
+            },
+          ]),
+      {
+        id: "count",
+        icon: CheckCircle2,
+        label: `${count} of 5 logged`,
+      },
+      ...(isFriday
+        ? [
+            {
+              id: "friday",
+              icon: Sparkles,
+              label: "Friday · Surah Al-Kahf",
+            },
+          ]
+        : []),
+      ...(isRamadan
+        ? [
+            {
+              id: "ramadan",
+              icon: Sparkles,
+              label: ramadanDay ? `Ramadan Day ${ramadanDay}` : "Ramadan Mode",
+            },
+          ]
+        : []),
+    ];
+
+    return (
+      <PageHero
+        variant="deen"
+        eyebrow={profile.city ? `${profile.city} · Salah Times` : "Salah & Remembrance"}
+        title={
+          countdown ? (
+            <>
+              {countdown.next.name} in{" "}
+              <span className="numeric font-bold">
+                {countdown.hours > 0 ? `${countdown.hours}h ` : ""}
+                {countdown.mins}m
+              </span>
+            </>
+          ) : (
+            "Peace be upon you"
+          )
+        }
+        subtitle={`${count} of 5 prayers logged today · Next at ${countdown?.next.time ?? "—"}${
+          isFriday ? " · Blessed Friday" : ""
+        }`}
+        arabic="حَافِظُوا عَلَى الصَّلَوَاتِ وَالصَّلَاةِ الْوُسْطَىٰ"
+        pills={pills}
+        aside={<HeroFigure value={`${count}/5`} label="Logged" />}
+      />
+    );
+  }
 
   return (
     <header className="rise mb-10">

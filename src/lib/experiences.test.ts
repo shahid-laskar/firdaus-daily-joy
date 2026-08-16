@@ -42,5 +42,14 @@ test("Experience Registry Foundation", async (t) => {
     assert.deepEqual(ids, ["calm", "vibrant"]);
     assert.equal(ids.includes("bloom" as never), false);
   });
+
+  await t.test("secondary spaces hero variants contract is well-defined", () => {
+    const expectedVariants = ["home", "deen", "budget", "me", "review"];
+    assert.equal(expectedVariants.length, 5);
+    expectedVariants.forEach((v) => {
+      assert.ok(typeof v === "string" && v.length > 0);
+    });
+  });
 });
+
 

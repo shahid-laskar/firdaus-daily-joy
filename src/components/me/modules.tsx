@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { CheckCircle2, Droplets, HeartPulse, Sparkles } from "lucide-react";
 import { Action, EmptyState, Field, Meter, Section, Tick } from "@/components/veedu/primitives";
+import { PageHero, HeroFigure, type HeroPill } from "@/components/veedu/page-hero";
+import { useExperience } from "@/lib/theme-provider";
 import { todayKey, uid, useStore } from "@/lib/store";
 
 const MOODS = [
@@ -11,6 +14,7 @@ const MOODS = [
 ];
 
 export function SelfCare() {
+  const { experience } = useExperience();
   const [checkins, setCheckins] = useStore<Record<string, string>>("checkins", {});
   const today = checkins[todayKey()];
   const rituals = [
@@ -21,58 +25,112 @@ export function SelfCare() {
   ];
   const [done, setDone] = useStore<Record<string, string[]>>("rituals", {});
   const todayDone = done[todayKey()] ?? [];
+  const [health] = useStore<Record<string, { water?: number }>>("health", {});
+  const water = health[todayKey()]?.water ?? 0;
+
+  const moodButtons = (
+    <div className="flex flex-wrap gap-2">
+      {MOODS.map((m) => {
+        const active = today === m.id;
+        return (
+          <button
+            key={m.id}
+            onClick={() => setCheckins({ ...checkins, [todayKey()]: m.id })}
+            aria-pressed={active}
+            className="press flex min-w-[84px] flex-col items-center gap-1.5 rounded-2xl border px-4 py-4"
+            style={{
+              borderColor: active ? "var(--space-accent)" : "var(--rule)",
+              background: active ? "var(--space-accent-soft)" : "transparent",
+            }}
+          >
+            <span className="text-xl leading-none">{m.glyph}</span>
+            <span className="text-[0.76rem]">{m.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const ritualsList = (
+    <Section eyebrow="Small things" title="Today's rituals">
+      <ul className="thread">
+        {rituals.map((r) => {
+          const isDone = todayDone.includes(r);
+          return (
+            <li key={r} data-done={isDone} className="thread-node flex items-center gap-3 py-2.5">
+              <Tick
+                done={isDone}
+                label={r}
+                onToggle={() =>
+                  setDone({
+                    ...done,
+                    [todayKey()]: isDone ? todayDone.filter((x) => x !== r) : [...todayDone, r],
+                  })
+                }
+              />
+              <span className={`text-[0.95rem] ${isDone ? "text-ink-faint line-through" : ""}`}>
+                {r}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Section>
+  );
+
+  if (experience === "vibrant") {
+    const activeMood = MOODS.find((m) => m.id === today);
+    const pills: HeroPill[] = [
+      {
+        id: "mood",
+        icon: HeartPulse,
+        label: activeMood ? `${activeMood.glyph} ${activeMood.label}` : "Daily Check-in",
+      },
+      {
+        id: "rituals",
+        icon: CheckCircle2,
+        label: `${todayDone.length}/${rituals.length} rituals`,
+      },
+      {
+        id: "water",
+        icon: Droplets,
+        label: `${water} glass${water === 1 ? "" : "es"} water`,
+      },
+    ];
+
+    return (
+      <div className="space-y-10">
+        <PageHero
+          variant="me"
+          eyebrow="Personal Wellbeing · Private & On-Device"
+          title={activeMood ? `Feeling ${activeMood.label}` : "How are you, really?"}
+          subtitle={
+            todayDone.length === rituals.length
+              ? "All daily rituals completed for today. Well done."
+              : `${todayDone.length} of ${rituals.length} daily rituals completed · ${water} glasses water`
+          }
+          pills={pills}
+          aside={<HeroFigure value={`${todayDone.length}/${rituals.length}`} label="Rituals" />}
+        />
+
+        <Section eyebrow="Check in" title="How are you feeling?">
+          {moodButtons}
+        </Section>
+
+        {ritualsList}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
       <section className="rise">
         <p className="eyebrow">Check in</p>
         <h1 className="display-lg mt-2">How are you, really?</h1>
-        <div className="mt-6 flex flex-wrap gap-2">
-          {MOODS.map((m) => {
-            const active = today === m.id;
-            return (
-              <button
-                key={m.id}
-                onClick={() => setCheckins({ ...checkins, [todayKey()]: m.id })}
-                aria-pressed={active}
-                className="press flex min-w-[84px] flex-col items-center gap-1.5 rounded-2xl border px-4 py-4"
-                style={{
-                  borderColor: active ? "var(--space-accent)" : "var(--rule)",
-                  background: active ? "var(--space-accent-soft)" : "transparent",
-                }}
-              >
-                <span className="text-xl leading-none">{m.glyph}</span>
-                <span className="text-[0.76rem]">{m.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <div className="mt-6">{moodButtons}</div>
       </section>
 
-      <Section eyebrow="Small things" title="Today's rituals">
-        <ul className="thread">
-          {rituals.map((r) => {
-            const isDone = todayDone.includes(r);
-            return (
-              <li key={r} data-done={isDone} className="thread-node flex items-center gap-3 py-2.5">
-                <Tick
-                  done={isDone}
-                  label={r}
-                  onToggle={() =>
-                    setDone({
-                      ...done,
-                      [todayKey()]: isDone ? todayDone.filter((x) => x !== r) : [...todayDone, r],
-                    })
-                  }
-                />
-                <span className={`text-[0.95rem] ${isDone ? "text-ink-faint line-through" : ""}`}>
-                  {r}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </Section>
+      {ritualsList}
     </div>
   );
 }

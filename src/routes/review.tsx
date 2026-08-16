@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { HeartPulse, Moon, Sparkles, Wallet } from "lucide-react";
 import { Shell } from "@/components/veedu/shell";
+import { PageHero, HeroFigure } from "@/components/veedu/page-hero";
+import { useExperience } from "@/lib/theme-provider";
 import { money } from "@/components/budget/modules";
 import { useStore } from "@/lib/store";
 import { useInsights } from "@/components/insights/use-insights";
@@ -37,6 +40,7 @@ export const Route = createFileRoute("/review")({
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 function InsightsPage() {
+  const { experience } = useExperience();
   const data = useInsights();
   const { week, salah, budget, mood, meals, dueReminders, family, headline } = data;
 
@@ -83,15 +87,64 @@ function InsightsPage() {
 
   return (
     <Shell space="home">
-      <header className="rise mb-10">
-        <p className="eyebrow">
-          {week[0]} → {week[6]}
-        </p>
-        <h1 className="display-xl mt-3">What your week is telling you</h1>
-        <p className="text-muted-foreground mt-3 max-w-prose text-sm leading-relaxed">
-          {openingLine}
-        </p>
-      </header>
+      {experience === "vibrant" ? (
+        <PageHero
+          variant="review"
+          eyebrow={`${week[0]} → ${week[6]} · Weekly Insights`}
+          title="What your week is telling you"
+          subtitle={openingLine}
+          pills={[
+            {
+              id: "salah",
+              icon: Moon,
+              to: "/deen",
+              search: { tab: "salah" },
+              label: salah.hasData
+                ? `${Math.round(salah.comparison.current.onTimePercentage)}% Salah on time`
+                : "Salah consistency",
+            },
+            {
+              id: "budget",
+              icon: Wallet,
+              to: "/budget",
+              search: { tab: "history" },
+              label: `₹${money(budget.analytics.currentMonthTotal)} spent`,
+            },
+            {
+              id: "mood",
+              icon: HeartPulse,
+              to: "/me",
+              search: { tab: "trends" },
+              label: mood.hasData ? `${mood.analytics.positiveDays} lighter days` : "Wellbeing",
+            },
+            {
+              id: "patterns",
+              icon: Sparkles,
+              label: `${headline.length} pattern${headline.length === 1 ? "" : "s"} noticed`,
+            },
+          ]}
+          aside={
+            <HeroFigure
+              value={
+                salah.hasData
+                  ? `${Math.round(salah.comparison.current.onTimePercentage)}%`
+                  : String(headline.length)
+              }
+              label={salah.hasData ? "On time" : "Patterns"}
+            />
+          }
+        />
+      ) : (
+        <header className="rise mb-10">
+          <p className="eyebrow">
+            {week[0]} → {week[6]}
+          </p>
+          <h1 className="display-xl mt-3">What your week is telling you</h1>
+          <p className="text-muted-foreground mt-3 max-w-prose text-sm leading-relaxed">
+            {openingLine}
+          </p>
+        </header>
+      )}
 
       <div className="space-y-12">
         {headline.length > 0 && (

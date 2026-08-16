@@ -1,9 +1,13 @@
 import type { ComponentType, ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 
 export type HeroPill = {
   id: string;
   icon?: ComponentType<{ className?: string; strokeWidth?: number }>;
   label: ReactNode;
+  to?: string;
+  search?: Record<string, string>;
+  onClick?: () => void;
 };
 
 /**
@@ -63,12 +67,43 @@ export function PageHero({
 
         {pills.length > 0 && (
           <div className="flex flex-wrap items-center gap-2.5">
-            {pills.map((p) => (
-              <span key={p.id} className="hero-pill">
-                {p.icon && <p.icon className="size-3.5" strokeWidth={2.4} aria-hidden />}
-                {p.label}
-              </span>
-            ))}
+            {pills.map((p) => {
+              const content = (
+                <>
+                  {p.icon && <p.icon className="size-3.5" strokeWidth={2.4} aria-hidden />}
+                  {p.label}
+                </>
+              );
+              if (p.to) {
+                return (
+                  <Link
+                    key={p.id}
+                    to={p.to}
+                    {...(p.search ? { search: p.search } : {})}
+                    className="hero-pill"
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+              if (p.onClick) {
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={p.onClick}
+                    className="hero-pill cursor-pointer"
+                  >
+                    {content}
+                  </button>
+                );
+              }
+              return (
+                <span key={p.id} className="hero-pill">
+                  {content}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>
@@ -77,7 +112,7 @@ export function PageHero({
 }
 
 /** A compact figure that can sit on the right of a hero. */
-export function HeroFigure({ value, label }: { value: string; label: string }) {
+export function HeroFigure({ value, label }: { value: ReactNode; label: ReactNode }) {
   return (
     <span className="hero-figure">
       <span className="numeric block text-[1.6rem] leading-none font-bold">{value}</span>
