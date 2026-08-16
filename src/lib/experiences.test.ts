@@ -50,6 +50,18 @@ test("Experience Registry Foundation", async (t) => {
       assert.ok(typeof v === "string" && v.length > 0);
     });
   });
+
+  await t.test("shell navigation spaces contract holds both glyph and icon presentations", async () => {
+    const { SPACES } = await import("../components/veedu/shell");
+    assert.equal(SPACES.length, 4);
+    const ids = SPACES.map((s) => s.id);
+    assert.deepEqual(ids, ["home", "deen", "budget", "me"]);
+    SPACES.forEach((s) => {
+      assert.ok(s.glyph && typeof s.glyph === "string", `glyph exists for ${s.id}`);
+      assert.ok(s.icon && typeof s.icon === "object", `icon exists for ${s.id}`);
+      assert.ok(s.to && typeof s.to === "string", `route exists for ${s.id}`);
+    });
+  });
 });
 
 

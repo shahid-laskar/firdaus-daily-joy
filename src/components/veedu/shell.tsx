@@ -1,18 +1,20 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Flower2, Home, Moon, Wallet } from "lucide-react";
 import { useOnline, useStore } from "@/lib/store";
 import { downloadExport, importFromFile } from "@/lib/backup";
 import { GlobalSearch } from "./search";
 import { Sheet, Field, Action } from "./primitives";
+import { ThemeSwitcher } from "./theme-switcher";
+import { useExperience } from "@/lib/theme-provider";
 
-const SPACES = [
-  { id: "home", to: "/", label: "Home", glyph: "⌂" },
-  { id: "deen", to: "/deen", label: "Deen", glyph: "☾" },
-  { id: "budget", to: "/budget", label: "Budget", glyph: "◈" },
-  { id: "me", to: "/me", label: "Me", glyph: "❋" },
+export const SPACES = [
+  { id: "home", to: "/", label: "Home", glyph: "⌂", icon: Home },
+  { id: "deen", to: "/deen", label: "Deen", glyph: "☾", icon: Moon },
+  { id: "budget", to: "/budget", label: "Budget", glyph: "◈", icon: Wallet },
+  { id: "me", to: "/me", label: "Me", glyph: "❋", icon: Flower2 },
 ] as const;
 
-import { ThemeSwitcher } from "./theme-switcher";
 export function Shell({
   space,
   children,
@@ -20,6 +22,8 @@ export function Shell({
   space: "home" | "deen" | "budget" | "me";
   children: ReactNode;
 }) {
+  const { experience } = useExperience();
+  const isVibrant = experience === "vibrant";
   const online = useOnline();
   const [settings, setSettings] = useState(false);
   const [profile, setProfile] = useStore("profile", {
@@ -50,7 +54,13 @@ export function Shell({
 
   return (
     <div data-space={space} className="relative z-[1] min-h-dvh">
-      <header className="border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md">
+      <header
+        className={
+          isVibrant
+            ? "app-bar sticky top-0 z-30"
+            : "border-border/60 bg-background/85 sticky top-0 z-30 border-b backdrop-blur-md"
+        }
+      >
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
           <Link to="/" className="flex items-center gap-2">
             <img
@@ -65,7 +75,11 @@ export function Shell({
               onClick={() => setSearch(true)}
               aria-label="Search everything"
               title="Search everything (⌘K)"
-              className="press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
+              className={
+                isVibrant
+                  ? "icon-btn press size-9"
+                  : "press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
+              }
             >
               <svg
                 viewBox="0 0 24 24"
@@ -92,7 +106,11 @@ export function Shell({
             <button
               onClick={() => setSettings(true)}
               aria-label="Settings"
-              className="press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
+              className={
+                isVibrant
+                  ? "icon-btn press size-9"
+                  : "press text-ink-soft hover:text-foreground grid size-9 place-items-center rounded-full"
+              }
             >
               <svg
                 viewBox="0 0 24 24"
@@ -111,7 +129,11 @@ export function Shell({
             <Link
               to="/auth"
               aria-label="Account"
-              className="press border-border grid size-9 place-items-center rounded-full border text-[0.7rem] font-semibold"
+              className={
+                isVibrant
+                  ? "icon-btn press size-9 text-[0.7rem] font-bold"
+                  : "press border-border grid size-9 place-items-center rounded-full border text-[0.7rem] font-semibold"
+              }
             >
               {(account?.email?.[0] ?? profile.name?.[0] ?? "G").toUpperCase()}
             </Link>
@@ -125,28 +147,48 @@ export function Shell({
         aria-label="Sunnah Home spaces"
         className="fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[max(0.75rem,env(safe-area-inset-bottom))]"
       >
-        <div className="border-border/70 bg-background/90 flex gap-1 rounded-full border p-1.5 shadow-[var(--shadow-float)] backdrop-blur-xl">
-          {SPACES.map((s) => {
-            const active = s.to === "/" ? path === "/" : path.startsWith(s.to);
-            return (
-              <Link
-                key={s.id}
-                to={s.to}
-                data-space={s.id}
-                aria-current={active ? "page" : undefined}
-                className="press relative flex min-w-[68px] flex-col items-center gap-0.5 rounded-full px-3 py-1.5"
-                style={
-                  active
-                    ? { background: "var(--space-accent-soft)", color: "var(--foreground)" }
-                    : { color: "var(--ink-faint)" }
-                }
-              >
-                <span className="text-[15px] leading-none">{s.glyph}</span>
-                <span className="text-[0.66rem] font-medium tracking-wide">{s.label}</span>
-              </Link>
-            );
-          })}
-        </div>
+        {isVibrant ? (
+          <div className="nav-dock flex gap-1">
+            {SPACES.map((s) => {
+              const active = s.to === "/" ? path === "/" : path.startsWith(s.to);
+              return (
+                <Link
+                  key={s.id}
+                  to={s.to}
+                  data-space={s.id}
+                  aria-current={active ? "page" : undefined}
+                  className="nav-item press relative flex min-w-[70px] flex-col items-center gap-1 px-3 py-2"
+                >
+                  <s.icon className="size-[18px]" strokeWidth={active ? 2.4 : 1.9} />
+                  <span className="text-[0.66rem] font-bold tracking-wide">{s.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="border-border/70 bg-background/90 flex gap-1 rounded-full border p-1.5 shadow-[var(--shadow-float)] backdrop-blur-xl">
+            {SPACES.map((s) => {
+              const active = s.to === "/" ? path === "/" : path.startsWith(s.to);
+              return (
+                <Link
+                  key={s.id}
+                  to={s.to}
+                  data-space={s.id}
+                  aria-current={active ? "page" : undefined}
+                  className="press relative flex min-w-[68px] flex-col items-center gap-0.5 rounded-full px-3 py-1.5"
+                  style={
+                    active
+                      ? { background: "var(--space-accent-soft)", color: "var(--foreground)" }
+                      : { color: "var(--ink-faint)" }
+                  }
+                >
+                  <span className="text-[15px] leading-none">{s.glyph}</span>
+                  <span className="text-[0.66rem] font-medium tracking-wide">{s.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       <Sheet open={settings} onClose={() => setSettings(false)} title="Settings">
@@ -182,26 +224,46 @@ export function Shell({
             </Action>
           </div>
           <div className="space-y-2">
-            <label className="text-foreground/80 block text-[0.8rem] font-semibold tracking-wide">
+            <label
+              className={
+                isVibrant
+                  ? "eyebrow block"
+                  : "text-foreground/80 block text-[0.8rem] font-semibold tracking-wide"
+              }
+            >
               Madhab (Asr Method)
             </label>
             <select
               value={profile.madhab ?? "shafi"}
               onChange={(e) => setProfile({ ...profile, madhab: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              className={
+                isVibrant
+                  ? "control text-sm"
+                  : "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              }
             >
               <option value="shafi">Shafi'i, Maliki, Hanbali (Standard)</option>
               <option value="hanafi">Hanafi</option>
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-foreground/80 block text-[0.8rem] font-semibold tracking-wide">
+            <label
+              className={
+                isVibrant
+                  ? "eyebrow block"
+                  : "text-foreground/80 block text-[0.8rem] font-semibold tracking-wide"
+              }
+            >
               Calculation Method
             </label>
             <select
               value={profile.method ?? "MuslimWorldLeague"}
               onChange={(e) => setProfile({ ...profile, method: e.target.value })}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              className={
+                isVibrant
+                  ? "control text-sm"
+                  : "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              }
             >
               <option value="MuslimWorldLeague">Muslim World League</option>
               <option value="Egyptian">Egyptian General Authority of Survey</option>
