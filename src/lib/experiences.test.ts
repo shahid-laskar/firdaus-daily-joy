@@ -36,4 +36,11 @@ test("Experience Registry Foundation", async (t) => {
     assert.ok(vibrant.tagline.length > 0);
     assert.ok(vibrant.description.length > 0);
   });
+
+  await t.test("experience IDs map strictly to supported values without bloom contamination", () => {
+    const ids = experiences.map((e) => e.id);
+    assert.deepEqual(ids, ["calm", "vibrant"]);
+    assert.equal(ids.includes("bloom" as never), false);
+  });
 });
+
