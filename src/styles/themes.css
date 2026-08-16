@@ -1655,3 +1655,43 @@
   --shadow-float: 0 4px 14px -6px oklch(0 0 0 / 0.16);
   --grain-opacity: 0;
 }
+
+/* Category voices — life-area color tokens (prayer, task, meal, kids, grocery, habit, money, self).
+ * Theme-agnostic baseline definitions that work across all experiences and themes. */
+:root {
+  --cat-prayer: oklch(0.585 0.095 205);
+  --cat-prayer-soft: oklch(0.945 0.032 205);
+  --cat-task: oklch(0.635 0.16 18);
+  --cat-task-soft: oklch(0.948 0.028 18);
+  --cat-meal: oklch(0.685 0.157 44);
+  --cat-meal-soft: oklch(0.95 0.038 52);
+  --cat-kids: oklch(0.63 0.13 265);
+  --cat-kids-soft: oklch(0.948 0.03 268);
+  --cat-grocery: oklch(0.6 0.11 158);
+  --cat-grocery-soft: oklch(0.945 0.036 158);
+  --cat-habit: oklch(0.66 0.14 330);
+  --cat-habit-soft: oklch(0.95 0.03 330);
+  --cat-money: oklch(0.66 0.13 88);
+  --cat-money-soft: oklch(0.95 0.04 88);
+  --cat-self: oklch(0.63 0.11 190);
+  --cat-self-soft: oklch(0.945 0.03 190);
+}
+.dark {
+  --cat-prayer-soft: color-mix(in oklab, oklch(0.585 0.095 205) 24%, oklch(0.212 0.021 42));
+  --cat-task-soft: color-mix(in oklab, oklch(0.635 0.16 18) 22%, oklch(0.212 0.021 42));
+  --cat-meal-soft: color-mix(in oklab, oklch(0.685 0.157 44) 22%, oklch(0.212 0.021 42));
+  --cat-kids-soft: color-mix(in oklab, oklch(0.63 0.13 265) 24%, oklch(0.212 0.021 42));
+  --cat-grocery-soft: color-mix(in oklab, oklch(0.6 0.11 158) 24%, oklch(0.212 0.021 42));
+  --cat-habit-soft: color-mix(in oklab, oklch(0.66 0.14 330) 24%, oklch(0.212 0.021 42));
+  --cat-money-soft: color-mix(in oklab, oklch(0.66 0.13 88) 24%, oklch(0.212 0.021 42));
+  --cat-self-soft: color-mix(in oklab, oklch(0.63 0.11 190) 24%, oklch(0.212 0.021 42));
+  --cat-prayer: oklch(0.75 0.095 205);
+  --cat-task: oklch(0.75 0.14 18);
+  --cat-meal: oklch(0.78 0.14 48);
+  --cat-kids: oklch(0.75 0.12 265);
+  --cat-grocery: oklch(0.75 0.11 158);
+  --cat-habit: oklch(0.77 0.12 330);
+  --cat-money: oklch(0.79 0.12 88);
+  --cat-self: oklch(0.76 0.1 190);
+}
+

@@ -61,6 +61,24 @@
   --color-space: var(--space-accent);
   --color-space-soft: var(--space-accent-soft);
 
+  /* category voices */
+  --color-cat-prayer: var(--cat-prayer);
+  --color-cat-prayer-soft: var(--cat-prayer-soft);
+  --color-cat-task: var(--cat-task);
+  --color-cat-task-soft: var(--cat-task-soft);
+  --color-cat-meal: var(--cat-meal);
+  --color-cat-meal-soft: var(--cat-meal-soft);
+  --color-cat-kids: var(--cat-kids);
+  --color-cat-kids-soft: var(--cat-kids-soft);
+  --color-cat-grocery: var(--cat-grocery);
+  --color-cat-grocery-soft: var(--cat-grocery-soft);
+  --color-cat-habit: var(--cat-habit);
+  --color-cat-habit-soft: var(--cat-habit-soft);
+  --color-cat-money: var(--cat-money);
+  --color-cat-money-soft: var(--cat-money-soft);
+  --color-cat-self: var(--cat-self);
+  --color-cat-self-soft: var(--cat-self-soft);
+
   --color-chart-1: var(--leaf);
   --color-chart-2: var(--brass);
   --color-chart-3: var(--teal);
@@ -74,6 +92,43 @@
   --color-sidebar-accent-foreground: var(--ink);
   --color-sidebar-border: var(--rule);
   --color-sidebar-ring: var(--ring);
+}
+
+/* ── Experience typography bindings ───────────────────────────────────── */
+:root,
+[data-experience="calm"] {
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-experience="vibrant"] {
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-experience="vibrant"] .display-xl {
+  font-weight: 700;
+  font-variation-settings: normal;
+  font-size: clamp(1.95rem, 6.4vw, 2.9rem);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+}
+
+[data-experience="vibrant"] .display-lg {
+  font-weight: 700;
+  font-variation-settings: normal;
+  font-size: clamp(1.42rem, 4.2vw, 1.85rem);
+  line-height: 1.14;
+  letter-spacing: -0.028em;
+}
+
+[data-experience="vibrant"] .title-md {
+  font-weight: 600;
+}
+
+[data-experience="vibrant"] .eyebrow {
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
 @layer base {
