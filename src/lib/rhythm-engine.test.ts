@@ -359,3 +359,80 @@ test("Rhythm Engine — Adapter with DailySurfaceData", () => {
   const lateBlock = rhythm.blocks.find((b) => b.id === "lateAfternoon")!;
   assert.ok(lateBlock.items.some((i) => i.title === "Submit project report"));
 });
+
+test("Rhythm Engine — Recurring Calendar Events & Repeating Task Completions", () => {
+  const rhythm = buildDayRhythm({
+    now: new Date("2026-08-15T10:00:00"), // Saturday
+    date: "2026-08-15",
+    prayers: prayerList,
+    events: [
+      {
+        id: "rec-e1",
+        title: "Daily Morning Standup",
+        time: "09:30",
+        date: "2026-08-01",
+        recur: { freq: "daily", start: "2026-08-01" },
+      },
+      {
+        id: "rec-e2",
+        title: "Sunday Family Halaqah",
+        time: "17:00",
+        date: "2026-08-02",
+        recur: { freq: "weekly", start: "2026-08-02" }, // Sundays only
+      },
+    ],
+    tasks: [
+      {
+        id: "rec-t1",
+        title: "Morning Surah Yaseen",
+        recur: { freq: "daily", start: "2026-08-01" },
+        completions: ["2026-08-14", "2026-08-15"], // Done today
+      },
+      {
+        id: "rec-t2",
+        title: "Recite Kahf",
+        recur: { freq: "weekly", start: "2026-08-07" }, // Fridays only -> not today (Saturday)
+        completions: [],
+      },
+      {
+        id: "dated-t3",
+        title: "Send Weekly Report",
+        date: "2026-08-15",
+        done: false,
+        time: "14:00",
+      },
+      {
+        id: "future-t4",
+        title: "Pay Rent",
+        date: "2026-08-30",
+        done: false,
+      },
+    ],
+  });
+
+  const morningBlock = rhythm.blocks.find((b) => b.id === "morning")!;
+  const morningTitles = morningBlock.items.map((i) => i.title);
+
+  // Daily recurring event should appear
+  assert.ok(morningTitles.includes("Daily Morning Standup"));
+
+  // Weekly Sunday event should NOT appear on Saturday
+  const allTitles = rhythm.blocks.flatMap((b) => b.items.map((i) => i.title));
+  assert.ok(!allTitles.includes("Sunday Family Halaqah"));
+
+  // Daily repeating task completed today should have done: true
+  const yaseenItem = allTitles.includes("Morning Surah Yaseen");
+  assert.ok(yaseenItem);
+  const yaseenObj = morningBlock.items.find((i) => i.title === "Morning Surah Yaseen");
+  assert.equal(yaseenObj?.done, true);
+
+  // Friday repeating task should NOT appear on Saturday
+  assert.ok(!allTitles.includes("Recite Kahf"));
+
+  // Dated task for today should appear
+  assert.ok(allTitles.includes("Send Weekly Report"));
+
+  // Future dated task should NOT appear today
+  assert.ok(!allTitles.includes("Pay Rent"));
+});
+

@@ -16,7 +16,13 @@ import { isoDate } from "./intelligence";
 import { isRepeating, occursOn } from "./recurrence";
 import { generateHifzRevisionQueue, type HifzItem } from "./hifz-scheduler";
 import type { ReminderSignal } from "./reminder-engine";
-import type { DailySurfaceData, TaskRecord, CalEventRecord } from "./daily-surface";
+import {
+  isTaskRecordDone,
+  isEventOnDate,
+  type DailySurfaceData,
+  type TaskRecord,
+  type CalEventRecord,
+} from "./daily-surface";
 
 // -----------------------------------------------------------------------------
 // TYPES & DEFINITIONS
@@ -706,9 +712,7 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
 
   // 4. Calendar events
   if (input.events) {
-    const todayEvents = input.events.filter((e) =>
-      e.date === dateStr || (Boolean((e as any).recur) && occursOn((e as any).recur, dateStr))
-    );
+    const todayEvents = input.events.filter((e) => isEventOnDate(e, dateStr));
     for (const ev of todayEvents) {
       const bId = inferBlockForItem({ title: ev.title, time: ev.time, category: "event" }, prayerMap);
       blockItemsMap[bId].push({
@@ -730,11 +734,11 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
     const dueTasks = input.tasks.filter((t) =>
       isRepeating(t.recur)
         ? occursOn(t.recur, dateStr)
-        : ((t as any).date ? (t as any).date === dateStr : !t.done)
+        : (t.date ? t.date === dateStr : !t.done)
     );
 
     for (const t of dueTasks) {
-      const done = Boolean(t.done);
+      const done = isTaskRecordDone(t, dateStr);
       const bId = inferBlockForItem({ title: t.title, time: t.time, category: "task" }, prayerMap);
 
       blockItemsMap[bId].push({

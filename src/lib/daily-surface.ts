@@ -4,7 +4,7 @@
  * a prioritized, calm daily stream.
  */
 
-import { isRepeating, occursOn } from "./recurrence";
+import { isRepeating, occursOn, type Recurrence } from "./recurrence";
 import { calculateBudgetAnalytics } from "./budget-intelligence";
 import { generateHifzRevisionQueue, type HifzItem } from "./hifz-scheduler";
 import { calculateSuhurIftar } from "./ramadan";
@@ -43,7 +43,11 @@ export interface TaskRecord {
   title: string;
   done?: boolean | undefined;
   time?: string | undefined;
-  recur?: any;
+  date?: string | undefined;
+  recur?: Recurrence | undefined;
+  completions?: string[] | undefined;
+  list?: string | undefined;
+  assigneeId?: string | undefined;
 }
 
 export interface CalEventRecord {
@@ -51,6 +55,8 @@ export interface CalEventRecord {
   title: string;
   time?: string | undefined;
   date: string;
+  recur?: Recurrence | undefined;
+  assigneeId?: string | undefined;
 }
 
 export interface DailySurfaceData {
@@ -76,12 +82,12 @@ export interface DailySurfaceData {
 
 export function isTaskRecordDone(t: TaskRecord, todayIso = isoDate()): boolean {
   if (!isRepeating(t.recur)) return Boolean(t.done);
-  return Boolean(t.done);
+  return Boolean(t.completions?.includes(todayIso));
 }
 
-/** Check if an event falls on the specified date */
+/** Check if an event falls on the specified date (explicit date match or recurring schedule) */
 export function isEventOnDate(event: CalEventRecord, iso: string): boolean {
-  return event.date === iso;
+  return event.date === iso || occursOn(event.recur, iso);
 }
 
 /**
