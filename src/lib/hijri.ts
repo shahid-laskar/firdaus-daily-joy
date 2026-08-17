@@ -1,6 +1,21 @@
-/** PROTOTYPE — Hijri dates for the unified calendar. */
+/** Hijri dates for the unified calendar. */
 
 const FMT = "en-u-ca-islamic-umalqura";
+
+export const HIJRI_MONTH_NAMES = [
+  "Muharram",
+  "Safar",
+  "Rabi al-Awwal",
+  "Rabi al-Thani",
+  "Jumada al-Awwal",
+  "Jumada al-Thani",
+  "Rajab",
+  "Sha'ban",
+  "Ramadan",
+  "Shawwal",
+  "Dhu al-Qi'dah",
+  "Dhu al-Hijjah",
+] as const;
 
 export function hijriParts(
   d: Date,
@@ -12,10 +27,14 @@ export function hijriParts(
       year: "numeric",
     }).formatToParts(d);
     const get = (t: string) => Number(parts.find((p) => p.type === t)?.value?.replace(/\D/g, ""));
-    const monthName = new Intl.DateTimeFormat(FMT, { month: "long" })
-      .format(d)
-      .replace(/\s*AH\s*/, "");
-    return { day: get("day"), month: get("month"), monthName, year: get("year") };
+    const day = get("day");
+    const month = get("month");
+    const year = get("year");
+
+    if (!day || !month || !year || month < 1 || month > 12) return null;
+
+    const monthName = HIJRI_MONTH_NAMES[month - 1];
+    return { day, month, monthName, year };
   } catch {
     return null;
   }
@@ -40,3 +59,4 @@ export function islamicMarker(d: Date): string | null {
   if (d.getDay() === 5) return null;
   return null;
 }
+
