@@ -436,3 +436,110 @@ test("Rhythm Engine — Recurring Calendar Events & Repeating Task Completions",
   assert.ok(!allTitles.includes("Pay Rent"));
 });
 
+test("Rhythm Engine — Missing, Null, or Malformed Prayer Data Edge Cases", () => {
+  // Empty array of prayers should gracefully use canonical defaults without crashing
+  const rhythmFromEmpty = buildDayRhythm({
+    now: new Date("2026-08-15T10:00:00"),
+    prayers: [],
+  });
+  assert.equal(rhythmFromEmpty.anchors.length, 5);
+  assert.equal(rhythmFromEmpty.blocks.length, 5);
+  assert.equal(rhythmFromEmpty.currentBlockId, "morning");
+
+  // Reordered and mixed case prayer items
+  const mixedPrayers = [
+    { id: "ISHA", name: "Isha", time: "20:30" },
+    { id: "FAJR", name: "Fajr", time: "04:45" },
+    { id: "MAGHRIB", name: "Maghrib", time: "19:00" },
+    { id: "DHUHR", name: "Dhuhr", time: "12:15" },
+    { id: "ASR", name: "Asr", time: "16:00" },
+  ];
+
+  const rhythmFromMixed = buildDayRhythm({
+    now: new Date("2026-08-15T19:15:00"),
+    prayers: mixedPrayers,
+  });
+  assert.equal(rhythmFromMixed.currentBlockId, "evening");
+  assert.equal(rhythmFromMixed.nextAnchor.id, "isha");
+  assert.equal(rhythmFromMixed.nextAnchor.time, "20:30");
+});
+
+test("Rhythm Engine — Midnight Transition & Night Block Progress Across Days", () => {
+  const prayers = [
+    { id: "fajr", name: "Fajr", time: "05:00" },
+    { id: "dhuhr", name: "Dhuhr", time: "12:30" },
+    { id: "asr", name: "Asr", time: "16:00" },
+    { id: "maghrib", name: "Maghrib", time: "18:30" },
+    { id: "isha", name: "Isha", time: "20:00" },
+  ];
+
+  // Night duration = from 20:00 to 05:00 = 9 hours = 540 minutes
+  // 1. Pre-midnight at 22:15 (135 min after Isha -> progress = 135/540 = 25%)
+  const preMidnight = buildDayRhythm({
+    now: new Date("2026-08-15T22:15:00"),
+    prayers,
+  });
+  assert.equal(preMidnight.currentBlockId, "night");
+  const nightPre = preMidnight.blocks.find((b) => b.id === "night")!;
+  assert.equal(nightPre.durationMinutes, 540);
+  assert.equal(nightPre.progressPct, 25);
+  assert.equal(preMidnight.nextAnchor.id, "fajr");
+  assert.equal(preMidnight.nextAnchor.minutesRemaining, 405); // 6h 45m to 05:00
+
+  // 2. Exact midnight at 00:00 (240 min after Isha -> progress = 240/540 = 44%)
+  const atMidnight = buildDayRhythm({
+    now: new Date("2026-08-15T00:00:00"),
+    prayers,
+  });
+  assert.equal(atMidnight.currentBlockId, "night");
+  const nightMid = atMidnight.blocks.find((b) => b.id === "night")!;
+  assert.equal(nightMid.progressPct, 44);
+
+  // 3. Post-midnight at 02:45 (405 min after Isha -> progress = 405/540 = 75%)
+  const postMidnight = buildDayRhythm({
+    now: new Date("2026-08-15T02:45:00"),
+    prayers,
+  });
+  assert.equal(postMidnight.currentBlockId, "night");
+  const nightPost = postMidnight.blocks.find((b) => b.id === "night")!;
+  assert.equal(nightPost.progressPct, 75);
+  assert.equal(postMidnight.nextAnchor.id, "fajr");
+  assert.equal(postMidnight.nextAnchor.minutesRemaining, 135); // 2h 15m to 05:00
+});
+
+test("Rhythm Engine — Exact Boundary Invariants", () => {
+  const prayers = [
+    { id: "fajr", name: "Fajr", time: "05:00" },
+    { id: "dhuhr", name: "Dhuhr", time: "12:00" },
+    { id: "asr", name: "Asr", time: "15:30" },
+    { id: "maghrib", name: "Maghrib", time: "18:00" },
+    { id: "isha", name: "Isha", time: "19:30" },
+  ];
+
+  // At exactly 05:00 -> morning begins
+  assert.equal(determineRhythmBlock("05:00", prayers), "morning");
+  // At exactly 04:59 -> still night
+  assert.equal(determineRhythmBlock("04:59", prayers), "night");
+
+  // At exactly 12:00 -> afternoon begins
+  assert.equal(determineRhythmBlock("12:00", prayers), "afternoon");
+  // At exactly 11:59 -> still morning
+  assert.equal(determineRhythmBlock("11:59", prayers), "morning");
+
+  // At exactly 15:30 -> lateAfternoon begins
+  assert.equal(determineRhythmBlock("15:30", prayers), "lateAfternoon");
+  // At exactly 15:29 -> still afternoon
+  assert.equal(determineRhythmBlock("15:29", prayers), "afternoon");
+
+  // At exactly 18:00 -> evening begins
+  assert.equal(determineRhythmBlock("18:00", prayers), "evening");
+  // At exactly 17:59 -> still lateAfternoon
+  assert.equal(determineRhythmBlock("17:59", prayers), "lateAfternoon");
+
+  // At exactly 19:30 -> night begins
+  assert.equal(determineRhythmBlock("19:30", prayers), "night");
+  // At exactly 19:29 -> still evening
+  assert.equal(determineRhythmBlock("19:29", prayers), "evening");
+});
+
+

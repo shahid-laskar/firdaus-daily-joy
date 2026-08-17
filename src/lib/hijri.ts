@@ -34,6 +34,7 @@ export function hijriParts(
     if (!day || !month || !year || month < 1 || month > 12) return null;
 
     const monthName = HIJRI_MONTH_NAMES[month - 1];
+    if (!monthName) return null;
     return { day, month, monthName, year };
   } catch {
     return null;

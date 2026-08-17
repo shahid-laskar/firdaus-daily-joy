@@ -272,7 +272,7 @@ export interface PrayerTimeMap {
  * Falls back to canonical standards if not provided.
  */
 export function extractPrayerTimeMap(
-  prayers: { id: string; time: string }[]
+  prayers?: { id?: string | undefined; time?: string | undefined }[] | null | undefined
 ): PrayerTimeMap {
   const defaults: Record<PrayerId, string> = {
     fajr: "05:15",
@@ -282,9 +282,16 @@ export function extractPrayerTimeMap(
     isha: "19:45",
   };
 
+  const list = Array.isArray(prayers) ? prayers : [];
+
   const getMin = (id: PrayerId) => {
-    const found = prayers.find((p) => p.id.toLowerCase() === id);
-    return timeToMinutes(found?.time ?? defaults[id]);
+    const found = list.find(
+      (p) => p && typeof p.id === "string" && p.id.toLowerCase() === id
+    );
+    const timeVal = found?.time && typeof found.time === "string" && found.time.trim() !== ""
+      ? found.time
+      : defaults[id];
+    return timeToMinutes(timeVal);
   };
 
   return {
