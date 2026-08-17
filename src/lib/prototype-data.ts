@@ -53,6 +53,8 @@ export const PROTOTYPE_KEYS = [
   "journal",
   "reminders",
   "notifPrefs",
+  "family",
+  "routines",
 ] as const;
 
 function seedKey<T>(key: string, value: T) {

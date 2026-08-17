@@ -23,6 +23,7 @@ import {
   type TaskRecord,
   type CalEventRecord,
 } from "./daily-surface";
+import { type Routine, getTodayRoutineInstances } from "./routine-engine";
 
 // -----------------------------------------------------------------------------
 // TYPES & DEFINITIONS
@@ -352,6 +353,7 @@ export interface DayRhythmInput {
   isRamadan?: boolean | undefined;
   ramadanDay?: number | null | undefined;
   activeReminders?: ReminderSignal[] | undefined;
+  routines?: Routine[] | undefined;
 }
 
 // -----------------------------------------------------------------------------
@@ -1066,6 +1068,32 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
     }
   }
 
+  // 5.5. Family Routines due today (Wave 1.3)
+  if (input.routines && input.routines.length > 0) {
+    const routineInstances = getTodayRoutineInstances(input.routines, dateStr, prayerMap);
+    for (const inst of routineInstances) {
+      const isDone = inst.status === "completed";
+      const bId = inst.targetBlock;
+
+      let detail = `${inst.completedSteps}/${inst.totalSteps} steps completed`;
+      if (inst.currentStep) {
+        detail = `Next: ${inst.currentStep.title} (${inst.completedSteps}/${inst.totalSteps})`;
+      }
+
+      blockItemsMap[bId].push({
+        id: `routine-${inst.routineId}`,
+        category: "family",
+        title: inst.name,
+        detail,
+        done: isDone,
+        blockId: bId,
+        priority: isDone ? 9 : inst.status === "in_progress" ? 3 : 5,
+        to: "/",
+        sourceId: inst.routineId,
+      });
+    }
+  }
+
   // 6. Planned Meals
   if (input.meals) {
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -1283,5 +1311,6 @@ export function buildDayRhythmFromSurfaceData(data: DailySurfaceData): DayRhythm
     isRamadan: data.isRamadan,
     ramadanDay: data.ramadanDay,
     activeReminders: data.activeReminders,
+    routines: data.routines,
   });
 }

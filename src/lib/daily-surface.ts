@@ -10,6 +10,7 @@ import { generateHifzRevisionQueue, type HifzItem } from "./hifz-scheduler";
 import { calculateSuhurIftar } from "./ramadan";
 import { isoDate } from "./intelligence";
 import type { ReminderSignal } from "./reminder-engine";
+import { type Routine, generateRoutineSignals } from "./routine-engine";
 
 export type DailyThreadItemCategory =
   | "prayer"
@@ -80,6 +81,7 @@ export interface DailySurfaceData {
   expenses: { id?: string | undefined; amount: number; category?: string | undefined; date: string }[];
   limits: Record<string, number>;
   activeReminders?: ReminderSignal[] | undefined;
+  routines?: Routine[] | undefined;
 }
 
 export function isTaskRecordDone(t: TaskRecord, todayIso = isoDate()): boolean {
@@ -242,6 +244,22 @@ export function buildDailyThread(
       detail: taskDetail,
       to: "/",
     });
+  }
+
+  // 6.5. Active Family Routines Due Today (Wave 1.3)
+  if (data.routines && data.routines.length > 0) {
+    const routineSignals = generateRoutineSignals(data.routines, today, data.prayers);
+    for (const sig of routineSignals.slice(0, 2)) {
+      items.push({
+        id: `routine-${sig.routineId}`,
+        category: "task",
+        priority: sig.priority,
+        label: "Routine",
+        value: `${sig.name} (${sig.completedSteps}/${sig.totalSteps})`,
+        detail: sig.currentStepTitle ? `Next: ${sig.currentStepTitle}` : sig.displaySchedule || undefined,
+        to: "/",
+      });
+    }
   }
 
   // 7. Today's Planned Meal Context
