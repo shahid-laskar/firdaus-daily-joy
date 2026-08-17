@@ -1430,11 +1430,11 @@
 }
 
 /* ── Life-Area Voice Tonal Carriers ─────────────────────────────────────── */
-.band-label[data-tone="prayer"], .action-pill[data-tone="prayer"], .panel[data-tone="prayer"], .row-item[data-tone="prayer"], .btn-tone[data-tone="prayer"] { --tone: var(--cat-prayer); --tone-soft: var(--cat-prayer-soft); }
-.band-label[data-tone="task"], .action-pill[data-tone="task"], .panel[data-tone="task"], .row-item[data-tone="task"], .btn-tone[data-tone="task"] { --tone: var(--cat-task); --tone-soft: var(--cat-task-soft); }
-.band-label[data-tone="meal"], .action-pill[data-tone="meal"], .panel[data-tone="meal"], .row-item[data-tone="meal"], .btn-tone[data-tone="meal"] { --tone: var(--cat-meal); --tone-soft: var(--cat-meal-soft); }
-.band-label[data-tone="kids"], .action-pill[data-tone="kids"], .panel[data-tone="kids"], .row-item[data-tone="kids"], .btn-tone[data-tone="kids"] { --tone: var(--cat-kids); --tone-soft: var(--cat-kids-soft); }
-.band-label[data-tone="grocery"], .action-pill[data-tone="grocery"], .panel[data-tone="grocery"], .row-item[data-tone="grocery"], .btn-tone[data-tone="grocery"] { --tone: var(--cat-grocery); --tone-soft: var(--cat-grocery-soft); }
-.band-label[data-tone="habit"], .action-pill[data-tone="habit"], .panel[data-tone="habit"], .row-item[data-tone="habit"], .btn-tone[data-tone="habit"] { --tone: var(--cat-habit); --tone-soft: var(--cat-habit-soft); }
-.band-label[data-tone="money"], .action-pill[data-tone="money"], .panel[data-tone="money"], .row-item[data-tone="money"], .btn-tone[data-tone="money"] { --tone: var(--cat-money); --tone-soft: var(--cat-money-soft); }
-.band-label[data-tone="self"], .action-pill[data-tone="self"], .panel[data-tone="self"], .row-item[data-tone="self"], .btn-tone[data-tone="self"] { --tone: var(--cat-self); --tone-soft: var(--cat-self-soft); }
+[data-tone="prayer"], .band-label[data-tone="prayer"], .action-pill[data-tone="prayer"], .panel[data-tone="prayer"], .row-item[data-tone="prayer"], .btn-tone[data-tone="prayer"] { --tone: var(--cat-prayer); --tone-soft: var(--cat-prayer-soft); }
+[data-tone="task"], .band-label[data-tone="task"], .action-pill[data-tone="task"], .panel[data-tone="task"], .row-item[data-tone="task"], .btn-tone[data-tone="task"] { --tone: var(--cat-task); --tone-soft: var(--cat-task-soft); }
+[data-tone="meal"], .band-label[data-tone="meal"], .action-pill[data-tone="meal"], .panel[data-tone="meal"], .row-item[data-tone="meal"], .btn-tone[data-tone="meal"] { --tone: var(--cat-meal); --tone-soft: var(--cat-meal-soft); }
+[data-tone="kids"], .band-label[data-tone="kids"], .action-pill[data-tone="kids"], .panel[data-tone="kids"], .row-item[data-tone="kids"], .btn-tone[data-tone="kids"] { --tone: var(--cat-kids); --tone-soft: var(--cat-kids-soft); }
+[data-tone="grocery"], .band-label[data-tone="grocery"], .action-pill[data-tone="grocery"], .panel[data-tone="grocery"], .row-item[data-tone="grocery"], .btn-tone[data-tone="grocery"] { --tone: var(--cat-grocery); --tone-soft: var(--cat-grocery-soft); }
+[data-tone="habit"], .band-label[data-tone="habit"], .action-pill[data-tone="habit"], .panel[data-tone="habit"], .row-item[data-tone="habit"], .btn-tone[data-tone="habit"] { --tone: var(--cat-habit); --tone-soft: var(--cat-habit-soft); }
+[data-tone="money"], .band-label[data-tone="money"], .action-pill[data-tone="money"], .panel[data-tone="money"], .row-item[data-tone="money"], .btn-tone[data-tone="money"] { --tone: var(--cat-money); --tone-soft: var(--cat-money-soft); }
+[data-tone="self"], .band-label[data-tone="self"], .action-pill[data-tone="self"], .panel[data-tone="self"], .row-item[data-tone="self"], .btn-tone[data-tone="self"] { --tone: var(--cat-self); --tone-soft: var(--cat-self-soft); }

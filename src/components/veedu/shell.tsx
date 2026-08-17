@@ -7,19 +7,15 @@ import { GlobalSearch } from "./search";
 import { Sheet, Field, Action } from "./primitives";
 import { ThemeSwitcher } from "./theme-switcher";
 import { useExperience } from "@/lib/theme-provider";
+import { SPACES, type SpaceId } from "@/lib/spaces";
 
-export const SPACES = [
-  { id: "home", to: "/", label: "Home", glyph: "⌂", icon: Home },
-  { id: "deen", to: "/deen", label: "Deen", glyph: "☾", icon: Moon },
-  { id: "budget", to: "/budget", label: "Budget", glyph: "◈", icon: Wallet },
-  { id: "me", to: "/me", label: "Me", glyph: "❋", icon: Flower2 },
-] as const;
+export { SPACES, type SpaceId };
 
 export function Shell({
   space,
   children,
 }: {
-  space: "home" | "deen" | "budget" | "me";
+  space: SpaceId;
   children: ReactNode;
 }) {
   const { experience } = useExperience();
@@ -204,10 +200,16 @@ export function Shell({
             value={profile.city}
             onChange={(e) => setProfile({ ...profile, city: e.target.value })}
           />
-          <div className="flex items-center justify-between">
+          <div
+            className={
+              isVibrant
+                ? "flex items-center justify-between p-3.5 rounded-2xl bg-card/60 border border-border/60"
+                : "flex items-center justify-between"
+            }
+          >
             <div>
-              <p className="title-md">Location Coordinates</p>
-              <p className="text-muted-foreground text-xs">
+              <p className="title-md text-sm">Location Coordinates</p>
+              <p className="text-muted-foreground text-xs mt-0.5">
                 {(profile.lat ?? 11.2588).toFixed(4)}, {(profile.lng ?? 75.7804).toFixed(4)}
               </p>
             </div>
@@ -223,7 +225,7 @@ export function Shell({
               Detect
             </Action>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label
               className={
                 isVibrant
@@ -238,7 +240,7 @@ export function Shell({
               onChange={(e) => setProfile({ ...profile, madhab: e.target.value })}
               className={
                 isVibrant
-                  ? "control text-sm"
+                  ? "control text-sm w-full"
                   : "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               }
             >
@@ -246,7 +248,7 @@ export function Shell({
               <option value="hanafi">Hanafi</option>
             </select>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label
               className={
                 isVibrant
@@ -261,7 +263,7 @@ export function Shell({
               onChange={(e) => setProfile({ ...profile, method: e.target.value })}
               className={
                 isVibrant
-                  ? "control text-sm"
+                  ? "control text-sm w-full"
                   : "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               }
             >

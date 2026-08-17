@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useExperience } from "@/lib/theme-provider";
 
 export function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="eyebrow">{children}</p>;
@@ -42,6 +43,39 @@ export function SubTabs({
   value: string;
   onChange: (id: string) => void;
 }) {
+  const { experience } = useExperience();
+
+  if (experience === "vibrant") {
+    return (
+      <div className="no-scrollbar -mx-4 sm:-mx-6 overflow-x-auto px-4 sm:px-6">
+        <div
+          role="tablist"
+          aria-label="Sections"
+          className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_oklab,var(--card)_80%,transparent)] p-1 border border-border/60"
+        >
+          {tabs.map((t) => {
+            const active = t.id === value;
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => onChange(t.id)}
+                className={`press relative shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  active
+                    ? "bg-[var(--space-accent)] text-[oklch(0.995_0.008_70)] shadow-[0_4px_14px_-6px_color-mix(in_oklab,var(--space-accent)_90%,transparent)]"
+                    : "text-ink-soft hover:text-foreground hover:bg-[color-mix(in_oklab,var(--space-accent)_8%,transparent)]"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="-mx-5 px-5">
       <div role="tablist" aria-label="Sections" className="flex flex-wrap gap-1.5 pb-px">
@@ -113,6 +147,30 @@ export function Action({
   disabled?: boolean;
   ariaLabel?: string;
 }) {
+  const { experience } = useExperience();
+  const isVibrant = experience === "vibrant";
+
+  if (isVibrant) {
+    const vibrantStyles = {
+      quiet:
+        "btn-quiet text-foreground",
+      solid: "btn-solid font-bold",
+      ghost: "text-ink-soft hover:text-foreground hover:bg-[color-mix(in_oklab,var(--space-accent)_10%,transparent)]",
+    }[variant];
+
+    return (
+      <button
+        type={type}
+        aria-label={ariaLabel}
+        disabled={disabled}
+        onClick={onClick}
+        className={`press inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full px-4 text-xs font-semibold disabled:opacity-40 transition-all ${vibrantStyles} ${className}`}
+      >
+        {children}
+      </button>
+    );
+  }
+
   const styles = {
     quiet:
       "border border-border bg-card text-foreground hover:border-space/60 hover:bg-space-soft/40",
@@ -136,6 +194,23 @@ export function Field({
   label,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  const { experience } = useExperience();
+  const isVibrant = experience === "vibrant";
+
+  if (isVibrant) {
+    return (
+      <label className="block space-y-1.5">
+        <span className="eyebrow block" style={{ color: "var(--tone, var(--space-accent))" }}>
+          {label}
+        </span>
+        <input
+          {...props}
+          className={`control text-sm w-full ${props.className ?? ""}`}
+        />
+      </label>
+    );
+  }
+
   return (
     <label className="block">
       <span className="eyebrow">{label}</span>
@@ -220,6 +295,9 @@ export function Sheet({
   title: string;
   children: ReactNode;
 }) {
+  const { experience } = useExperience();
+  const isVibrant = experience === "vibrant";
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     if (open) window.addEventListener("keydown", onKey);
@@ -232,18 +310,39 @@ export function Sheet({
       <button
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+        className={
+          isVibrant
+            ? "absolute inset-0 bg-black/40 backdrop-blur-[6px] transition-opacity"
+            : "absolute inset-0 bg-black/25 backdrop-blur-[2px]"
+        }
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="bg-card rise relative max-h-[86vh] w-full overflow-y-auto rounded-t-3xl border p-6 shadow-[var(--shadow-float)] sm:max-w-md sm:rounded-3xl"
+        className={
+          isVibrant
+            ? "tile bloom-in relative max-h-[86vh] w-full overflow-y-auto rounded-t-[2rem] border border-border/80 bg-[color-mix(in_oklab,var(--card)_92%,transparent)] backdrop-blur-2xl p-6 shadow-2xl sm:max-w-md sm:rounded-[2rem]"
+            : "bg-card rise relative max-h-[86vh] w-full overflow-y-auto rounded-t-3xl border p-6 shadow-[var(--shadow-float)] sm:max-w-md sm:rounded-3xl"
+        }
       >
-        <div className="bg-rule mx-auto mb-5 h-1 w-9 rounded-full sm:hidden" />
+        <div
+          className={
+            isVibrant
+              ? "bg-border/80 mx-auto mb-5 h-1.5 w-10 rounded-full sm:hidden"
+              : "bg-rule mx-auto mb-5 h-1 w-9 rounded-full sm:hidden"
+          }
+        />
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="display-lg">{title}</h2>
-          <button onClick={onClose} className="text-muted-foreground text-sm">
+          <h2 className={isVibrant ? "title-md text-lg" : "display-lg"}>{title}</h2>
+          <button
+            onClick={onClose}
+            className={
+              isVibrant
+                ? "press rounded-full px-3 py-1 text-xs font-semibold text-ink-soft hover:text-foreground hover:bg-[color-mix(in_oklab,var(--space-accent)_10%,transparent)]"
+                : "text-muted-foreground text-sm"
+            }
+          >
             Done
           </button>
         </div>

@@ -52,7 +52,7 @@ test("Experience Registry Foundation", async (t) => {
   });
 
   await t.test("shell navigation spaces contract holds both glyph and icon presentations", async () => {
-    const { SPACES } = await import("../components/veedu/shell");
+    const { SPACES } = await import("./spaces");
     assert.equal(SPACES.length, 4);
     const ids = SPACES.map((s) => s.id);
     assert.deepEqual(ids, ["home", "deen", "budget", "me"]);

@@ -8,12 +8,28 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { useReminderEngine } from "../components/home/reminders";
 import { registerServiceWorker } from "../lib/pwa";
+import { isExperienceId, DEFAULT_EXPERIENCE, type ExperienceId } from "../lib/experiences";
+import { isThemeId, DEFAULT_THEME, type ThemeId, type ColorMode } from "../lib/themes";
+
+const getInitialPreferences = createServerFn({ method: "GET" }).handler(async () => {
+  const { getCookie } = await import("@tanstack/react-start/server");
+  const exp = getCookie("veedu.experience");
+  const theme = getCookie("veedu.theme");
+  const mode = getCookie("theme");
+
+  return {
+    experience: (isExperienceId(exp) ? exp : DEFAULT_EXPERIENCE) as ExperienceId,
+    theme: (isThemeId(theme) ? theme : DEFAULT_THEME) as ThemeId,
+    mode: (mode === "dark" || mode === "light" ? mode : "light") as ColorMode,
+  };
+});
 
 function NotFoundComponent() {
   return (
@@ -115,6 +131,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
+  loader: async () => {
+    return await getInitialPreferences();
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -131,9 +150,24 @@ function RootShell({ children }: { children: ReactNode }) {
             __html: `
 (function() {
   try {
-    var exp = localStorage.getItem('veedu.experience') || 'calm';
-    var th = localStorage.getItem('veedu.theme') || 'veedu';
-    var m = (localStorage.getItem('theme') || 'light').replace(/"/g, '');
+    var cExp = document.cookie.match(/(?:^|; )veedu\\.experience=([^;]*)/);
+    var exp = (cExp && decodeURIComponent(cExp[1])) || localStorage.getItem('veedu.experience') || 'calm';
+    if (exp !== 'calm' && exp !== 'vibrant') exp = 'calm';
+    var cTh = document.cookie.match(/(?:^|; )veedu\\.theme=([^;]*)/);
+    var th = (cTh && decodeURIComponent(cTh[1])) || localStorage.getItem('veedu.theme') || 'veedu';
+    var cMode = document.cookie.match(/(?:^|; )theme=([^;]*)/);
+    var m = (cMode && decodeURIComponent(cMode[1])) || (localStorage.getItem('theme') || 'light').replace(/"/g, '');
+    
+    if (!cExp && localStorage.getItem('veedu.experience')) {
+      document.cookie = 'veedu.experience=' + exp + '; path=/; max-age=31536000; SameSite=Lax';
+    }
+    if (!cTh && localStorage.getItem('veedu.theme')) {
+      document.cookie = 'veedu.theme=' + th + '; path=/; max-age=31536000; SameSite=Lax';
+    }
+    if (!cMode && localStorage.getItem('theme')) {
+      document.cookie = 'theme=' + m + '; path=/; max-age=31536000; SameSite=Lax';
+    }
+
     var root = document.documentElement;
     root.dataset.experience = exp;
     root.dataset.theme = th;
@@ -160,6 +194,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const loaderData = Route.useLoaderData();
   useReminderEngine();
 
   useEffect(() => {
@@ -168,7 +203,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="veedu" defaultExperience="calm">
+      <ThemeProvider
+        defaultTheme={loaderData?.theme ?? "veedu"}
+        defaultExperience={loaderData?.experience ?? "calm"}
+        defaultMode={loaderData?.mode ?? "light"}
+      >
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </ThemeProvider>

@@ -34,10 +34,19 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 function applyToDocument(experience: ExperienceId, theme: ThemeId, mode: ColorMode) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.dataset["experience"] = experience;
-  root.dataset["theme"] = theme;
-  root.classList.toggle("dark", mode === "dark");
-  root.style.colorScheme = mode;
+  if (root.dataset["experience"] !== experience) {
+    root.dataset["experience"] = experience;
+  }
+  if (root.dataset["theme"] !== theme) {
+    root.dataset["theme"] = theme;
+  }
+  const isDark = mode === "dark";
+  if (root.classList.contains("dark") !== isDark) {
+    root.classList.toggle("dark", isDark);
+  }
+  if (root.style.colorScheme !== mode) {
+    root.style.colorScheme = mode;
+  }
 }
 
 export function ThemeProvider({
@@ -55,15 +64,43 @@ export function ThemeProvider({
   const [theme, setThemeState] = useState<ThemeId>(defaultTheme);
   const [mode, setModeState] = useState<ColorMode>(defaultMode);
 
-  // Hydrate from storage after mount (avoids SSR mismatch).
+  // Sync state when default props change
+  useEffect(() => {
+    setExperienceState(defaultExperience);
+  }, [defaultExperience]);
+
+  useEffect(() => {
+    setThemeState(defaultTheme);
+  }, [defaultTheme]);
+
+  useEffect(() => {
+    setModeState(defaultMode);
+  }, [defaultMode]);
+
+  // Client hydration check: sync any local preferences to cookies and state
   useEffect(() => {
     try {
       const storedExp = window.localStorage.getItem(EXPERIENCE_KEY);
-      if (isExperienceId(storedExp)) setExperienceState(storedExp);
+      if (isExperienceId(storedExp)) {
+        if (storedExp !== experience) {
+          setExperienceState(storedExp);
+        }
+        document.cookie = `${EXPERIENCE_KEY}=${storedExp}; path=/; max-age=31536000; SameSite=Lax`;
+      }
       const storedTheme = window.localStorage.getItem(THEME_KEY);
-      if (isThemeId(storedTheme)) setThemeState(storedTheme);
+      if (isThemeId(storedTheme)) {
+        if (storedTheme !== theme) {
+          setThemeState(storedTheme);
+        }
+        document.cookie = `${THEME_KEY}=${storedTheme}; path=/; max-age=31536000; SameSite=Lax`;
+      }
       const storedMode = window.localStorage.getItem(MODE_KEY)?.replace(/"/g, "");
-      if (storedMode === "dark" || storedMode === "light") setModeState(storedMode);
+      if (storedMode === "dark" || storedMode === "light") {
+        if (storedMode !== mode) {
+          setModeState(storedMode);
+        }
+        document.cookie = `${MODE_KEY}=${storedMode}; path=/; max-age=31536000; SameSite=Lax`;
+      }
     } catch {
       /* storage unavailable */
     }
@@ -74,31 +111,39 @@ export function ThemeProvider({
   }, [experience, theme, mode]);
 
   const setExperience = useCallback((next: ExperienceId) => {
+    if (!isExperienceId(next)) return;
     setExperienceState(next);
+    applyToDocument(next, theme, mode);
     try {
       window.localStorage.setItem(EXPERIENCE_KEY, next);
+      document.cookie = `${EXPERIENCE_KEY}=${next}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [theme, mode]);
 
   const setTheme = useCallback((next: ThemeId) => {
+    if (!isThemeId(next)) return;
     setThemeState(next);
+    applyToDocument(experience, next, mode);
     try {
       window.localStorage.setItem(THEME_KEY, next);
+      document.cookie = `${THEME_KEY}=${next}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [experience, mode]);
 
   const setMode = useCallback((next: ColorMode) => {
     setModeState(next);
+    applyToDocument(experience, theme, next);
     try {
       window.localStorage.setItem(MODE_KEY, next);
+      document.cookie = `${MODE_KEY}=${next}; path=/; max-age=31536000; SameSite=Lax`;
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [experience, theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({
