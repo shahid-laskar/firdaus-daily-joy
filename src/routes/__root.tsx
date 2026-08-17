@@ -18,8 +18,9 @@ import { registerServiceWorker } from "../lib/pwa";
 import { isExperienceId, DEFAULT_EXPERIENCE, type ExperienceId } from "../lib/experiences";
 import { isThemeId, DEFAULT_THEME, type ThemeId, type ColorMode } from "../lib/themes";
 
+import { getCookie } from "@tanstack/react-start/server";
+
 const getInitialPreferences = createServerFn({ method: "GET" }).handler(async () => {
-  const { getCookie } = await import("@tanstack/react-start/server");
   const exp = getCookie("veedu.experience");
   const theme = getCookie("veedu.theme");
   const mode = getCookie("theme");
