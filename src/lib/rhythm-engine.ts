@@ -113,6 +113,140 @@ export const RHYTHM_BLOCK_DEFINITIONS: Record<RhythmBlockId, RhythmBlockDefiniti
 
 export type PrayerAnchorStatus = "ontime" | "late" | "missed" | "pending" | "upcoming";
 
+// -----------------------------------------------------------------------------
+// PRAYER-AWARE TASK SCHEDULING VOCABULARY & MODELS (Wave 1.2)
+// -----------------------------------------------------------------------------
+
+export type CanonicalRelativeAnchorKey =
+  | "afterFajr"
+  | "beforeDhuhr"
+  | "afterDhuhr"
+  | "beforeAsr"
+  | "afterAsr"
+  | "beforeMaghrib"
+  | "afterMaghrib"
+  | "beforeIsha"
+  | "afterIsha"
+  | "beforeFajr";
+
+export const CANONICAL_RELATIVE_ANCHOR_KEYS: readonly CanonicalRelativeAnchorKey[] = [
+  "afterFajr",
+  "beforeDhuhr",
+  "afterDhuhr",
+  "beforeAsr",
+  "afterAsr",
+  "beforeMaghrib",
+  "afterMaghrib",
+  "beforeIsha",
+  "afterIsha",
+  "beforeFajr",
+] as const;
+
+export interface RelativePrayerAnchorObj {
+  prayer: PrayerId;
+  relation: "before" | "after" | "at";
+  offsetMinutes?: number | undefined;
+}
+
+export type RelativePrayerAnchor = CanonicalRelativeAnchorKey | RelativePrayerAnchorObj;
+
+export type ScheduleMode = "exactTime" | "relativePrayer" | "unscheduled";
+
+export interface RelativeAnchorDefinition {
+  key: CanonicalRelativeAnchorKey;
+  label: string;
+  prayer: PrayerId;
+  relation: "before" | "after";
+  targetBlock: RhythmBlockId;
+  description: string;
+}
+
+export const RELATIVE_ANCHOR_DEFINITIONS: Record<
+  CanonicalRelativeAnchorKey,
+  RelativeAnchorDefinition
+> = {
+  afterFajr: {
+    key: "afterFajr",
+    label: "After Fajr",
+    prayer: "fajr",
+    relation: "after",
+    targetBlock: "morning",
+    description: "Post-Fajr morning start, Quran recitation, Adhkar, and deep focus",
+  },
+  beforeDhuhr: {
+    key: "beforeDhuhr",
+    label: "Before Dhuhr",
+    prayer: "dhuhr",
+    relation: "before",
+    targetBlock: "morning",
+    description: "Late morning focus, Duha prayer, and pre-midday wrap-up",
+  },
+  afterDhuhr: {
+    key: "afterDhuhr",
+    label: "After Dhuhr",
+    prayer: "dhuhr",
+    relation: "after",
+    targetBlock: "afternoon",
+    description: "Midday prayer, nourishment, Qaylulah (rest), and focused afternoon momentum",
+  },
+  beforeAsr: {
+    key: "beforeAsr",
+    label: "Before Asr",
+    prayer: "asr",
+    relation: "before",
+    targetBlock: "afternoon",
+    description: "Afternoon wrap-up before Asr prayer",
+  },
+  afterAsr: {
+    key: "afterAsr",
+    label: "After Asr",
+    prayer: "asr",
+    relation: "after",
+    targetBlock: "lateAfternoon",
+    description: "Late afternoon, closing tasks, outdoor activity, and evening transition",
+  },
+  beforeMaghrib: {
+    key: "beforeMaghrib",
+    label: "Before Maghrib",
+    prayer: "maghrib",
+    relation: "before",
+    targetBlock: "lateAfternoon",
+    description: "Pre-sunset reflection, evening Adhkar, and mindful winding down",
+  },
+  afterMaghrib: {
+    key: "afterMaghrib",
+    label: "After Maghrib",
+    prayer: "maghrib",
+    relation: "after",
+    targetBlock: "evening",
+    description: "Sunset prayer, family meal, gratitude, connection, and Muraja'ah",
+  },
+  beforeIsha: {
+    key: "beforeIsha",
+    label: "Before Isha",
+    prayer: "isha",
+    relation: "before",
+    targetBlock: "evening",
+    description: "Evening wrap-up and study before Isha prayer",
+  },
+  afterIsha: {
+    key: "afterIsha",
+    label: "After Isha",
+    prayer: "isha",
+    relation: "after",
+    targetBlock: "night",
+    description: "Night prayer, peaceful winding down, rest preparation, and calm",
+  },
+  beforeFajr: {
+    key: "beforeFajr",
+    label: "Before Fajr",
+    prayer: "fajr",
+    relation: "before",
+    targetBlock: "night",
+    description: "Pre-dawn, Tahajjud (Qiyam al-Layl), Suhur, and early reflection",
+  },
+};
+
 export interface PrayerAnchor {
   id: PrayerId;
   name: string;
@@ -142,11 +276,8 @@ export interface RhythmItem {
   title: string;
   detail?: string | undefined;
   time?: string | undefined; // "HH:mm" if scheduled at specific clock time
-  relativeAnchor?: {
-    prayer: PrayerId;
-    relation: "before" | "after" | "at";
-    offsetMinutes?: number | undefined;
-  } | undefined;
+  relativeAnchor?: RelativePrayerAnchorObj | undefined;
+  scheduleMode?: ScheduleMode | undefined;
   blockId: RhythmBlockId;
   done?: boolean | undefined;
   priority?: number | undefined; // 1 (urgent) to 10 (ambient)
@@ -403,6 +534,167 @@ export function resolveRelativeAnchorToBlock(
 }
 
 /**
+ * Normalizes any relative anchor representation (string key or object) into a typed RelativePrayerAnchorObj.
+ * Returns null if invalid or undefined.
+ */
+export function normalizeRelativeAnchor(
+  anchor: RelativePrayerAnchor | string | undefined | null
+): RelativePrayerAnchorObj | null {
+  if (!anchor) return null;
+
+  if (typeof anchor === "object") {
+    const prayer = String(anchor.prayer || "").toLowerCase() as PrayerId;
+    const relation = anchor.relation ?? "after";
+    if (PRAYER_IDS.includes(prayer)) {
+      return {
+        prayer,
+        relation: relation === "before" ? "before" : relation === "at" ? "at" : "after",
+        offsetMinutes: typeof anchor.offsetMinutes === "number" ? anchor.offsetMinutes : undefined,
+      };
+    }
+    return null;
+  }
+
+  if (typeof anchor === "string") {
+    // Check direct canonical key match
+    if (anchor in RELATIVE_ANCHOR_DEFINITIONS) {
+      const def = RELATIVE_ANCHOR_DEFINITIONS[anchor as CanonicalRelativeAnchorKey];
+      return { prayer: def.prayer, relation: def.relation };
+    }
+
+    // Flexible case-insensitive string parsing (e.g. "after-fajr", "after_fajr", "after fajr")
+    const cleaned = anchor.toLowerCase().replace(/[-_\s]/g, "");
+    if (cleaned === "afterfajr") return { prayer: "fajr", relation: "after" };
+    if (cleaned === "beforedhuhr") return { prayer: "dhuhr", relation: "before" };
+    if (cleaned === "afterdhuhr") return { prayer: "dhuhr", relation: "after" };
+    if (cleaned === "beforeasr") return { prayer: "asr", relation: "before" };
+    if (cleaned === "afterasr") return { prayer: "asr", relation: "after" };
+    if (cleaned === "beforemaghrib") return { prayer: "maghrib", relation: "before" };
+    if (cleaned === "aftermaghrib") return { prayer: "maghrib", relation: "after" };
+    if (cleaned === "beforeisha") return { prayer: "isha", relation: "before" };
+    if (cleaned === "afterisha") return { prayer: "isha", relation: "after" };
+    if (cleaned === "beforefajr") return { prayer: "fajr", relation: "before" };
+  }
+
+  return null;
+}
+
+/**
+ * Formats a relative prayer anchor into a user-friendly label.
+ * e.g. "After Fajr", "Before Dhuhr", "After Maghrib (+20m)"
+ */
+export function formatRelativeAnchorLabel(
+  anchor: RelativePrayerAnchor | string | undefined | null
+): string {
+  const norm = normalizeRelativeAnchor(anchor);
+  if (!norm) return "";
+
+  const prayerNames: Record<PrayerId, string> = {
+    fajr: "Fajr",
+    dhuhr: "Dhuhr",
+    asr: "Asr",
+    maghrib: "Maghrib",
+    isha: "Isha",
+  };
+
+  const pName = prayerNames[norm.prayer] ?? norm.prayer;
+  const relStr = norm.relation === "before" ? "Before" : norm.relation === "at" ? "At" : "After";
+  const offset = norm.offsetMinutes ? ` (+${norm.offsetMinutes}m)` : "";
+  return `${relStr} ${pName}${offset}`;
+}
+
+/**
+ * Determines the effective schedule mode of a task or item.
+ * Precedence:
+ * 1. Explicit `scheduleMode` if provided
+ * 2. If valid `relativeAnchor` exists -> "relativePrayer"
+ * 3. Else if `time` string exists and is non-empty -> "exactTime"
+ * 4. Else -> "unscheduled"
+ */
+export function getTaskScheduleMode(task: {
+  scheduleMode?: ScheduleMode | undefined;
+  time?: string | undefined;
+  relativeAnchor?: RelativePrayerAnchor | string | undefined;
+}): ScheduleMode {
+  if (task.scheduleMode) return task.scheduleMode;
+  if (normalizeRelativeAnchor(task.relativeAnchor)) return "relativePrayer";
+  if (task.time && task.time.trim().length > 0) return "exactTime";
+  return "unscheduled";
+}
+
+export interface TaskPlacement {
+  blockId: RhythmBlockId;
+  scheduleMode: ScheduleMode;
+  displayLabel: string; // e.g. "14:00" or "After Asr" or ""
+  normalizedAnchor: RelativePrayerAnchorObj | null;
+  approximateMinutes?: number | undefined; // Presentation/sorting helper only (NOT persisted)
+  targetPrayer?: PrayerId | undefined;
+}
+
+/**
+ * Resolves a task's placement dynamically through the Rhythm Engine.
+ * Never writes or mutates persistent clock times for prayer-relative tasks.
+ */
+export function resolveTaskPlacement(
+  task: {
+    title?: string | undefined;
+    time?: string | undefined;
+    relativeAnchor?: RelativePrayerAnchor | string | undefined;
+    scheduleMode?: ScheduleMode | undefined;
+    category?: string | undefined;
+  },
+  prayers: PrayerTimeMap | { id: string; time: string }[]
+): TaskPlacement {
+  const map: PrayerTimeMap = Array.isArray(prayers)
+    ? extractPrayerTimeMap(prayers)
+    : prayers;
+
+  const mode = getTaskScheduleMode(task);
+
+  if (mode === "relativePrayer") {
+    const norm = normalizeRelativeAnchor(task.relativeAnchor);
+    if (norm) {
+      const blockId = resolveRelativeAnchorToBlock(norm.prayer, norm.relation);
+      const prayerMins = map[norm.prayer];
+      // Derived approximate minutes for chronological ordering within block (NOT persisted)
+      const defaultOffset = norm.relation === "after" ? 15 : norm.relation === "before" ? -15 : 0;
+      const offset = norm.offsetMinutes ?? defaultOffset;
+      const approximateMinutes = (prayerMins + offset + 1440) % 1440;
+      return {
+        blockId,
+        scheduleMode: "relativePrayer",
+        displayLabel: formatRelativeAnchorLabel(norm),
+        normalizedAnchor: norm,
+        approximateMinutes,
+        targetPrayer: norm.prayer,
+      };
+    }
+  }
+
+  if (mode === "exactTime" && task.time && task.time.includes(":")) {
+    const mins = timeToMinutes(task.time);
+    const blockId = determineRhythmBlock(mins, map);
+    return {
+      blockId,
+      scheduleMode: "exactTime",
+      displayLabel: task.time,
+      normalizedAnchor: null,
+      approximateMinutes: mins,
+    };
+  }
+
+  // Unscheduled mode - infer block through heuristics
+  const blockId = inferBlockForItem(task, map);
+  return {
+    blockId,
+    scheduleMode: "unscheduled",
+    displayLabel: "",
+    normalizedAnchor: null,
+    approximateMinutes: undefined,
+  };
+}
+
+/**
  * Smart inference for placing items into appropriate rhythm blocks.
  *
  * Priority order:
@@ -415,20 +707,23 @@ export function inferBlockForItem(
     title?: string | undefined;
     time?: string | undefined;
     category?: string | undefined;
-    relativeAnchor?: { prayer: PrayerId; relation: "before" | "after" | "at" } | undefined;
+    relativeAnchor?: RelativePrayerAnchor | string | undefined;
+    scheduleMode?: ScheduleMode | undefined;
   },
   prayers: PrayerTimeMap | { id: string; time: string }[]
 ): RhythmBlockId {
+  const mode = getTaskScheduleMode(item);
+
   // 1. Explicit relative anchor
-  if (item.relativeAnchor) {
-    return resolveRelativeAnchorToBlock(
-      item.relativeAnchor.prayer,
-      item.relativeAnchor.relation
-    );
+  if (mode === "relativePrayer" || item.relativeAnchor) {
+    const norm = normalizeRelativeAnchor(item.relativeAnchor);
+    if (norm) {
+      return resolveRelativeAnchorToBlock(norm.prayer, norm.relation);
+    }
   }
 
   // 2. Explicit time
-  if (item.time && item.time.includes(":")) {
+  if ((mode === "exactTime" || !item.relativeAnchor) && item.time && item.time.includes(":")) {
     return determineRhythmBlock(item.time, prayers);
   }
 
@@ -746,14 +1041,22 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
 
     for (const t of dueTasks) {
       const done = isTaskRecordDone(t, dateStr);
-      const bId = inferBlockForItem({ title: t.title, time: t.time, category: "task" }, prayerMap);
+      const placement = resolveTaskPlacement(t, prayerMap);
+      const bId = placement.blockId;
+
+      let detail: string | undefined = t.time ? `Due ${t.time}` : undefined;
+      if (placement.scheduleMode === "relativePrayer" && placement.displayLabel) {
+        detail = placement.displayLabel;
+      }
 
       blockItemsMap[bId].push({
         id: `task-${t.id}`,
         category: "task",
         title: t.title,
-        detail: t.time ? `Due ${t.time}` : undefined,
+        detail,
         time: t.time,
+        relativeAnchor: placement.normalizedAnchor ?? undefined,
+        scheduleMode: placement.scheduleMode,
         done,
         blockId: bId,
         priority: done ? 9 : 6,

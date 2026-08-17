@@ -23,6 +23,12 @@ import { type FamilyMember, type Chore } from "@/lib/family-model";
 import { rankRecipes } from "@/lib/meal-intelligence";
 import { useExperience } from "@/lib/theme-provider";
 
+import {
+  type RelativePrayerAnchor,
+  type ScheduleMode,
+  formatRelativeAnchorLabel,
+} from "@/lib/rhythm-engine";
+
 export type Task = {
   id: string;
   title: string;
@@ -33,6 +39,8 @@ export type Task = {
   recur?: Recurrence;
   completions?: string[];
   assigneeId?: string;
+  relativeAnchor?: RelativePrayerAnchor | string;
+  scheduleMode?: ScheduleMode;
 };
 const LISTS = ["General", "Shopping", "Work", "Home"];
 
@@ -251,17 +259,22 @@ export function Tasks() {
                     >
                       {t.title}
                     </p>
-                    {(t.time || (next && next !== today)) && (
-                      <p className="text-ink-faint numeric mt-1 flex flex-wrap items-center gap-2 text-xs">
-                        {t.time && (
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="size-3 text-ink-faint" />
-                            {t.time}
-                          </span>
-                        )}
-                        {next && next !== today && <span>next {next}</span>}
-                      </p>
-                    )}
+                    {(() => {
+                      const anchorLabel = formatRelativeAnchorLabel(t.relativeAnchor);
+                      const timingDisplay = anchorLabel || t.time;
+                      if (!timingDisplay && (!next || next === today)) return null;
+                      return (
+                        <p className="text-ink-faint numeric mt-1 flex flex-wrap items-center gap-2 text-xs">
+                          {timingDisplay && (
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="size-3 text-ink-faint" />
+                              {timingDisplay}
+                            </span>
+                          )}
+                          {next && next !== today && <span>next {next}</span>}
+                        </p>
+                      );
+                    })()}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <RepeatChip recur={t.recur} />
@@ -358,11 +371,17 @@ export function Tasks() {
                   <p className={`text-[0.95rem] ${done ? "text-ink-faint line-through" : ""}`}>
                     {t.title}
                   </p>
-                  <p className="text-ink-faint numeric text-xs">
-                    {[t.time, next && next !== today ? `next ${next}` : null]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
+                  {(() => {
+                    const anchorLabel = formatRelativeAnchorLabel(t.relativeAnchor);
+                    const timingDisplay = anchorLabel || t.time;
+                    return (
+                      <p className="text-ink-faint numeric text-xs">
+                        {[timingDisplay, next && next !== today ? `next ${next}` : null]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <RepeatChip recur={t.recur} />

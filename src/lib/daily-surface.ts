@@ -48,6 +48,8 @@ export interface TaskRecord {
   completions?: string[] | undefined;
   list?: string | undefined;
   assigneeId?: string | undefined;
+  relativeAnchor?: any;
+  scheduleMode?: "exactTime" | "relativePrayer" | "unscheduled" | undefined;
 }
 
 export interface CalEventRecord {
@@ -214,13 +216,30 @@ export function buildDailyThread(
   );
   const openTasks = dueTasks.filter((t) => !isTaskRecordDone(t, today));
   for (const t of openTasks.slice(0, 3)) {
+    let taskDetail = t.time;
+    if (t.relativeAnchor) {
+      if (typeof t.relativeAnchor === "string") {
+        const cleaned = t.relativeAnchor.replace(/[-_\s]/g, "");
+        if (/^after/i.test(cleaned)) {
+          taskDetail = `After ${cleaned.slice(5).charAt(0).toUpperCase() + cleaned.slice(6)}`;
+        } else if (/^before/i.test(cleaned)) {
+          taskDetail = `Before ${cleaned.slice(6).charAt(0).toUpperCase() + cleaned.slice(7)}`;
+        } else {
+          taskDetail = t.relativeAnchor;
+        }
+      } else if (typeof t.relativeAnchor === "object" && t.relativeAnchor.prayer) {
+        const rel = t.relativeAnchor.relation === "before" ? "Before" : "After";
+        const p = String(t.relativeAnchor.prayer);
+        taskDetail = `${rel} ${p.charAt(0).toUpperCase() + p.slice(1)}`;
+      }
+    }
     items.push({
       id: `task-${t.id}`,
       category: "task",
       priority: 6,
       label: "Waiting",
       value: t.title,
-      detail: t.time,
+      detail: taskDetail,
       to: "/",
     });
   }

@@ -6,15 +6,23 @@ import {
   formatDuration,
   determineRhythmBlock,
   resolveRelativeAnchorToBlock,
+  normalizeRelativeAnchor,
+  formatRelativeAnchorLabel,
+  getTaskScheduleMode,
+  resolveTaskPlacement,
   inferBlockForItem,
   buildDayRhythm,
   buildDayRhythmFromSurfaceData,
   RHYTHM_BLOCK_DEFINITIONS,
   PRAYER_IDS,
   RHYTHM_BLOCK_IDS,
+  CANONICAL_RELATIVE_ANCHOR_KEYS,
+  RELATIVE_ANCHOR_DEFINITIONS,
   type PrayerTimeMap,
+  type RelativePrayerAnchor,
+  type ScheduleMode,
 } from "./rhythm-engine";
-import type { DailySurfaceData } from "./daily-surface";
+import type { DailySurfaceData, TaskRecord } from "./daily-surface";
 
 const standardPrayers: PrayerTimeMap = {
   fajr: timeToMinutes("05:15"), // 315
@@ -541,5 +549,353 @@ test("Rhythm Engine — Exact Boundary Invariants", () => {
   // At exactly 19:29 -> still evening
   assert.equal(determineRhythmBlock("19:29", prayers), "evening");
 });
+
+// =============================================================================
+// WAVE 1.2 — PRAYER-AWARE TASK SCHEDULING TESTS
+// =============================================================================
+
+test("Wave 1.2 — Canonical Relative Anchor Vocabulary & Definitions", () => {
+  assert.equal(CANONICAL_RELATIVE_ANCHOR_KEYS.length, 10);
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("afterFajr"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("beforeDhuhr"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("afterDhuhr"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("beforeAsr"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("afterAsr"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("beforeMaghrib"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("afterMaghrib"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("beforeIsha"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("afterIsha"));
+  assert.ok(CANONICAL_RELATIVE_ANCHOR_KEYS.includes("beforeFajr"));
+
+  // Check definitions map
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.afterFajr.targetBlock, "morning");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.beforeDhuhr.targetBlock, "morning");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.afterDhuhr.targetBlock, "afternoon");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.beforeAsr.targetBlock, "afternoon");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.afterAsr.targetBlock, "lateAfternoon");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.beforeMaghrib.targetBlock, "lateAfternoon");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.afterMaghrib.targetBlock, "evening");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.beforeIsha.targetBlock, "evening");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.afterIsha.targetBlock, "night");
+  assert.equal(RELATIVE_ANCHOR_DEFINITIONS.beforeFajr.targetBlock, "night");
+});
+
+test("Wave 1.2 — Relative Anchor Normalization & Label Formatting", () => {
+  // Canonical keys
+  const normFajr = normalizeRelativeAnchor("afterFajr");
+  assert.deepEqual(normFajr, { prayer: "fajr", relation: "after" });
+  assert.equal(formatRelativeAnchorLabel("afterFajr"), "After Fajr");
+
+  const normDhuhr = normalizeRelativeAnchor("beforeDhuhr");
+  assert.deepEqual(normDhuhr, { prayer: "dhuhr", relation: "before" });
+  assert.equal(formatRelativeAnchorLabel("beforeDhuhr"), "Before Dhuhr");
+
+  // Tolerant string forms
+  assert.deepEqual(normalizeRelativeAnchor("after-asr"), { prayer: "asr", relation: "after" });
+  assert.deepEqual(normalizeRelativeAnchor("after_maghrib"), { prayer: "maghrib", relation: "after" });
+  assert.deepEqual(normalizeRelativeAnchor("before isha"), { prayer: "isha", relation: "before" });
+
+  // Object structures with offsets
+  const customObj = { prayer: "maghrib" as const, relation: "after" as const, offsetMinutes: 20 };
+  assert.deepEqual(normalizeRelativeAnchor(customObj), customObj);
+  assert.equal(formatRelativeAnchorLabel(customObj), "After Maghrib (+20m)");
+
+  // Invalid / null
+  assert.equal(normalizeRelativeAnchor(null), null);
+  assert.equal(normalizeRelativeAnchor(undefined), null);
+  assert.equal(normalizeRelativeAnchor("arbitraryInvalidString"), null);
+  assert.equal(formatRelativeAnchorLabel(null), "");
+  assert.equal(formatRelativeAnchorLabel(undefined), "");
+});
+
+test("Wave 1.2 — Schedule Mode Determination & Precedence", () => {
+  // 1. Explicit relative anchor
+  assert.equal(getTaskScheduleMode({ relativeAnchor: "afterFajr" }), "relativePrayer");
+  assert.equal(getTaskScheduleMode({ relativeAnchor: { prayer: "asr", relation: "after" } }), "relativePrayer");
+
+  // 2. Exact clock time
+  assert.equal(getTaskScheduleMode({ time: "14:30" }), "exactTime");
+
+  // 3. Unscheduled
+  assert.equal(getTaskScheduleMode({}), "unscheduled");
+  assert.equal(getTaskScheduleMode({ time: "" }), "unscheduled");
+
+  // 4. Precedence: relativeAnchor takes priority over time if both present without explicit mode
+  assert.equal(getTaskScheduleMode({ time: "14:00", relativeAnchor: "afterAsr" }), "relativePrayer");
+
+  // 5. Explicit scheduleMode override
+  assert.equal(getTaskScheduleMode({ scheduleMode: "exactTime", time: "14:00", relativeAnchor: "afterAsr" }), "exactTime");
+  assert.equal(getTaskScheduleMode({ scheduleMode: "unscheduled", time: "14:00" }), "unscheduled");
+});
+
+test("Wave 1.2 — Dynamic Task Placement Resolution across all 5 Prayers", () => {
+  // Fajr: 05:15, Dhuhr: 12:30, Asr: 15:45, Maghrib: 18:25, Isha: 19:45
+  // afterFajr -> morning block
+  const p1 = resolveTaskPlacement({ title: "Morning Quran", relativeAnchor: "afterFajr" }, standardPrayers);
+  assert.equal(p1.blockId, "morning");
+  assert.equal(p1.scheduleMode, "relativePrayer");
+  assert.equal(p1.displayLabel, "After Fajr");
+  assert.equal(p1.approximateMinutes, 315 + 15); // 05:30 (approximate minutes for ordering only)
+
+  // beforeDhuhr -> morning block
+  const p2 = resolveTaskPlacement({ title: "Duha prayer", relativeAnchor: "beforeDhuhr" }, standardPrayers);
+  assert.equal(p2.blockId, "morning");
+  assert.equal(p2.displayLabel, "Before Dhuhr");
+
+  // afterDhuhr -> afternoon block
+  const p3 = resolveTaskPlacement({ title: "Qaylulah rest", relativeAnchor: "afterDhuhr" }, standardPrayers);
+  assert.equal(p3.blockId, "afternoon");
+  assert.equal(p3.displayLabel, "After Dhuhr");
+
+  // beforeAsr -> afternoon block
+  const p4 = resolveTaskPlacement({ title: "Wrap up focus block", relativeAnchor: "beforeAsr" }, standardPrayers);
+  assert.equal(p4.blockId, "afternoon");
+  assert.equal(p4.displayLabel, "Before Asr");
+
+  // afterAsr -> lateAfternoon block
+  const p5 = resolveTaskPlacement({ title: "Evening walk", relativeAnchor: "afterAsr" }, standardPrayers);
+  assert.equal(p5.blockId, "lateAfternoon");
+  assert.equal(p5.displayLabel, "After Asr");
+
+  // beforeMaghrib -> lateAfternoon block
+  const p6 = resolveTaskPlacement({ title: "Evening Adhkar", relativeAnchor: "beforeMaghrib" }, standardPrayers);
+  assert.equal(p6.blockId, "lateAfternoon");
+  assert.equal(p6.displayLabel, "Before Maghrib");
+
+  // afterMaghrib -> evening block
+  const p7 = resolveTaskPlacement({ title: "Family dinner", relativeAnchor: "afterMaghrib" }, standardPrayers);
+  assert.equal(p7.blockId, "evening");
+  assert.equal(p7.displayLabel, "After Maghrib");
+
+  // beforeIsha -> evening block
+  const p8 = resolveTaskPlacement({ title: "Muraja'ah session", relativeAnchor: "beforeIsha" }, standardPrayers);
+  assert.equal(p8.blockId, "evening");
+  assert.equal(p8.displayLabel, "Before Isha");
+
+  // afterIsha -> night block
+  const p9 = resolveTaskPlacement({ title: "Wind down & read", relativeAnchor: "afterIsha" }, standardPrayers);
+  assert.equal(p9.blockId, "night");
+  assert.equal(p9.displayLabel, "After Isha");
+
+  // beforeFajr -> night block
+  const p10 = resolveTaskPlacement({ title: "Tahajjud prayer", relativeAnchor: "beforeFajr" }, standardPrayers);
+  assert.equal(p10.blockId, "night");
+  assert.equal(p10.displayLabel, "Before Fajr");
+});
+
+test("Wave 1.2 — Backward Compatibility with Legacy Exact-Time, Dated, and Unscheduled Tasks", () => {
+  const legacyTasks: TaskRecord[] = [
+    { id: "leg-1", title: "Dentist appointment", time: "10:30", date: "2026-08-17", done: false },
+    { id: "leg-2", title: "Buy groceries", date: "2026-08-17", done: false },
+    { id: "leg-3", title: "Fix kitchen door", done: false }, // undated, unscheduled
+  ];
+
+  const rhythm = buildDayRhythm({
+    now: new Date("2026-08-17T09:00:00"),
+    date: "2026-08-17",
+    prayers: prayerList,
+    tasks: legacyTasks,
+  });
+
+  const morningItems = rhythm.blocks.find((b) => b.id === "morning")!.items;
+  const dentist = morningItems.find((i) => i.sourceId === "leg-1");
+  assert.ok(dentist);
+  assert.equal(dentist.time, "10:30");
+  assert.equal(dentist.detail, "Due 10:30");
+  assert.equal(dentist.scheduleMode, "exactTime");
+
+  const groceries = morningItems.find((i) => i.sourceId === "leg-2");
+  assert.ok(groceries);
+  assert.equal(groceries.scheduleMode, "unscheduled");
+});
+
+test("Wave 1.2 — Dynamic Recurrence Integration with Prayer-Relative Anchors (Daily, Weekly, Weekday)", () => {
+  const recurringTasks: TaskRecord[] = [
+    {
+      id: "rec-daily-quran",
+      title: "Daily Morning Quran Recitation",
+      relativeAnchor: "afterFajr",
+      recur: { freq: "daily", start: "2026-08-01" },
+      completions: ["2026-08-16"], // Done yesterday, not today (2026-08-17 Monday)
+    },
+    {
+      id: "rec-weekly-halaqah",
+      title: "Weekly Friday Reflection",
+      relativeAnchor: "afterAsr",
+      recur: { freq: "weekly", start: "2026-08-07" }, // Friday
+      completions: [],
+    },
+    {
+      id: "rec-weekday-standup",
+      title: "Weekday Work Wrap-up",
+      relativeAnchor: "beforeMaghrib",
+      recur: { freq: "weekdays", start: "2026-08-01" },
+      completions: [],
+    },
+  ];
+
+  // On Monday 2026-08-17:
+  const mondayRhythm = buildDayRhythm({
+    now: new Date("2026-08-17T08:00:00"),
+    date: "2026-08-17",
+    prayers: prayerList,
+    tasks: recurringTasks,
+  });
+
+  const allItems = mondayRhythm.blocks.flatMap((b) => b.items);
+  const dailyQuran = allItems.find((i) => i.sourceId === "rec-daily-quran");
+  assert.ok(dailyQuran);
+  assert.equal(dailyQuran.blockId, "morning");
+  assert.equal(dailyQuran.done, false);
+  assert.equal(dailyQuran.detail, "After Fajr");
+
+  // Weekday standup should appear on Monday in lateAfternoon
+  const weekdayStandup = allItems.find((i) => i.sourceId === "rec-weekday-standup");
+  assert.ok(weekdayStandup);
+  assert.equal(weekdayStandup.blockId, "lateAfternoon");
+  assert.equal(weekdayStandup.detail, "Before Maghrib");
+
+  // Weekly Friday halaqah should NOT appear on Monday
+  const fridayHalaqah = allItems.find((i) => i.sourceId === "rec-weekly-halaqah");
+  assert.equal(fridayHalaqah, undefined);
+});
+
+test("Wave 1.2 — Changed Prayer Times & Calculation Adjustments (Dynamic Resolution)", () => {
+  const task: TaskRecord = {
+    id: "dyn-1",
+    title: "After-Asr Study Session",
+    relativeAnchor: "afterAsr",
+  };
+
+  // Standard Winter Timing: Asr is at 15:15
+  const winterPrayers: PrayerTimeMap = {
+    fajr: timeToMinutes("05:30"),
+    dhuhr: timeToMinutes("12:15"),
+    asr: timeToMinutes("15:15"),
+    maghrib: timeToMinutes("17:45"),
+    isha: timeToMinutes("19:00"),
+  };
+  const placementWinter = resolveTaskPlacement(task, winterPrayers);
+  assert.equal(placementWinter.blockId, "lateAfternoon");
+  assert.equal(placementWinter.approximateMinutes, timeToMinutes("15:15") + 15);
+
+  // Summer Timing: Asr shifted to 16:45
+  const summerPrayers: PrayerTimeMap = {
+    fajr: timeToMinutes("04:15"),
+    dhuhr: timeToMinutes("12:45"),
+    asr: timeToMinutes("16:45"),
+    maghrib: timeToMinutes("19:30"),
+    isha: timeToMinutes("21:00"),
+  };
+  const placementSummer = resolveTaskPlacement(task, summerPrayers);
+  assert.equal(placementSummer.blockId, "lateAfternoon");
+  assert.equal(placementSummer.approximateMinutes, timeToMinutes("16:45") + 15);
+
+  // Task object itself remained pure and unmutated without storing hardcoded clock times
+  assert.equal(task.time, undefined);
+  assert.equal(task.relativeAnchor, "afterAsr");
+});
+
+test("Wave 1.2 — Conflicting, Invalid, or Missing Anchor Edge Cases", () => {
+  // Invalid anchor string falls back to unscheduled heuristics without crashing
+  const badAnchorTask = {
+    title: "Check refrigerator",
+    relativeAnchor: "nonExistentPrayerAnchor" as any,
+  };
+  const placementBad = resolveTaskPlacement(badAnchorTask, standardPrayers);
+  assert.equal(placementBad.scheduleMode, "unscheduled");
+  assert.equal(placementBad.normalizedAnchor, null);
+  assert.equal(placementBad.displayLabel, "");
+
+  // Missing prayer data array falls back gracefully to canonical defaults
+  const taskWithAnchor = {
+    title: "Recite Surah Mulk",
+    relativeAnchor: "afterIsha" as const,
+  };
+  const placementNoPrayers = resolveTaskPlacement(taskWithAnchor, []);
+  assert.equal(placementNoPrayers.blockId, "night");
+  assert.equal(placementNoPrayers.displayLabel, "After Isha");
+});
+
+test("Wave 1.2 — Task Completion Semantics for Prayer-Relative & Repeating Tasks", () => {
+  const repeatingRelativeTask: TaskRecord = {
+    id: "rep-rel-1",
+    title: "Morning Muraja'ah",
+    relativeAnchor: "afterFajr",
+    recur: { freq: "daily", start: "2026-08-01" },
+    completions: ["2026-08-17"], // Completed on 2026-08-17
+  };
+
+  // When viewed on 2026-08-17: done is true
+  const rhythmToday = buildDayRhythm({
+    now: new Date("2026-08-17T09:00:00"),
+    date: "2026-08-17",
+    prayers: prayerList,
+    tasks: [repeatingRelativeTask],
+  });
+  const todayItem = rhythmToday.blocks.find((b) => b.id === "morning")!.items.find((i) => i.sourceId === "rep-rel-1")!;
+  assert.equal(todayItem.done, true);
+
+  // When viewed on next day 2026-08-18: done is false
+  const rhythmTomorrow = buildDayRhythm({
+    now: new Date("2026-08-18T09:00:00"),
+    date: "2026-08-18",
+    prayers: prayerList,
+    tasks: [repeatingRelativeTask],
+  });
+  const tomorrowItem = rhythmTomorrow.blocks.find((b) => b.id === "morning")!.items.find((i) => i.sourceId === "rep-rel-1")!;
+  assert.equal(tomorrowItem.done, false);
+});
+
+test("Wave 1.2 — Serialization, LocalStorage, and Backup Safety", () => {
+  const sampleTasks: TaskRecord[] = [
+    {
+      id: "task-json-1",
+      title: "Recite Kahf",
+      relativeAnchor: "afterFajr",
+      scheduleMode: "relativePrayer",
+      done: false,
+      date: "2026-08-21",
+    },
+    {
+      id: "task-json-2",
+      title: "Doctor visit",
+      time: "11:00",
+      scheduleMode: "exactTime",
+      done: true,
+      date: "2026-08-21",
+    },
+  ];
+
+  // Roundtrip through JSON serialization (as used by localStorage and backup.ts export/import)
+  const jsonStr = JSON.stringify(sampleTasks);
+  const parsed: TaskRecord[] = JSON.parse(jsonStr);
+
+  assert.equal(parsed.length, 2);
+  assert.equal(parsed[0]?.relativeAnchor, "afterFajr");
+  assert.equal(parsed[0]?.scheduleMode, "relativePrayer");
+  assert.equal(parsed[1]?.time, "11:00");
+  assert.equal(parsed[1]?.scheduleMode, "exactTime");
+});
+
+test("Wave 1.2 — Experience Independence Verification", () => {
+  // Confirm rhythm-engine does not reference Calm or Vibrant UI archetypes
+  const rhythm = buildDayRhythm({
+    now: new Date("2026-08-17T10:00:00"),
+    prayers: prayerList,
+    tasks: [{ id: "t1", title: "Deep study", relativeAnchor: "afterFajr" }],
+  });
+
+  // The output is purely neutral domain data
+  assert.ok(rhythm.currentBlockId);
+  assert.ok(rhythm.blocks.length === 5);
+  assert.ok(rhythm.timeline.length === 10);
+  assert.ok(rhythm.nextAnchor.id);
+
+  // Check no experience keys exist on DayRhythm
+  assert.equal((rhythm as any).experience, undefined);
+  assert.equal((rhythm as any).theme, undefined);
+});
+
 
 
