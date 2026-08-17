@@ -22,7 +22,13 @@ import {
   type RelativePrayerAnchor,
   type ScheduleMode,
 } from "./rhythm-engine";
-import type { DailySurfaceData, TaskRecord } from "./daily-surface";
+import {
+  isTaskDueOnDate,
+  buildDailyThread,
+  type DailySurfaceData,
+  type TaskRecord,
+} from "./daily-surface";
+import { createRoutine } from "./routine-engine";
 
 const standardPrayers: PrayerTimeMap = {
   fajr: timeToMinutes("05:15"), // 315
@@ -897,5 +903,179 @@ test("Wave 1.2 — Experience Independence Verification", () => {
   assert.equal((rhythm as any).theme, undefined);
 });
 
+// -----------------------------------------------------------------------------
+// WAVE 1 CRITICAL INTEGRATION FIX TESTS
+// -----------------------------------------------------------------------------
 
+test("Wave 1 Fix — Problem 1: isTaskDueOnDate Pure Semantics", () => {
+  const today = "2026-08-17"; // Monday
+  const tomorrow = "2026-08-18"; // Tuesday
+  const yesterday = "2026-08-16"; // Sunday
 
+  // 1. Future one-off task
+  const futureTask: TaskRecord = {
+    id: "task-future",
+    title: "Review quarterly report",
+    done: false,
+    date: tomorrow,
+  };
+  assert.equal(isTaskDueOnDate(futureTask, today), false, "Future task must NOT be due today");
+  assert.equal(isTaskDueOnDate(futureTask, tomorrow), true, "Future task must be due tomorrow");
+
+  // 2. Today's one-off task
+  const todayTask: TaskRecord = {
+    id: "task-today",
+    title: "Buy water filters",
+    done: false,
+    date: today,
+  };
+  assert.equal(isTaskDueOnDate(todayTask, today), true, "Today's task must be due today");
+
+  // 3. Yesterday's completed task
+  const yesterdayDoneTask: TaskRecord = {
+    id: "task-yesterday-done",
+    title: "Car wash",
+    done: true,
+    date: yesterday,
+  };
+  assert.equal(isTaskDueOnDate(yesterdayDoneTask, today), false, "Yesterday completed task must NOT be due today");
+
+  // 4. Undated task
+  const undatedOpenTask: TaskRecord = {
+    id: "task-undated-open",
+    title: "Fix cupboard handle",
+    done: false,
+  };
+  const undatedDoneTask: TaskRecord = {
+    id: "task-undated-done",
+    title: "Fix door hinge",
+    done: true,
+  };
+  assert.equal(isTaskDueOnDate(undatedOpenTask, today), true, "Undated open task should be due");
+  assert.equal(isTaskDueOnDate(undatedDoneTask, today), false, "Undated completed task should NOT be due");
+
+  // 5. Recurring task
+  const weekdayTask: TaskRecord = {
+    id: "task-recurring-weekdays",
+    title: "School drop-off",
+    recur: { freq: "weekdays", start: "2026-08-01" },
+  };
+  assert.equal(isTaskDueOnDate(weekdayTask, today), true, "Weekday task is due on Monday");
+  assert.equal(isTaskDueOnDate(weekdayTask, yesterday), false, "Weekday task is NOT due on Sunday");
+});
+
+test("Wave 1 Fix — Problem 2 & 3: Daily Surface Consumes Canonical DayRhythm", () => {
+  const today = "2026-08-17";
+  const tomorrow = "2026-08-18";
+
+  const taskTodayFajr: TaskRecord = {
+    id: "t-today-fajr",
+    title: "Morning Quran Session",
+    relativeAnchor: "afterFajr",
+    date: today,
+  };
+
+  const taskFutureMaghrib: TaskRecord = {
+    id: "t-future-maghrib",
+    title: "Family Halaqah Tomorrow",
+    relativeAnchor: "afterMaghrib",
+    date: tomorrow,
+  };
+
+  const taskExactTimeToday: TaskRecord = {
+    id: "t-exact-today",
+    title: "Dentist appointment",
+    time: "10:30",
+    date: today,
+  };
+
+  const schoolRoutine = createRoutine({
+    id: "rt-school-mon",
+    name: "School Morning Routine",
+    relativeAnchor: "afterFajr",
+    steps: [
+      { id: "s1", title: "Dress up" },
+      { id: "s2", title: "Eat breakfast" },
+    ],
+  });
+
+  const mockSurfaceData: DailySurfaceData = {
+    now: new Date("2026-08-17T06:00:00"), // 6 AM (Morning block)
+    profile: { name: "Shahid" },
+    prayers: prayerList,
+    nextPrayer: { next: { name: "Dhuhr", time: "12:30" }, hours: 6, mins: 30 },
+    salahLog: {},
+    hifzItems: [],
+    isRamadan: false,
+    ramadanDay: null,
+    tasks: [taskTodayFajr, taskFutureMaghrib, taskExactTimeToday],
+    events: [],
+    meals: {},
+    grocery: [],
+    habits: [],
+    health: {},
+    checkins: {},
+    expenses: [],
+    limits: {},
+    routines: [schoolRoutine],
+  };
+
+  // 1. Build DayRhythm directly
+  const dayRhythm = buildDayRhythmFromSurfaceData(mockSurfaceData);
+
+  // Check DayRhythm placement
+  const morningBlock = dayRhythm.blocks.find((b) => b.id === "morning");
+  assert.ok(morningBlock, "Morning block exists");
+  const morningItems = morningBlock.items;
+  assert.ok(morningItems.some((i) => i.id === "task-t-today-fajr"), "Today's afterFajr task is in Morning block");
+  assert.ok(morningItems.some((i) => i.id === "task-t-exact-today"), "Today's 10:30 task is in Morning block");
+  assert.ok(morningItems.some((i) => i.id === "routine-rt-school-mon"), "School routine is in Morning block");
+  assert.equal(morningItems.some((i) => i.id === "task-t-future-maghrib"), false, "Future task is NOT in DayRhythm blocks");
+
+  // 2. Build DailyThread
+  const thread = buildDailyThread(mockSurfaceData, today, dayRhythm);
+
+  // Verify future task is completely excluded from Daily Thread
+  const futureThreadItem = thread.find((i) => i.id === "task-t-future-maghrib");
+  assert.equal(futureThreadItem, undefined, "Future task MUST NOT bleed into today's Daily Thread");
+
+  // Verify today's prayer-relative task uses canonical detail from Rhythm Engine
+  const fajrThreadItem = thread.find((i) => i.id === "task-t-today-fajr");
+  assert.ok(fajrThreadItem, "Today's task must appear in Daily Thread");
+  assert.equal(fajrThreadItem?.detail, "After Fajr", "Detail must use canonical formatRelativeAnchorLabel from Rhythm Engine");
+  assert.equal(fajrThreadItem?.label, "Current", "Task in current block has 'Current' label");
+
+  // Verify routine item appears in Daily Thread
+  const routineThreadItem = thread.find((i) => i.id === "routine-rt-school-mon");
+  assert.ok(routineThreadItem, "Routine must appear in Daily Thread");
+  assert.ok(routineThreadItem?.value.includes("School Morning Routine"));
+  assert.ok(routineThreadItem?.detail?.includes("Next: Dress up"));
+});
+
+test("Wave 1 Fix — Quiet Day Behavior Remains Correct", () => {
+  const quietSurfaceData: DailySurfaceData = {
+    now: new Date("2026-08-17T14:00:00"),
+    profile: { name: "Shahid" },
+    prayers: prayerList,
+    nextPrayer: { next: { name: "Asr", time: "15:45" }, hours: 1, mins: 45 },
+    salahLog: {},
+    hifzItems: [],
+    isRamadan: false,
+    ramadanDay: null,
+    tasks: [],
+    events: [],
+    meals: {},
+    grocery: [],
+    habits: [],
+    health: {},
+    checkins: {},
+    expenses: [],
+    limits: {},
+    routines: [],
+  };
+
+  const thread = buildDailyThread(quietSurfaceData, "2026-08-17");
+  assert.ok(Array.isArray(thread));
+  assert.ok(thread.length > 0); // Contains prayer context
+  assert.equal(thread.filter((i) => i.category === "task").length, 0, "No task items on quiet day");
+});

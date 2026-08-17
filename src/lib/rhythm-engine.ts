@@ -19,6 +19,7 @@ import type { ReminderSignal } from "./reminder-engine";
 import {
   isTaskRecordDone,
   isEventOnDate,
+  isTaskDueOnDate,
   type DailySurfaceData,
   type TaskRecord,
   type CalEventRecord,
@@ -1035,11 +1036,7 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
 
   // 5. Tasks due today
   if (input.tasks) {
-    const dueTasks = input.tasks.filter((t) =>
-      isRepeating(t.recur)
-        ? occursOn(t.recur, dateStr)
-        : (t.date ? t.date === dateStr : !t.done)
-    );
+    const dueTasks = input.tasks.filter((t) => isTaskDueOnDate(t, dateStr));
 
     for (const t of dueTasks) {
       const done = isTaskRecordDone(t, dateStr);

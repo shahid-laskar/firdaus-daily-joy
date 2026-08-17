@@ -11,6 +11,7 @@ import { calculateSuhurIftar } from "./ramadan";
 import { isoDate } from "./intelligence";
 import type { ReminderSignal } from "./reminder-engine";
 import { type Routine, generateRoutineSignals } from "./routine-engine";
+import { buildDayRhythmFromSurfaceData, type DayRhythm } from "./rhythm-engine";
 
 export type DailyThreadItemCategory =
   | "prayer"
@@ -89,6 +90,22 @@ export function isTaskRecordDone(t: TaskRecord, todayIso = isoDate()): boolean {
   return Boolean(t.completions?.includes(todayIso));
 }
 
+/**
+ * Checks whether a task is due on the specified date.
+ * - For recurring tasks: checks occursOn(t.recur, iso).
+ * - For non-recurring tasks with a date: checks t.date === iso.
+ * - For non-recurring undated tasks: checks !t.done.
+ */
+export function isTaskDueOnDate(t: TaskRecord, iso = isoDate()): boolean {
+  if (isRepeating(t.recur)) {
+    return occursOn(t.recur, iso);
+  }
+  if (t.date) {
+    return t.date === iso;
+  }
+  return !t.done;
+}
+
 /** Check if an event falls on the specified date (explicit date match or recurring schedule) */
 export function isEventOnDate(event: CalEventRecord, iso: string): boolean {
   return event.date === iso || occursOn(event.recur, iso);
@@ -99,10 +116,17 @@ export function isEventOnDate(event: CalEventRecord, iso: string): boolean {
  */
 export function buildDailyThread(
   data: DailySurfaceData,
-  today = isoDate(data.now)
+  today = isoDate(data.now),
+  dayRhythm?: DayRhythm
 ): DailyThreadItem[] {
   const items: DailyThreadItem[] = [];
   const hour = data.now.getHours();
+
+  // Obtain canonical DayRhythm from Rhythm Engine
+  const rhythm = dayRhythm || buildDayRhythmFromSurfaceData({
+    ...data,
+    now: data.now,
+  });
 
   // 1. Ramadan Suhur & Iftar Context (if Ramadan is active)
   if (data.isRamadan) {
@@ -212,43 +236,42 @@ export function buildDailyThread(
     });
   }
 
-  // 6. Actionable Tasks Due Today
-  const dueTasks = data.tasks.filter((t) =>
-    isRepeating(t.recur) ? occursOn(t.recur, today) : !t.done
-  );
-  const openTasks = dueTasks.filter((t) => !isTaskRecordDone(t, today));
-  for (const t of openTasks.slice(0, 3)) {
-    let taskDetail = t.time;
-    if (t.relativeAnchor) {
-      if (typeof t.relativeAnchor === "string") {
-        const cleaned = t.relativeAnchor.replace(/[-_\s]/g, "");
-        if (/^after/i.test(cleaned)) {
-          taskDetail = `After ${cleaned.slice(5).charAt(0).toUpperCase() + cleaned.slice(6)}`;
-        } else if (/^before/i.test(cleaned)) {
-          taskDetail = `Before ${cleaned.slice(6).charAt(0).toUpperCase() + cleaned.slice(7)}`;
-        } else {
-          taskDetail = t.relativeAnchor;
-        }
-      } else if (typeof t.relativeAnchor === "object" && t.relativeAnchor.prayer) {
-        const rel = t.relativeAnchor.relation === "before" ? "Before" : "After";
-        const p = String(t.relativeAnchor.prayer);
-        taskDetail = `${rel} ${p.charAt(0).toUpperCase() + p.slice(1)}`;
+  // 6. Actionable Tasks Due Today (Consuming Canonical DayRhythm)
+  const openTaskItems: { id: string; title: string; detail?: string | undefined; blockId: string }[] = [];
+  for (const block of rhythm.blocks) {
+    for (const item of block.items) {
+      if (item.category === "task" && !item.done) {
+        openTaskItems.push({
+          id: item.id,
+          title: item.title,
+          detail: item.detail,
+          blockId: item.blockId,
+        });
       }
     }
+  }
+
+  for (const t of openTaskItems.slice(0, 3)) {
+    const isCurrentBlock = t.blockId === rhythm.currentBlockId;
     items.push({
-      id: `task-${t.id}`,
+      id: t.id,
       category: "task",
-      priority: 6,
-      label: "Waiting",
+      priority: isCurrentBlock ? 5 : 6,
+      label: isCurrentBlock ? "Current" : "Waiting",
       value: t.title,
-      detail: taskDetail,
+      detail: t.detail,
       to: "/",
     });
   }
 
   // 6.5. Active Family Routines Due Today (Wave 1.3)
   if (data.routines && data.routines.length > 0) {
-    const routineSignals = generateRoutineSignals(data.routines, today, data.prayers);
+    const routineSignals = generateRoutineSignals(
+      data.routines,
+      today,
+      data.prayers,
+      rhythm.currentBlockId
+    );
     for (const sig of routineSignals.slice(0, 2)) {
       items.push({
         id: `routine-${sig.routineId}`,
@@ -353,7 +376,14 @@ export function buildDailyThread(
   }
 
   // 13. Completed count ("Behind you")
-  const doneCount = dueTasks.length - openTasks.length;
+  let doneCount = 0;
+  for (const block of rhythm.blocks) {
+    for (const item of block.items) {
+      if (item.category === "task" && item.done) {
+        doneCount++;
+      }
+    }
+  }
   if (doneCount > 0) {
     items.push({
       id: "completed-summary",

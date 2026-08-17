@@ -1,0 +1,134 @@
+# Executive Verdict
+
+**WAVE 1 READY AFTER FIXES**
+
+While the individual engines (Rhythm, Tasks, Routines) are robust, pure, and well-tested, the highest-priority architectural goal—a single canonical temporal model—is violated in the integration layer. The Daily Surface currently bypasses the Rhythm Engine to re-evaluate tasks and routines independently, leading to duplicate logic and conflicting scheduling semantics. These integration flaws must be resolved before proceeding to the UX stage.
+
+---
+
+# Rhythm Engine Review
+
+The Rhythm Engine (`src/lib/rhythm-engine.ts`) is structurally sound. It correctly models prayer anchors, 24-hour block coverage, midnight transitions, and dynamically adjusts to shifting prayer times without persisting synthetic clock times. It successfully remains pure, deterministic, and experience-agnostic.
+
+---
+
+# Task Scheduling Review
+
+Wave 1.2 successfully established precedence rules for exact-time, relative-prayer, and unscheduled tasks. `resolveTaskPlacement()` reliably maps canonical anchors (e.g. `afterMaghrib`) to blocks. However, `src/lib/daily-surface.ts` re-implements `relativeAnchor` string parsing manually, duplicating the canonical logic from the Rhythm Engine.
+
+---
+
+# Routine Engine Review
+
+Wave 1.3 successfully models Family Routines as templates whose daily instances are derived dynamically on-the-fly. The step completion model correctly uses date-specific logs (`completions?: string[]`), preserving the purity of the routine definitions. Multi-member assignment is fully supported.
+
+---
+
+# Scheduling Consistency Review
+
+**CRITICAL FLAW DETECTED**: The architecture is intended to be:
+`RHYTHM ENGINE -> TASKS/ROUTINES -> DAILY SURFACE`. 
+
+In reality, `buildDailyThread()` in `daily-surface.ts` ignores the Rhythm Engine entirely and re-evaluates all raw `tasks` and `routines` from scratch. This leads directly to two distinct sources of truth. 
+
+---
+
+# Recurrence Review
+
+A shared recurrence engine (`src/lib/recurrence.ts`) is correctly reused across tasks, routines, and chores. Next-day behavior and completion dates function as designed within the domain models. However, because `daily-surface.ts` evaluates tasks manually, a critical conflict exists: `buildDayRhythm()` filters dated non-recurring tasks correctly, but `daily-surface.ts` includes ALL incomplete tasks regardless of their future `date`, incorrectly pulling future tasks into Today.
+
+---
+
+# Family Model Review
+
+Integration is clean. Household routines can remain unassigned while individual routines or specific steps can belong to specific members. Chores continue to coexist. No naming references are permanently stored; everything resolves cleanly via `memberId`.
+
+---
+
+# Daily Surface Review
+
+`buildDailyThread()` is accumulating feature-specific hacks (e.g., manual relative-anchor regex parsing, parallel task filtering, manual routine signal generation) rather than consuming normalized outputs from `buildDayRhythm()`. It is acting as a parallel scheduling engine rather than a strict presentation synthesizer.
+
+---
+
+# Reminder Review
+
+Routine signals and task signals interact cleanly via pure outputs. `generateRoutineSignals()` exposes actionable states without polluting the reminder engine or generating duplicate permanent schedules.
+
+---
+
+# Calendar Review
+
+Prayer-relative tasks and routines correctly avoid persisting exact clock times and do not pollute the Calendar API with synthetic appointments. The distinction between tasks and appointments is maintained.
+
+---
+
+# Persistence / Sync Review
+
+All fields (`completions`, `scheduleMode`, `relativeAnchor`) introduced in Wave 1 are purely additive and persist seamlessly across `localStorage`, Supabase, and JSON export roundtrips. Existing user tasks do not require migration.
+
+---
+
+# Experience Independence Review
+
+The domain logic in `src/lib/` is completely devoid of UI presentation logic (`calm`, `vibrant`). The abstraction boundary holds.
+
+---
+
+# Test Quality Review
+
+The 118 unit tests accurately reflect the domain models and successfully cover complex edge cases like prayer shifts (Winter vs Summer) and midnight bounding. However, they lack integration tests proving that the Daily Surface aligns identically with the Rhythm Engine's block placements, which allowed the integration flaws to slip through.
+
+---
+
+# Critical Findings
+
+1. **Conflicting Temporal Model for Tasks**
+   - **File**: `src/lib/daily-surface.ts` (Line 216) vs `src/lib/rhythm-engine.ts` (Line 1039)
+   - **Issue**: `buildDayRhythm` filters non-recurring tasks correctly using `t.date ? t.date === dateStr : !t.done`. However, `buildDailyThread` incorrectly filters using `!t.done` only, ignoring `t.date`.
+   - **Why it matters**: A one-off task scheduled for a specific date in the future will erroneously appear on the Daily Surface today.
+   - **Recommended Fix**: `buildDailyThread` must consume `DayRhythm` generated by the Rhythm Engine rather than computing due tasks independently, or minimally adopt the identical `t.date === today` constraint.
+
+2. **Bypassing the Rhythm Engine**
+   - **File**: `src/lib/daily-surface.ts`
+   - **Issue**: `buildDailyThread()` manually iterates over raw tasks and routine definitions to construct the timeline.
+   - **Why it matters**: The core architectural directive was `Rhythm Engine -> Daily Surface`. Currently, they operate as parallel calculation engines.
+   - **Recommended Fix**: Refactor `buildDailyThread()` to pass the compiled `DayRhythm` object (from `buildDayRhythm`) as input, directly mapping the generated `RhythmItem`s into `DailyThreadItem`s.
+
+---
+
+# Important Findings
+
+1. **Duplicated Relative Anchor Vocabulary Logic**
+   - **File**: `src/lib/daily-surface.ts` (Lines 221-237)
+   - **Issue**: `buildDailyThread` manually parses string anchors (e.g. `t.relativeAnchor.replace(/[-_\s]/g, "")`) to determine task display labels.
+   - **Why it matters**: Duplicates the canonical `normalizeRelativeAnchor` and `formatRelativeAnchorLabel` logic. If the vocabulary expands, the UI will break.
+   - **Recommended Fix**: Use `formatRelativeAnchorLabel(normalizeRelativeAnchor(t.relativeAnchor))` directly, or rely entirely on `placement.displayLabel` provided by the Rhythm Engine.
+
+---
+
+# Minor Findings
+
+None beyond the integration discrepancies above. The pure engines themselves are exceptionally clean and well-structured.
+
+---
+
+# What Is Strong
+
+- The `RoutineDayInstance` pure derivation model is excellent, eliminating state mutation on templates.
+- The `relativeAnchor` implementation elegantly maps abstract time to real-world shifting daylight.
+- 100% backward compatibility was achieved without schema migrations.
+- Zero TypeScript errors and perfect test execution across 118 cases.
+
+---
+
+# Required Fixes Before UX
+
+1. Refactor `daily-surface.ts` task filtering to correctly enforce `t.date === today` for non-recurring tasks to stop future tasks from bleeding into Today.
+2. Remove manual Regex parsing of relative anchors in `daily-surface.ts` and replace it with the `formatRelativeAnchorLabel` helper (or eliminate it entirely by consuming `DayRhythm` output).
+
+---
+
+# Final Verdict
+
+WAVE 1 READY AFTER FIXES
