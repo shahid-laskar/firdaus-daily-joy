@@ -98,7 +98,7 @@ export function Reminders() {
 
   if (experience === "vibrant") {
     return (
-      <div className="space-y-8" data-tone="prayer">
+      <div className="space-y-8">
         {/* ── Nudges Overview Header ── */}
         <section aria-label="Reminders header" className="space-y-4">
           <div className="tile tile-vivid bloom-in p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -107,7 +107,7 @@ export function Reminders() {
                 <Bell className="size-6 text-[var(--tone,var(--space-accent))]" />
               </div>
               <div>
-                <p className="eyebrow" style={{ color: "var(--tone)" }}>
+                <p className="eyebrow" style={{ color: "var(--tone, var(--space-accent))" }}>
                   Personal Nudges & Prayer Awareness
                 </p>
                 <h2 className="title-md text-[1.1rem] mt-0.5">
@@ -220,8 +220,10 @@ export function Reminders() {
           {/* Reminders List */}
           {reminders.length === 0 ? (
             <div className="empty-field bloom-in">
-              <span className="text-3xl leading-none">🕊️</span>
-              <p className="title-md mt-3">No active reminders</p>
+              <div className="size-12 rounded-2xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-3">
+                <Bell className="size-6" strokeWidth={2.2} />
+              </div>
+              <p className="title-md">No active reminders</p>
               <p className="text-ink-soft mt-1 max-w-sm mx-auto text-xs leading-relaxed">
                 Set small repeating things you'd rather not hold in your head.
               </p>
@@ -267,7 +269,7 @@ export function Reminders() {
                         type="button"
                         onClick={() => setReminders(reminders.filter((x) => x.id !== r.id))}
                         aria-label={`Remove reminder ${r.title}`}
-                        className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                        className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors"
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -398,7 +400,7 @@ export function Reminders() {
                     <RepeatChip recur={r.recur} />
                     <button
                       onClick={() => setReminders(reminders.filter((x) => x.id !== r.id))}
-                      className="text-ink-faint hover:text-destructive text-xs opacity-0 group-hover:opacity-100"
+                      className="text-ink-faint hover:text-destructive text-xs transition-colors p-1"
                     >
                       Remove
                     </button>

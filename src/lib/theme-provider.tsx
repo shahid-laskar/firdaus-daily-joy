@@ -77,28 +77,19 @@ export function ThemeProvider({
     setModeState(defaultMode);
   }, [defaultMode]);
 
-  // Client hydration check: sync any local preferences to cookies and state
+  // Client hydration check: sync any local preferences to cookies for future SSR requests
   useEffect(() => {
     try {
       const storedExp = window.localStorage.getItem(EXPERIENCE_KEY);
       if (isExperienceId(storedExp)) {
-        if (storedExp !== experience) {
-          setExperienceState(storedExp);
-        }
         document.cookie = `${EXPERIENCE_KEY}=${storedExp}; path=/; max-age=31536000; SameSite=Lax`;
       }
       const storedTheme = window.localStorage.getItem(THEME_KEY);
       if (isThemeId(storedTheme)) {
-        if (storedTheme !== theme) {
-          setThemeState(storedTheme);
-        }
         document.cookie = `${THEME_KEY}=${storedTheme}; path=/; max-age=31536000; SameSite=Lax`;
       }
       const storedMode = window.localStorage.getItem(MODE_KEY)?.replace(/"/g, "");
       if (storedMode === "dark" || storedMode === "light") {
-        if (storedMode !== mode) {
-          setModeState(storedMode);
-        }
         document.cookie = `${MODE_KEY}=${storedMode}; path=/; max-age=31536000; SameSite=Lax`;
       }
     } catch {

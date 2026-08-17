@@ -48,7 +48,7 @@ export function Notes() {
   if (experience === "vibrant") {
     if (open) {
       return (
-        <div className="space-y-6" data-tone="task">
+        <div className="space-y-6">
           {/* ── Note Editor Header ── */}
           <div className="tile tile-vivid bloom-in p-4 sm:p-5 flex items-center justify-between gap-3">
             <button
@@ -114,7 +114,7 @@ export function Notes() {
     }
 
     return (
-      <div className="space-y-8" data-tone="task">
+      <div className="space-y-8">
         {/* ── Notes Header Banner ── */}
         <section aria-label="Notes header" className="space-y-4">
           <div className="tile tile-vivid bloom-in p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -123,7 +123,7 @@ export function Notes() {
                 <BookOpen className="size-6 text-[var(--tone,var(--space-accent))]" />
               </div>
               <div>
-                <p className="eyebrow" style={{ color: "var(--tone)" }}>
+                <p className="eyebrow" style={{ color: "var(--tone, var(--space-accent))" }}>
                   Family Notebook & Scratchpad
                 </p>
                 <h2 className="title-md text-[1.1rem] mt-0.5">
@@ -164,8 +164,10 @@ export function Notes() {
         {/* ── Notes Grid / List ── */}
         {visible.length === 0 ? (
           <div className="empty-field bloom-in">
-            <span className="text-3xl leading-none">📝</span>
-            <p className="title-md mt-3">No notes yet</p>
+            <div className="size-12 rounded-2xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-3">
+              <PenLine className="size-6" strokeWidth={2.2} />
+            </div>
+            <p className="title-md">No notes yet</p>
             <p className="text-ink-soft mt-1 max-w-sm mx-auto text-xs leading-relaxed">
               Keep codes, lists, quotes, and half-thoughts in neat family notes instead of one long page.
             </p>

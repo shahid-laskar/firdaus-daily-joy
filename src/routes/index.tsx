@@ -225,7 +225,8 @@ function Today() {
   const spentToday = expenses
     .filter((e) => e.date === today)
     .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-  const mealToday = meals[today];
+  const dayName = (now ?? new Date()).toLocaleDateString("en-US", { weekday: "short" });
+  const mealToday = meals[`${dayName}-Dinner`] || meals[today];
   const water = health[today]?.water ?? 0;
   const verse = encouragementFor(today);
   const marker = now ? islamicMarker(now) : null;
@@ -584,8 +585,8 @@ function VibrantToday({
       )}
 
       {/* ── Quick actions: small, colourful, one tap away ─────────────────── */}
-      <nav aria-label="Quick actions" className="-mx-5 no-scrollbar overflow-x-auto px-5">
-        <div className="flex gap-2.5 pb-1">
+      <nav aria-label="Quick actions" className="-mx-4 sm:-mx-6 no-scrollbar overflow-x-auto px-4 sm:px-6">
+        <div className="flex gap-2.5 pb-1 min-w-max">
           <QuickAction to="/deen" tone="prayer" icon={Moon} label="Log salah" />
           <QuickAction to="/deen" tone="habit" icon={BookOpen} label="Quran" />
           <QuickAction to="/me" tone="self" icon={Droplets} label="Water" />
@@ -596,14 +597,14 @@ function VibrantToday({
 
       {/* ── Bento: the day at a glance, one hue per life-area ───────────── */}
       <section aria-label="Today at a glance" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Tile tone="prayer" to="/deen" index={0} className="col-span-2 flex items-center gap-4">
+        <Tile tone="prayer" to="/deen" index={0} className="col-span-2 flex items-center gap-4.5 p-4 sm:p-5">
           <ProgressRing pct={salahPct} tone="prayer" label="Salah" size={72} thickness={7}>
             <span className="numeric text-[0.95rem] font-bold" style={{ color: "var(--tone)" }}>
               {prayed}
               <span className="text-ink-faint text-[0.7rem]">/5</span>
             </span>
           </ProgressRing>
-          <span className="min-w-0">
+          <span className="min-w-0 flex-1">
             <span className="eyebrow block" style={{ color: "var(--tone)" }}>
               Salah
             </span>
@@ -645,7 +646,7 @@ function VibrantToday({
           tone="money"
           icon={Wallet}
           label="Spent today"
-          value={spentToday ? spentToday.toLocaleString() : "Nothing yet"}
+          value={spentToday ? `₹${spentToday.toLocaleString()}` : "Nothing yet"}
           to="/budget"
           index={4}
         />
@@ -789,27 +790,37 @@ function PrayerRhythm({
     <section
       aria-label="Prayer rhythm"
       data-tone="prayer"
-      className="tile tile-vivid bloom-in px-5 py-4"
+      className="tile tile-vivid bloom-in p-4 sm:p-5"
     >
-      <div className="mb-4 flex items-center gap-2.5">
-        <IconChip icon={Sun} solid />
-        <div className="min-w-0 flex-1">
-          <p className="eyebrow" style={{ color: "var(--tone)" }}>
-            Today's rhythm
-          </p>
-          <p className="title-md text-[0.98rem]">
-            {prayed === 5 ? "Every prayer kept 🤍" : `${prayed} of 5 kept so far`}
-          </p>
+      <div className="mb-3.5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <IconChip icon={Sun} solid />
+          <div className="min-w-0">
+            <p className="eyebrow" style={{ color: "var(--tone)" }}>
+              Today's Rhythm
+            </p>
+            <p className="title-md text-[0.98rem] mt-0.5">
+              {prayed === 5 ? "Every prayer kept 🤍" : `${prayed} of 5 kept so far`}
+            </p>
+          </div>
         </div>
+        <Link
+          to="/deen"
+          className="text-ink-soft hover:text-foreground text-xs font-semibold shrink-0 transition-colors"
+        >
+          View all →
+        </Link>
       </div>
-      <div className="flex items-start gap-1">
+      <div className="grid grid-cols-5 gap-1.5 pt-1">
         {prayers.map((p) => {
-          const state = logged[p.id] ? "done" : p.id === nextId ? "next" : "ahead";
+          const isDone = Boolean(logged[p.id]);
+          const isNext = p.id === nextId && !isDone;
+          const state = isDone ? "done" : isNext ? "next" : "ahead";
           return (
-            <span key={p.id} className="rhythm-node" data-state={state}>
+            <span key={p.id} className="rhythm-node p-1.5 sm:p-2 rounded-xl transition-all" data-state={state}>
               <span className="dot" aria-hidden />
-              <span className="truncate">{p.name}</span>
-              <span className="numeric text-ink-faint text-[0.63rem] font-semibold">{p.time}</span>
+              <span className="truncate text-foreground/90">{p.name}</span>
+              <span className="numeric text-ink-faint text-[0.65rem] font-semibold">{p.time}</span>
             </span>
           );
         })}

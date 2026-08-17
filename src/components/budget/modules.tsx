@@ -113,7 +113,7 @@ export function QuickEntry() {
                   <span className="numeric font-display text-[1.05rem]">₹{money(e.amount)}</span>
                   <button
                     onClick={() => setExpenses(expenses.filter((x) => x.id !== e.id))}
-                    className="text-ink-faint hover:text-destructive text-xs opacity-0 group-hover:opacity-100"
+                    className="text-ink-faint hover:text-destructive text-xs transition-colors p-1"
                     aria-label="Delete expense"
                   >
                     ✕

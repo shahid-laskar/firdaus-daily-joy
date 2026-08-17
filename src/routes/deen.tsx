@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { Shell } from "@/components/veedu/shell";
 import { SubTabs } from "@/components/veedu/primitives";
 import {
@@ -15,6 +14,7 @@ import {
 } from "@/components/deen/modules";
 import { RamadanModeView } from "@/components/deen/ramadan";
 import { useRamadanMode } from "@/lib/ramadan";
+import { useTab } from "@/lib/use-tab";
 
 export const Route = createFileRoute("/deen")({
   head: () => ({
@@ -49,8 +49,10 @@ const BASE_TABS = [
 ];
 
 function DeenPage() {
-  const [tab, setTab] = useState("today");
+  const [tab, setTab] = useTab("today");
   const { isActive, ramadanDay } = useRamadanMode();
+
+  const activeTab = tab === "salah" ? "today" : tab;
 
   const tabs = BASE_TABS.map((t) =>
     t.id === "ramadan" && isActive
@@ -61,22 +63,22 @@ function DeenPage() {
   return (
     <Shell space="deen">
       <div className="mb-8">
-        <SubTabs tabs={tabs} value={tab} onChange={setTab} />
+        <SubTabs tabs={tabs} value={activeTab} onChange={setTab} />
       </div>
-      {tab === "today" && (
+      {activeTab === "today" && (
         <div className="space-y-12">
           <DeenHero />
           <Salah />
           <DailyVerse />
         </div>
       )}
-      {tab === "ramadan" && <RamadanModeView />}
-      {tab === "quran" && <Quran />}
-      {tab === "dhikr" && <Tasbih />}
-      {tab === "duas" && <Duas />}
-      {tab === "hifz" && <Hifz />}
-      {tab === "fasting" && <Fasting />}
-      {tab === "qibla" && <Qibla />}
+      {activeTab === "ramadan" && <RamadanModeView />}
+      {activeTab === "quran" && <Quran />}
+      {activeTab === "dhikr" && <Tasbih />}
+      {activeTab === "duas" && <Duas />}
+      {activeTab === "hifz" && <Hifz />}
+      {activeTab === "fasting" && <Fasting />}
+      {activeTab === "qibla" && <Qibla />}
     </Shell>
   );
 }

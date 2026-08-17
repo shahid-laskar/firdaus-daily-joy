@@ -151,21 +151,24 @@ function RootShell({ children }: { children: ReactNode }) {
 (function() {
   try {
     var cExp = document.cookie.match(/(?:^|; )veedu\\.experience=([^;]*)/);
-    var exp = (cExp && decodeURIComponent(cExp[1])) || localStorage.getItem('veedu.experience') || 'calm';
+    var exp = (cExp && decodeURIComponent(cExp[1])) || 'calm';
     if (exp !== 'calm' && exp !== 'vibrant') exp = 'calm';
     var cTh = document.cookie.match(/(?:^|; )veedu\\.theme=([^;]*)/);
-    var th = (cTh && decodeURIComponent(cTh[1])) || localStorage.getItem('veedu.theme') || 'veedu';
+    var th = (cTh && decodeURIComponent(cTh[1])) || 'veedu';
     var cMode = document.cookie.match(/(?:^|; )theme=([^;]*)/);
-    var m = (cMode && decodeURIComponent(cMode[1])) || (localStorage.getItem('theme') || 'light').replace(/"/g, '');
+    var m = (cMode && decodeURIComponent(cMode[1])) || 'light';
     
-    if (!cExp && localStorage.getItem('veedu.experience')) {
-      document.cookie = 'veedu.experience=' + exp + '; path=/; max-age=31536000; SameSite=Lax';
+    var lsExp = localStorage.getItem('veedu.experience');
+    if (!cExp && (lsExp === 'calm' || lsExp === 'vibrant')) {
+      document.cookie = 'veedu.experience=' + lsExp + '; path=/; max-age=31536000; SameSite=Lax';
     }
-    if (!cTh && localStorage.getItem('veedu.theme')) {
-      document.cookie = 'veedu.theme=' + th + '; path=/; max-age=31536000; SameSite=Lax';
+    var lsTh = localStorage.getItem('veedu.theme');
+    if (!cTh && lsTh) {
+      document.cookie = 'veedu.theme=' + lsTh + '; path=/; max-age=31536000; SameSite=Lax';
     }
-    if (!cMode && localStorage.getItem('theme')) {
-      document.cookie = 'theme=' + m + '; path=/; max-age=31536000; SameSite=Lax';
+    var lsMode = (localStorage.getItem('theme') || '').replace(/"/g, '');
+    if (!cMode && (lsMode === 'dark' || lsMode === 'light')) {
+      document.cookie = 'theme=' + lsMode + '; path=/; max-age=31536000; SameSite=Lax';
     }
 
     var root = document.documentElement;

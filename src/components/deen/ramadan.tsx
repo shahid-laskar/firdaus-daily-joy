@@ -294,7 +294,7 @@ export function RamadanModeView() {
                         </div>
                         <button
                           onClick={() => removeCharity(c.id)}
-                          className="text-ink-faint hover:text-destructive shrink-0 text-xs opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                          className="text-ink-faint hover:text-destructive shrink-0 text-xs transition-colors p-1"
                         >
                           Remove
                         </button>

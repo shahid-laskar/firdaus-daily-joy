@@ -581,7 +581,7 @@ export function Quran() {
                     {translation && (
                       <p className="text-ink-soft mt-3 text-[0.95rem] leading-relaxed">{a.en}</p>
                     )}
-                    <div className="mt-3 flex gap-4 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    <div className="mt-3 flex gap-4">
                       <button
                         onClick={() =>
                           setBookmarks(

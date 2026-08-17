@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  CheckCircle2,
   Clock,
   Copy,
   Heart,
@@ -214,8 +215,10 @@ export function Tasks() {
         {/* ── Task Items ── */}
         {visible.length === 0 ? (
           <div className="empty-field bloom-in">
-            <span className="text-3xl leading-none">✨</span>
-            <p className="title-md mt-3">Nothing waiting in {list}</p>
+            <div className="size-12 rounded-2xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-3">
+              <CheckCircle2 className="size-6" strokeWidth={2.2} />
+            </div>
+            <p className="title-md">Nothing waiting in {list}</p>
             <p className="text-ink-soft mt-1 max-w-sm mx-auto text-xs leading-relaxed">
               {filter === "done"
                 ? "No completed tasks yet in this list."
@@ -265,7 +268,7 @@ export function Tasks() {
                     <button
                       onClick={() => setTasks(tasks.filter((x) => x.id !== t.id))}
                       aria-label={`Remove ${t.title}`}
-                      className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                      className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
@@ -366,7 +369,7 @@ export function Tasks() {
                   <button
                     onClick={() => setTasks(tasks.filter((x) => x.id !== t.id))}
                     aria-label={`Remove ${t.title}`}
-                    className="text-ink-faint hover:text-destructive text-xs opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+                    className="text-ink-faint hover:text-destructive text-xs transition-colors p-1"
                   >
                     Remove
                   </button>
@@ -651,8 +654,10 @@ export function Meals() {
 
           {recipes.length === 0 ? (
             <div className="empty-field bloom-in">
-              <span className="text-3xl leading-none">🥘</span>
-              <p className="title-md mt-3">No family recipes saved yet</p>
+              <div className="size-12 rounded-2xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-3">
+                <UtensilsCrossed className="size-6" strokeWidth={2.2} />
+              </div>
+              <p className="title-md">No family recipes saved yet</p>
               <p className="text-ink-soft mt-1 max-w-sm mx-auto text-xs leading-relaxed">
                 Save the meals your family loves. When you plan meals with them, ingredients automatically sync to your grocery list.
               </p>
@@ -683,7 +688,7 @@ export function Meals() {
                     <button
                       type="button"
                       onClick={() => setRecipes(recipes.filter((x) => x.id !== r.id))}
-                      className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                      className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors"
                       title={`Remove ${r.name}`}
                       aria-label={`Remove ${r.name}`}
                     >
@@ -1004,8 +1009,10 @@ export function GroceryList() {
         {/* ── Items List / Empty State ── */}
         {items.length === 0 ? (
           <div className="empty-field bloom-in">
-            <span className="text-3xl leading-none">🧺</span>
-            <p className="title-md mt-3">Nothing on the shopping list</p>
+            <div className="size-12 rounded-2xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-3">
+              <ShoppingBasket className="size-6" strokeWidth={2.2} />
+            </div>
+            <p className="title-md">Nothing on the shopping list</p>
             <p className="text-ink-soft mt-1 max-w-sm mx-auto text-xs leading-relaxed">
               Add items above, or tap "From meal plan" to automatically pull the ingredients needed for this week's planned dishes.
             </p>
@@ -1053,7 +1060,7 @@ export function GroceryList() {
                     type="button"
                     onClick={() => setItems(items.filter((x) => x.id !== i.id))}
                     aria-label={`Remove ${i.name}`}
-                    className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                    className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors"
                   >
                     <Trash2 className="size-3.5" />
                   </button>
@@ -1141,7 +1148,7 @@ export function GroceryList() {
                 </span>
                 <button
                   onClick={() => setItems(items.filter((x) => x.id !== i.id))}
-                  className="text-ink-faint hover:text-destructive text-xs opacity-0 group-hover:opacity-100 cursor-pointer"
+                  className="text-ink-faint hover:text-destructive text-xs transition-colors cursor-pointer p-1"
                   aria-label={`Remove ${i.name}`}
                 >
                   Remove
@@ -1367,8 +1374,10 @@ export function Kids() {
         {/* ── Children List / Empty State ── */}
         {kids.length === 0 ? (
           <div className="empty-field bloom-in">
-            <span className="text-3xl leading-none">🌱</span>
-            <p className="title-md mt-3">No little ones added yet</p>
+            <div className="size-12 rounded-2xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-3">
+              <Smile className="size-6" strokeWidth={2.2} />
+            </div>
+            <p className="title-md">No little ones added yet</p>
             <p className="text-ink-soft mt-1 max-w-sm mx-auto text-xs leading-relaxed">
               Add your children above to track their daily routines, chores, and the small wins worth noticing together.
             </p>
@@ -1575,7 +1584,7 @@ function VibrantKidCard({
                     type="button"
                     onClick={() => onChangeChores(kid.chores.filter((x) => x.id !== c.id))}
                     aria-label={`Remove ${c.title}`}
-                    className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                    className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors"
                   >
                     <Trash2 className="size-3.5" />
                   </button>
@@ -1644,7 +1653,7 @@ function ChoreList({ kid, onChange }: { kid: FamilyMember; onChange: (c: Chore[]
             <button
               onClick={() => onChange(kid.chores.filter((x) => x.id !== c.id))}
               aria-label={`Remove ${c.title}`}
-              className="text-ink-faint hover:text-destructive text-xs opacity-0 transition group-hover:opacity-100"
+              className="text-ink-faint hover:text-destructive text-xs transition-colors p-1"
             >
               Remove
             </button>
@@ -1700,7 +1709,7 @@ export function Deeds() {
 
   if (experience === "vibrant") {
     return (
-      <div className="space-y-8" data-tone="prayer">
+      <div className="space-y-8" data-tone="habit">
         {/* ── Deeds Overview Banner ── */}
         <section aria-label="Good deeds overview" className="space-y-4">
           <div className="tile tile-vivid bloom-in p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1750,8 +1759,10 @@ export function Deeds() {
         {/* ── Deeds Stream / Empty State ── */}
         {deeds.length === 0 ? (
           <div className="empty-field bloom-in">
-            <span className="text-3xl leading-none">✨</span>
-            <p className="title-md mt-3">Nothing recorded yet</p>
+            <div className="size-12 rounded-2xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-3">
+              <Heart className="size-6" strokeWidth={2.2} />
+            </div>
+            <p className="title-md">Nothing recorded yet</p>
             <p className="text-ink-soft mt-1 max-w-sm mx-auto text-xs leading-relaxed">
               Small kindnesses are easy to forget in the rush of daily life. Record one above to keep the warmth alive.
             </p>
@@ -1779,7 +1790,7 @@ export function Deeds() {
                   type="button"
                   onClick={() => handleDeleteDeed(d.id)}
                   aria-label={`Remove deed by ${d.who}`}
-                  className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                  className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors"
                 >
                   <Trash2 className="size-3.5" />
                 </button>
@@ -1827,7 +1838,7 @@ export function Deeds() {
                 type="button"
                 onClick={() => handleDeleteDeed(d.id)}
                 aria-label={`Remove deed by ${d.who}`}
-                className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity cursor-pointer"
+                className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors cursor-pointer"
               >
                 <Trash2 className="size-3.5" />
               </button>

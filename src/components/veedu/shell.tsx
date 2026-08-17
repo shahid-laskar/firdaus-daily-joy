@@ -153,7 +153,7 @@ export function Shell({
                   to={s.to}
                   data-space={s.id}
                   aria-current={active ? "page" : undefined}
-                  className="nav-item press relative flex min-w-[70px] flex-col items-center gap-1 px-3 py-2"
+                  className="nav-item press relative flex min-w-[56px] sm:min-w-[68px] flex-col items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2"
                 >
                   <s.icon className="size-[18px]" strokeWidth={active ? 2.4 : 1.9} />
                   <span className="text-[0.66rem] font-bold tracking-wide">{s.label}</span>

@@ -105,7 +105,7 @@ export function UnifiedCalendar() {
     const midMonthHijri = hijriLabel(midMonthDate);
 
     return (
-      <div className="space-y-8" data-tone="prayer">
+      <div className="space-y-8">
         {/* ── Month Header & Navigator ── */}
         <section aria-label="Month navigator" className="space-y-4">
           <div className="tile tile-vivid bloom-in p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -114,7 +114,7 @@ export function UnifiedCalendar() {
                 <CalendarIcon className="size-6 text-[var(--tone,var(--space-accent))]" />
               </div>
               <div>
-                <p className="eyebrow" style={{ color: "var(--tone)" }}>
+                <p className="eyebrow" style={{ color: "var(--tone, var(--space-accent))" }}>
                   {midMonthHijri ? `Hijri ${midMonthHijri}` : "Household & Islamic Rhythm"}
                 </p>
                 <h2 className="title-md text-[1.15rem] mt-0.5 capitalize">
@@ -347,8 +347,10 @@ export function UnifiedCalendar() {
           {/* Schedule List */}
           {selEvents.length === 0 && selTasks.length === 0 && !selMeal && !fasting[selected] ? (
             <div className="empty-field bloom-in py-6">
-              <span className="text-2xl leading-none">🕊️</span>
-              <p className="title-md mt-2 text-sm">Nothing scheduled for this day</p>
+              <div className="size-10 rounded-xl bg-[color-mix(in_oklab,var(--tone,var(--space-accent))_15%,transparent)] grid place-items-center mx-auto text-[var(--tone,var(--space-accent))] mb-2">
+                <CalendarIcon className="size-5" strokeWidth={2.2} />
+              </div>
+              <p className="title-md text-sm">Nothing scheduled for this day</p>
               <p className="text-ink-soft text-xs mt-0.5">
                 Enjoy a peaceful, unhurried day with family.
               </p>
@@ -376,7 +378,7 @@ export function UnifiedCalendar() {
                     <button
                       type="button"
                       onClick={() => setEvents(events.filter((x) => x.id !== e.id))}
-                      className="icon-btn press size-7 text-ink-faint hover:text-destructive opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                      className="icon-btn press size-7 text-ink-faint hover:text-destructive transition-colors"
                       title="Remove event"
                       aria-label="Remove event"
                     >
@@ -647,7 +649,7 @@ export function UnifiedCalendar() {
                 <RepeatChip recur={e.recur} />
                 <button
                   onClick={() => setEvents(events.filter((x) => x.id !== e.id))}
-                  className="text-ink-faint hover:text-destructive text-xs opacity-0 group-hover:opacity-100"
+                  className="text-ink-faint hover:text-destructive text-xs transition-colors p-1"
                 >
                   Remove
                 </button>
