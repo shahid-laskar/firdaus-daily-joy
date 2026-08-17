@@ -1397,9 +1397,9 @@
   max-width: calc(100vw - 1rem);
   overflow-x: auto;
   scrollbar-width: none;
-}
-@utility nav-dock::-webkit-scrollbar {
-  display: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @utility nav-item {
