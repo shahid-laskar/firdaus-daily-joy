@@ -51,7 +51,7 @@ export function SubTabs({
         <div
           role="tablist"
           aria-label="Sections"
-          className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_oklab,var(--card)_80%,transparent)] p-1 border border-border/60"
+          className="flex w-max items-center gap-1.5 rounded-full bg-[color-mix(in_oklab,var(--card)_80%,transparent)] p-1 border border-border/60 after:content-[''] after:w-1 after:shrink-0 sm:after:w-3"
         >
           {tabs.map((t) => {
             const active = t.id === value;

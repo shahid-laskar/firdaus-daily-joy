@@ -1381,6 +1381,7 @@
 @utility app-bar {
   background: color-mix(in oklab, var(--space-accent) 5%, color-mix(in oklab, var(--background) 88%, transparent));
   box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--space-accent) 14%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
   backdrop-filter: blur(14px) saturate(1.3);
 }
 
@@ -1391,7 +1392,14 @@
   box-shadow:
     inset 0 0 0 1px color-mix(in oklab, var(--space-accent) 16%, transparent),
     0 22px 44px -26px color-mix(in oklab, var(--space-accent) 85%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
   backdrop-filter: blur(18px) saturate(1.4);
+  max-width: calc(100vw - 1rem);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+@utility nav-dock::-webkit-scrollbar {
+  display: none;
 }
 
 @utility nav-item {
