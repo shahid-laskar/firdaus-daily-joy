@@ -46,6 +46,8 @@ export interface TaskRecord {
   title: string;
   done?: boolean | undefined;
   time?: string | undefined;
+  duration?: number | undefined;
+  durationMinutes?: number | undefined;
   date?: string | undefined;
   recur?: Recurrence | undefined;
   completions?: string[] | undefined;
@@ -60,6 +62,8 @@ export interface CalEventRecord {
   id: string;
   title: string;
   time?: string | undefined;
+  duration?: number | undefined;
+  durationMinutes?: number | undefined;
   date: string;
   recur?: Recurrence | undefined;
   assigneeId?: string | undefined;
