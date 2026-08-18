@@ -43,7 +43,14 @@ import { useNextPrayer, usePrayers, useSalah } from "@/components/deen/modules";
 import { isRepeating, occursOn } from "@/lib/recurrence";
 import { useTab } from "@/lib/use-tab";
 import { todayKey, useNow, useStore } from "@/lib/store";
-import { useFamilyMigration } from "@/lib/family-model";
+import {
+  type FamilyMember,
+  useFamilyMigration,
+  useSelectedMember,
+  filterTasksForMember,
+  filterEventsForMember,
+} from "@/lib/family-model";
+import { MemberSelector } from "@/components/home/member-selector";
 import { buildDailyThread, type DailyThreadItem } from "@/lib/daily-surface";
 import { useRamadanMode } from "@/lib/ramadan";
 import { hijriLabel, islamicMarker } from "@/lib/hijri";
@@ -157,6 +164,8 @@ function Today() {
   const [limits] = useStore<Record<string, number>>("limits", {});
   const [hifzItems] = useStore<HifzItem[]>("hifz", []);
   const [routines] = useStore<Routine[]>("routines", []);
+  const [family] = useStore<FamilyMember[]>("family", []);
+  const [selectedMemberId, , selectedMember] = useSelectedMember();
   const [salah] = useSalah();
   const countdown = useNextPrayer();
   const prayers = usePrayers();
@@ -164,12 +173,20 @@ function Today() {
   const activeReminders = useReminderEngine();
 
   const hour = now?.getHours() ?? 8;
-  const dueToday = tasks.filter((t) =>
+  const scopedTasks = useMemo(
+    () => filterTasksForMember(tasks, selectedMemberId),
+    [tasks, selectedMemberId],
+  );
+  const dueToday = scopedTasks.filter((t) =>
     isRepeating(t.recur) ? occursOn(t.recur, today) : !t.done,
   );
   const open = dueToday.filter((t) => !isTaskDone(t));
   const doneCount = dueToday.length - open.length;
-  const todayEvents = eventsOn(events, today);
+  const scopedEvents = useMemo(
+    () => filterEventsForMember(events, selectedMemberId),
+    [events, selectedMemberId],
+  );
+  const todayEvents = eventsOn(scopedEvents, today);
   const loggedSalah = salah[today] ?? {};
   const prayed = Object.keys(loggedSalah).length;
   const leftToBuy = grocery.filter((g) => !g.got).length;
@@ -196,6 +213,8 @@ function Today() {
         limits,
         activeReminders,
         routines,
+        memberId: selectedMemberId,
+        familyMembers: family,
       }),
     [
       now,
@@ -217,6 +236,8 @@ function Today() {
       limits,
       activeReminders,
       routines,
+      selectedMemberId,
+      family,
     ],
   );
 
@@ -266,6 +287,7 @@ function Today() {
         hijri={hijri}
         dayPct={dayPct}
         salahPct={salahPct}
+        selectedMember={selectedMember}
       />
     );
   }
@@ -284,6 +306,7 @@ function Today() {
       grocery={grocery}
       bands={bands}
       quietDay={quietDay}
+      selectedMember={selectedMember}
     />
   );
 }
@@ -305,6 +328,7 @@ function CalmToday({
   grocery,
   bands,
   quietDay,
+  selectedMember,
 }: {
   now: Date | null;
   hour: number;
@@ -318,24 +342,28 @@ function CalmToday({
   grocery: { id: string; got: boolean }[];
   bands: Band[];
   quietDay: boolean;
+  selectedMember?: FamilyMember | undefined;
 }) {
   return (
     <div className="space-y-12">
       <header className="rise">
+        <MemberSelector className="mb-4" />
         <p className="eyebrow">
           {now?.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }) ??
             " "}
         </p>
         <h1 className="display-xl mt-3">
           {calmGreeting(hour)}
-          {profile.name ? `, ${profile.name}` : ""}.
+          {selectedMember ? `, ${selectedMember.name}` : profile.name ? `, ${profile.name}` : ""}.
         </h1>
         <p className="text-muted-foreground mt-4 max-w-md text-[0.98rem] leading-relaxed">
           {open.length === 0 && todayEvents.length === 0
-            ? "Nothing is asking for you right now. That is allowed."
+            ? selectedMember
+              ? `Nothing is waiting for ${selectedMember.name} right now. That is allowed.`
+              : "Nothing is asking for you right now. That is allowed."
             : `${open.length} thing${open.length === 1 ? "" : "s"} waiting${
-                todayEvents.length ? ` · ${todayEvents.length} on the calendar` : ""
-              }.`}
+                selectedMember ? ` for ${selectedMember.name}` : ""
+              }${todayEvents.length ? ` · ${todayEvents.length} on the calendar` : ""}.`}
         </p>
       </header>
 
@@ -343,8 +371,12 @@ function CalmToday({
       {quietDay && bands.length === 0 ? (
         <EmptyState
           glyph="☾"
-          headline="A quiet day"
-          body="Nothing is due and nothing is waiting. When something arrives, it will appear here first."
+          headline={selectedMember ? `A quiet day for ${selectedMember.name}` : "A quiet day"}
+          body={
+            selectedMember
+              ? `Nothing is due and nothing is waiting for ${selectedMember.name}. Everything is in order.`
+              : "Nothing is due and nothing is waiting. When something arrives, it will appear here first."
+          }
         />
       ) : (
         <div className="space-y-10">
@@ -475,6 +507,7 @@ function VibrantToday({
   hijri,
   dayPct,
   salahPct,
+  selectedMember,
 }: {
   now: Date | null;
   hour: number;
@@ -501,11 +534,13 @@ function VibrantToday({
   hijri: string;
   dayPct: number;
   salahPct: number;
+  selectedMember?: FamilyMember | undefined;
 }) {
   const hello = vibrantGreeting(hour);
 
   return (
     <div className="space-y-9">
+      <MemberSelector className="mb-2" />
       {/* ── The emotional centre: one warm, living moment ─────────────────── */}
       <header className="hero-aurora bloom-in min-h-[15.5rem] p-6 sm:p-7">
         <span
@@ -534,7 +569,7 @@ function VibrantToday({
               <h1 className="display-xl mt-2.5 flex flex-wrap items-baseline gap-x-2.5">
                 <span>
                   {hello.text}
-                  {profile.name ? `, ${profile.name}` : ""}
+                  {selectedMember ? `, ${selectedMember.name}` : profile.name ? `, ${profile.name}` : ""}
                 </span>
                 <span className="float-soft text-[1.4rem] leading-none" aria-hidden>
                   {hello.emoji}
@@ -542,10 +577,12 @@ function VibrantToday({
               </h1>
               <p className="mt-2.5 max-w-md text-[0.95rem] leading-relaxed opacity-90">
                 {open.length === 0 && todayEvents.length === 0
-                  ? "Nothing is asking for you right now. That is allowed."
+                  ? selectedMember
+                    ? `Nothing is waiting for ${selectedMember.name} right now. That is allowed.`
+                    : "Nothing is asking for you right now. That is allowed."
                   : `${open.length} thing${open.length === 1 ? "" : "s"} waiting${
-                      todayEvents.length ? ` · ${todayEvents.length} on the calendar` : ""
-                    }.`}
+                      selectedMember ? ` for ${selectedMember.name}` : ""
+                    }${todayEvents.length ? ` · ${todayEvents.length} on the calendar` : ""}.`}
               </p>
             </div>
 
@@ -670,8 +707,12 @@ function VibrantToday({
       {quietDay && bands.length === 0 ? (
         <EmptyState
           glyph="🌙"
-          headline="A quiet day"
-          body="Nothing is due and nothing is waiting. When something arrives, it will appear here first."
+          headline={selectedMember ? `A quiet day for ${selectedMember.name}` : "A quiet day"}
+          body={
+            selectedMember
+              ? `Nothing is due and nothing is waiting for ${selectedMember.name}. Everything is in order.`
+              : "Nothing is due and nothing is waiting. When something arrives, it will appear here first."
+          }
         />
       ) : (
         <div className="space-y-8">

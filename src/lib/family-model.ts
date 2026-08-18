@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useStore } from "./store";
 
 export type FamilyRole = "admin" | "member" | "child" | "parent" | "other";
@@ -22,6 +22,9 @@ export interface FamilyMember {
   chores: Chore[]; // kept for backward compatibility with current routine workflows
 }
 
+/** Storage key for active perspective/view filter */
+export const SELECTED_MEMBER_KEY = "selected_member_id";
+
 /**
  * Normalizes legacy and product roles to the canonical set: "admin" | "member" | "child".
  * Defaults safely to "member" if unspecified, or maps "parent" -> "admin".
@@ -32,6 +35,47 @@ export function getCanonicalFamilyRole(role?: string | null): CanonicalFamilyRol
   if (r === "admin" || r === "parent") return "admin";
   if (r === "child") return "child";
   return "member";
+}
+
+/**
+ * Checks whether a given member ID corresponds to a child in the family list.
+ */
+export function isChildMember(memberId?: string | null, family?: FamilyMember[] | null): boolean {
+  if (!memberId || !family) return false;
+  const member = family.find((m) => m && m.id === memberId);
+  return Boolean(member && getCanonicalFamilyRole(member.role) === "child");
+}
+
+/**
+ * Reusable member-selection hook.
+ * Returns [effectiveMemberId, setSelectedMemberId, activeFamilyMember].
+ * Persists in local storage under `veedu:selected_member_id`.
+ * Safely defaults to `undefined` (Household) if no member or an invalid ID is selected.
+ */
+export function useSelectedMember(): [
+  string | undefined,
+  (id: string | undefined) => void,
+  FamilyMember | undefined
+] {
+  const [selectedId, setSelectedId] = useStore<string | undefined>(SELECTED_MEMBER_KEY, undefined);
+  const [family] = useStore<FamilyMember[]>("family", []);
+
+  const activeMember = useMemo(
+    () => (selectedId ? family.find((m) => m.id === selectedId) : undefined),
+    [selectedId, family]
+  );
+
+  // If the stored ID does not match any current family member, fallback safely to Household (undefined)
+  const effectiveId = activeMember ? activeMember.id : undefined;
+
+  const setMember = useCallback(
+    (id: string | undefined) => {
+      setSelectedId(id);
+    },
+    [setSelectedId]
+  );
+
+  return [effectiveId, setMember, activeMember];
 }
 
 /**

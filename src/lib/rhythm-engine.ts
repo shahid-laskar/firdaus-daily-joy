@@ -25,7 +25,7 @@ import {
   type CalEventRecord,
 } from "./daily-surface";
 import { type Routine, getTodayRoutineInstances } from "./routine-engine";
-import { filterTasksForMember, filterRoutinesForMember, filterEventsForMember } from "./family-model";
+import { filterTasksForMember, filterRoutinesForMember, filterEventsForMember, type FamilyMember } from "./family-model";
 
 // -----------------------------------------------------------------------------
 // TYPES & DEFINITIONS
@@ -63,54 +63,51 @@ export interface RhythmBlockDefinition {
   description: string;
   startAnchor: PrayerId;
   endAnchor: PrayerId;
-  spiritualFocus: string;
 }
 
-export const RHYTHM_BLOCK_DEFINITIONS: Record<RhythmBlockId, RhythmBlockDefinition> = {
+export const RHYTHM_BLOCK_DEFINITIONS: Record<
+  RhythmBlockId,
+  RhythmBlockDefinition
+> = {
   morning: {
     id: "morning",
-    name: "Morning",
+    name: "Morning Block",
     arabicName: "الصباح",
-    description: "Between Fajr and Dhuhr",
+    description: "Post-Fajr through Dhuhr: Focused work, learning, Quran study, and early-day energy",
     startAnchor: "fajr",
     endAnchor: "dhuhr",
-    spiritualFocus: "Adhkar, Quran recitation, Duha, deep focus, household start",
   },
   afternoon: {
     id: "afternoon",
-    name: "Afternoon",
+    name: "Afternoon Block",
     arabicName: "الظهيرة",
-    description: "Between Dhuhr and Asr",
+    description: "Dhuhr through Asr: Midday responsibilities, collaborative tasks, and Qaylulah rest",
     startAnchor: "dhuhr",
     endAnchor: "asr",
-    spiritualFocus: "Midday prayer, nourishment, Qaylulah (rest), focused momentum",
   },
   lateAfternoon: {
     id: "lateAfternoon",
-    name: "Late Afternoon",
+    name: "Late Afternoon Block",
     arabicName: "العصر",
-    description: "Between Asr and Maghrib",
+    description: "Asr through Maghrib: Task closure, transition home, family gathering, and reflection",
     startAnchor: "asr",
     endAnchor: "maghrib",
-    spiritualFocus: "Wrap-up, outdoor activity, evening Adhkar, mindful closing",
   },
   evening: {
     id: "evening",
-    name: "Evening",
+    name: "Evening Block",
     arabicName: "المساء",
-    description: "Between Maghrib and Isha",
+    description: "Maghrib through Isha: Family dinner, conversation, gratitude, and evening connection",
     startAnchor: "maghrib",
     endAnchor: "isha",
-    spiritualFocus: "Sunset prayer, family meal, gratitude, connection, Muraja'ah",
   },
   night: {
     id: "night",
-    name: "Night",
+    name: "Night Block",
     arabicName: "الليل",
-    description: "Between Isha and Fajr",
+    description: "Isha through Fajr: Rest, peaceful reflection, Tahajjud, and peaceful winding down",
     startAnchor: "isha",
     endAnchor: "fajr",
-    spiritualFocus: "Night prayer, peaceful winding down, rest, Qiyam al-Layl, Suhur",
   },
 };
 
@@ -134,6 +131,7 @@ export interface DayRhythmInput {
   activeReminders?: ReminderSignal[] | undefined;
   routines?: Routine[] | undefined;
   memberId?: string | undefined; // Optional member context for filtered DayRhythm
+  familyMembers?: FamilyMember[] | undefined; // Optional family members list
 }
 
 // -----------------------------------------------------------------------------
@@ -1334,5 +1332,6 @@ export function buildDayRhythmFromSurfaceData(data: DailySurfaceData): DayRhythm
     activeReminders: data.activeReminders,
     routines: data.routines,
     memberId: data.memberId,
+    familyMembers: data.familyMembers,
   });
 }

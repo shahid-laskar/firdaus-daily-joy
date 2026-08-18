@@ -12,7 +12,7 @@ import { isoDate } from "./intelligence";
 import type { ReminderSignal } from "./reminder-engine";
 import { type Routine, generateRoutineSignals } from "./routine-engine";
 import { buildDayRhythmFromSurfaceData, type DayRhythm } from "./rhythm-engine";
-import { filterEventsForMember } from "./family-model";
+import { filterEventsForMember, filterRoutinesForMember, isChildMember, type FamilyMember } from "./family-model";
 
 export type DailyThreadItemCategory =
   | "prayer"
@@ -87,6 +87,7 @@ export interface DailySurfaceData {
   activeReminders?: ReminderSignal[] | undefined;
   routines?: Routine[] | undefined;
   memberId?: string | undefined; // Optional member context for filtered Daily Surface
+  familyMembers?: FamilyMember[] | undefined; // Optional family members list for role-aware filtering
 }
 
 export function isTaskRecordDone(t: TaskRecord, todayIso = isoDate()): boolean {
@@ -269,10 +270,11 @@ export function buildDailyThread(
     });
   }
 
-  // 6.5. Active Family Routines Due Today (Wave 1.3)
+  // 6.5. Active Family Routines Due Today (Wave 1.3 & Wave 2.0-B)
   if (data.routines && data.routines.length > 0) {
+    const scopedRoutines = filterRoutinesForMember(data.routines, data.memberId);
     const routineSignals = generateRoutineSignals(
-      data.routines,
+      scopedRoutines,
       today,
       data.prayers,
       rhythm.currentBlockId
@@ -362,22 +364,25 @@ export function buildDailyThread(
     });
   }
 
-  // 12. Budget Signals (if over 80% or category over limit)
-  const month = today.slice(0, 7);
-  const budgetAnalytics = calculateBudgetAnalytics(data.expenses as any, month);
-  const spent = budgetAnalytics.currentMonthTotal;
-  const cap = Object.values(data.limits).reduce((s, n) => s + n, 0);
-  const overBudget = cap > 0 && spent / cap > 0.8;
-  if (overBudget) {
-    items.push({
-      id: "budget-alert",
-      category: "budget",
-      priority: 8,
-      label: "Money",
-      value: `${Math.round((spent / cap) * 100)}% of this month's limits used`,
-      detail: "Worth a look before the month ends",
-      to: "/budget",
-    });
+  // 12. Budget Signals (if over 80% or category over limit) — Suppressed for child perspective
+  const isChild = isChildMember(data.memberId, data.familyMembers);
+  if (!isChild) {
+    const month = today.slice(0, 7);
+    const budgetAnalytics = calculateBudgetAnalytics(data.expenses as any, month);
+    const spent = budgetAnalytics.currentMonthTotal;
+    const cap = Object.values(data.limits).reduce((s, n) => s + n, 0);
+    const overBudget = cap > 0 && spent / cap > 0.8;
+    if (overBudget) {
+      items.push({
+        id: "budget-alert",
+        category: "budget",
+        priority: 8,
+        label: "Money",
+        value: `${Math.round((spent / cap) * 100)}% of this month's limits used`,
+        detail: "Worth a look before the month ends",
+        to: "/budget",
+      });
+    }
   }
 
   // 13. Completed count ("Behind you")

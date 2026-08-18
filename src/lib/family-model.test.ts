@@ -5,6 +5,7 @@ import {
   type FamilyRole,
   type CanonicalFamilyRole,
   getCanonicalFamilyRole,
+  isChildMember,
   getTaskAssignee,
   getRoutineOwner,
   getRoutineStepAssignee,
@@ -19,7 +20,7 @@ import {
   getMemberRoutines,
 } from "./family-model";
 import { createRoutine } from "./routine-engine";
-import { buildDailyThread, type DailySurfaceData, type TaskRecord } from "./daily-surface";
+import { buildDailyThread, type DailySurfaceData, type TaskRecord, type CalEventRecord } from "./daily-surface";
 import { buildDayRhythmFromSurfaceData } from "./rhythm-engine";
 
 describe("Wave 2.0-A — Family Roles & Responsibility Assignment", () => {
@@ -358,5 +359,214 @@ describe("Wave 2.0-A — Family Roles & Responsibility Assignment", () => {
     assert.equal(getTaskAssignee(serializedTask), "mem_roundtrip");
     assert.equal(getCanonicalFamilyRole(serializedMember.role), "child");
   });
+
+  // ---------------------------------------------------------------------------
+  // 7. WAVE 2.0-B: PER-MEMBER DAILY SURFACE & PERSPECTIVE SWITCHING
+  // ---------------------------------------------------------------------------
+  test("Wave 2.0-B — Household View vs Member View vs Child View Filtering", () => {
+    const today = "2026-08-18";
+    const prayers = [
+      { id: "fajr", name: "Fajr", time: "05:15" },
+      { id: "dhuhr", name: "Dhuhr", time: "12:30" },
+      { id: "asr", name: "Asr", time: "15:45" },
+      { id: "maghrib", name: "Maghrib", time: "18:30" },
+      { id: "isha", name: "Isha", time: "19:45" },
+    ];
+
+    const family: FamilyMember[] = [
+      { id: "m_admin", name: "Ameen", role: "admin", chores: [] },
+      { id: "m_member", name: "Fatima", role: "member", chores: [] },
+      { id: "m_child", name: "Yusuf", role: "child", age: "9", chores: [] },
+      { id: "m_empty", name: "Guest", role: "other", chores: [] },
+    ];
+
+    assert.equal(isChildMember("m_child", family), true);
+    assert.equal(isChildMember("m_admin", family), false);
+    assert.equal(isChildMember("m_member", family), false);
+    assert.equal(isChildMember(undefined, family), false);
+
+    const tasks: TaskRecord[] = [
+      { id: "t_unassigned", title: "Clean living room window", date: today }, // household
+      { id: "t_admin", title: "Review quarterly tax invoice", date: today, assignedTo: "m_admin" },
+      { id: "t_fatima", title: "Purchase pharmacy supplies", date: today, assignedTo: "m_member" },
+      {
+        id: "t_child_pr",
+        title: "Yusuf Quran revision",
+        date: today,
+        assignedTo: "m_child",
+        scheduleMode: "relativePrayer",
+        relativeAnchor: "afterFajr",
+      },
+    ];
+
+    const events: CalEventRecord[] = [
+      { id: "ev_shared", title: "Family Dinner", date: today },
+      { id: "ev_admin", title: "Ameen Work Meeting", date: today, assignedTo: "m_admin" },
+      { id: "ev_child", title: "Yusuf Karate Class", date: today, assignedTo: "m_child" },
+    ];
+
+    const routines = [
+      createRoutine({
+        id: "r_shared",
+        name: "Morning Family Adhkar",
+        relativeAnchor: "afterFajr",
+        steps: [{ title: "Dua" }],
+      }),
+      createRoutine({
+        id: "r_admin",
+        name: "Ameen Fitness Routine",
+        assignedTo: "m_admin",
+        steps: [{ title: "Pushups" }],
+      }),
+      createRoutine({
+        id: "r_multi",
+        name: "Evening Kitchen Cleanup",
+        steps: [
+          { title: "Wipe Counters", assignedTo: "m_member" },
+          { title: "Put away toys", assignedTo: "m_child" },
+        ],
+      }),
+    ];
+
+    // Data with expenses causing budget alert (>80% of limit)
+    const baseData: DailySurfaceData = {
+      now: new Date("2026-08-18T08:00:00"),
+      profile: { name: "Household", city: "Kozhikode" },
+      prayers,
+      nextPrayer: { next: { name: "Dhuhr", time: "12:30" }, hours: 4, mins: 30 },
+      salahLog: {},
+      hifzItems: [],
+      isRamadan: false,
+      ramadanDay: null,
+      tasks,
+      events,
+      meals: { "Tue-Dinner": "Biryani" },
+      grocery: [{ id: "g1", name: "Rice", got: false }],
+      habits: [],
+      health: { [today]: { water: 4 } },
+      checkins: {},
+      expenses: [{ amount: 900, category: "Home", date: "2026-08-10" }],
+      limits: { Home: 1000 }, // 90% spent -> triggers budget alert for adults
+      routines,
+      familyMembers: family,
+    };
+
+    // 1. Household Perspective (memberId: undefined)
+    const householdRhythm = buildDayRhythmFromSurfaceData({ ...baseData, memberId: undefined });
+    const householdRhythmItems = householdRhythm.blocks.flatMap((b) => b.items);
+    assert.ok(householdRhythmItems.some((i) => i.id === "task-t_unassigned"), "Household task present in household rhythm");
+    assert.ok(householdRhythmItems.some((i) => i.id === "task-t_admin"), "Admin task present in household rhythm");
+    assert.ok(householdRhythmItems.some((i) => i.id === "task-t_fatima"), "Fatima task present in household rhythm");
+    assert.ok(householdRhythmItems.some((i) => i.id === "task-t_child_pr"), "Child prayer-relative task present in household rhythm");
+
+    const householdThread = buildDailyThread({ ...baseData, memberId: undefined }, today, householdRhythm);
+    assert.ok(householdThread.some((i) => i.id === "task-t_unassigned"), "Household task present in household thread");
+    assert.ok(householdThread.some((i) => i.id === "event-ev_shared"), "Shared event present in household thread");
+    assert.ok(householdThread.some((i) => i.id === "event-ev_admin"), "Admin event present in household thread");
+    assert.ok(householdThread.some((i) => i.id === "budget-alert"), "Budget alert present in household/adult view");
+
+    // 2. Admin Perspective (memberId: "m_admin")
+    const adminThread = buildDailyThread({ ...baseData, memberId: "m_admin" });
+    assert.ok(adminThread.some((i) => i.id === "task-t_unassigned"), "Household unassigned task visible to admin");
+    assert.ok(adminThread.some((i) => i.id === "task-t_admin"), "Admin task visible to admin");
+    assert.equal(adminThread.some((i) => i.id === "task-t_fatima"), false, "Fatima task excluded from admin view");
+    assert.equal(adminThread.some((i) => i.id === "task-t_child_pr"), false, "Child task excluded from admin view");
+    assert.ok(adminThread.some((i) => i.id === "budget-alert"), "Budget alert visible to admin");
+
+    // 3. Child Perspective (memberId: "m_child")
+    const childThread = buildDailyThread({ ...baseData, memberId: "m_child" });
+    assert.ok(childThread.some((i) => i.id === "task-t_unassigned"), "Household unassigned task visible to child");
+    assert.ok(childThread.some((i) => i.id === "task-t_child_pr"), "Child task visible to child");
+    assert.equal(childThread.some((i) => i.id === "task-t_admin"), false, "Admin adult task excluded from child view");
+    assert.equal(childThread.some((i) => i.id === "task-t_fatima"), false, "Fatima task excluded from child view");
+    assert.ok(childThread.some((i) => i.id === "event-ev_child"), "Child event visible to child");
+    assert.equal(childThread.some((i) => i.id === "event-ev_admin"), false, "Admin adult event excluded from child view");
+    // Child privacy protection: budget alerts must NEVER appear in child view
+    assert.equal(childThread.some((i) => i.id === "budget-alert"), false, "Budget alert suppressed for child");
+
+    // 4. Multi-Member Shared Routine Step Filtering
+    const fatimaThread = buildDailyThread({ ...baseData, memberId: "m_member" });
+    assert.ok(fatimaThread.some((i) => i.id === "routine-r_multi"), "Multi-assignee routine visible to member who has a step");
+    assert.ok(childThread.some((i) => i.id === "routine-r_multi"), "Multi-assignee routine visible to child who has a step");
+    assert.equal(fatimaThread.some((i) => i.id === "routine-r_admin"), false, "Admin-only routine excluded from Fatima");
+
+    // 5. Member with Zero Personal Assignments
+    const emptyMemberThread = buildDailyThread({ ...baseData, memberId: "m_empty" });
+    assert.ok(emptyMemberThread.some((i) => i.id === "task-t_unassigned"), "Household tasks visible to empty member");
+    assert.equal(emptyMemberThread.some((i) => i.id === "task-t_admin"), false);
+    assert.equal(emptyMemberThread.some((i) => i.id === "task-t_fatima"), false);
+    assert.equal(emptyMemberThread.some((i) => i.id === "task-t_child_pr"), false);
+
+    // 6. Data Immutability Guarantee: Switching perspectives does NOT mutate domain arrays or objects
+    const tasksSnapshot = JSON.stringify(tasks);
+    const routinesSnapshot = JSON.stringify(routines);
+    const eventsSnapshot = JSON.stringify(events);
+
+    buildDailyThread({ ...baseData, memberId: "m_admin" });
+    buildDailyThread({ ...baseData, memberId: "m_child" });
+    buildDailyThread({ ...baseData, memberId: undefined });
+
+    assert.equal(JSON.stringify(tasks), tasksSnapshot, "Tasks array remained immutable across switches");
+    assert.equal(JSON.stringify(routines), routinesSnapshot, "Routines array remained immutable across switches");
+    assert.equal(JSON.stringify(events), eventsSnapshot, "Events array remained immutable across switches");
+  });
+
+  test("Wave 2.0-B — Prayer-Relative Task Placement in DayRhythm Across Perspectives", () => {
+    const today = "2026-08-18";
+    const prayers = [
+      { id: "fajr", name: "Fajr", time: "05:15" },
+      { id: "dhuhr", name: "Dhuhr", time: "12:30" },
+      { id: "asr", name: "Asr", time: "15:45" },
+      { id: "maghrib", name: "Maghrib", time: "18:30" },
+      { id: "isha", name: "Isha", time: "19:45" },
+    ];
+
+    const tasks: TaskRecord[] = [
+      {
+        id: "t_yusuf_fajr",
+        title: "Morning Quran Hifz",
+        date: today,
+        assignedTo: "mem_yusuf",
+        scheduleMode: "relativePrayer",
+        relativeAnchor: "afterFajr",
+      },
+      {
+        id: "t_ameen_dhuhr",
+        title: "Dhuhr Family Work Break",
+        date: today,
+        assignedTo: "mem_ameen",
+        scheduleMode: "relativePrayer",
+        relativeAnchor: "afterDhuhr",
+      },
+    ];
+
+    const rhythmYusuf = buildDayRhythmFromSurfaceData({
+      now: new Date("2026-08-18T08:00:00"),
+      profile: { name: "Yusuf" },
+      prayers,
+      nextPrayer: null,
+      salahLog: {},
+      hifzItems: [],
+      isRamadan: false,
+      ramadanDay: null,
+      tasks,
+      events: [],
+      meals: {},
+      grocery: [],
+      habits: [],
+      health: {},
+      checkins: {},
+      expenses: [],
+      limits: {},
+      memberId: "mem_yusuf",
+    });
+
+    const morningItems = rhythmYusuf.blocks.find((b) => b.id === "morning")?.items ?? [];
+    const afternoonItems = rhythmYusuf.blocks.find((b) => b.id === "afternoon")?.items ?? [];
+
+    assert.ok(morningItems.some((i) => i.id === "task-t_yusuf_fajr"), "Yusuf afterFajr task placed in Morning block");
+    assert.equal(afternoonItems.some((i) => i.id === "task-t_ameen_dhuhr"), false, "Ameen task excluded from Yusuf rhythm");
+  });
 });
+
 
