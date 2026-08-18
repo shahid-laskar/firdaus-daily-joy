@@ -124,7 +124,7 @@ function WeeklyPlanningPage() {
   };
 
   const shiftWeek = (dir: 1 | -1) => {
-    setWeekStart(navigatePlanningWeek(weekStart, dir, "monday").startDate);
+    setWeekStart(navigatePlanningWeek(weekStart, dir, "monday")[0]!);
     setStepIndex(0);
     setCommitted(null);
   };
