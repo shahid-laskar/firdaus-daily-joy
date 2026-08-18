@@ -86,7 +86,7 @@ function WeeklyPlanningPage() {
 
   const prayers = usePrayers();
   const [weekStart, setWeekStart] = useState(
-    () => getPlanningWeekRange(new Date(), "monday").startDate,
+    () => getPlanningWeekRange(new Date(), "monday")[0]!,
   );
   const [stepIndex, setStepIndex] = useState(0);
   const [committed, setCommitted] = useState<string | null>(null);
