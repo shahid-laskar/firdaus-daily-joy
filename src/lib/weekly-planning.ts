@@ -947,20 +947,52 @@ export function buildWeeklyPlan(input: WeeklyPlanInput): WeeklyPlan {
     todayIso: today,
   });
 
-  const prevCompletedTasks = prevWorkload.householdTotal.totalCompleted;
+  // Calculate actual completed routine steps across previous week
+  let prevCompletedRoutineSteps = 0;
+  for (const r of input.routines || []) {
+    if (r.enabled === false) continue;
+    for (const d of prevWeekDates) {
+      const isRoutineDue = isRepeating(r.recur) ? occursOn(r.recur, d) : true;
+      if (!isRoutineDue) continue;
+      for (const s of r.steps || []) {
+        if (s.completions && s.completions.includes(d)) {
+          prevCompletedRoutineSteps++;
+        }
+      }
+    }
+  }
+
+  // Calculate actual completed tasks across previous week
+  let prevCompletedTasks = 0;
+  for (const t of input.tasks || []) {
+    if (isRepeating(t.recur)) {
+      for (const d of prevWeekDates) {
+        if (occursOn(t.recur, d) && t.completions?.includes(d)) {
+          prevCompletedTasks++;
+        }
+      }
+    } else {
+      const isDueInPeriod = t.date ? prevWeekDates.includes(t.date) : true;
+      if (isDueInPeriod && Boolean(t.done)) {
+        prevCompletedTasks++;
+      }
+    }
+  }
+
   const prevOverdueTasks = prevWorkload.householdTotal.totalOverdue;
+  const totalCompletedResponsibilities = prevCompletedTasks + prevCompletedRoutineSteps;
 
   const previousWeekSummary: PreviousWeekSummary = {
     startDate: prevStartDate,
     endDate: prevEndDate,
     completedTasksCount: prevCompletedTasks,
     unresolvedTasksCount: prevOverdueTasks,
-    completedRoutineStepsCount: prevWorkload.householdTotal.totalCompleted,
+    completedRoutineStepsCount: prevCompletedRoutineSteps,
     conflictsCount: prevWorkload.conflictsCount,
     workload: isChild && memberId ? filterWorkloadForChild(prevWorkload, memberId) : prevWorkload,
     reflectionNotice:
-      prevCompletedTasks > 0
-        ? `Alhamdulillah, your family completed ${prevCompletedTasks} responsibilities last week.`
+      totalCompletedResponsibilities > 0
+        ? `Alhamdulillah, your family completed ${totalCompletedResponsibilities} responsibilities last week.`
         : "A quiet previous week. Ready to plan the upcoming days together.",
   };
 

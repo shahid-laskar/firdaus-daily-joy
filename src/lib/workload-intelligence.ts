@@ -129,6 +129,11 @@ export const WORKLOAD_METHODOLOGY_STATEMENT =
   "Duration minutes are accumulated only when explicitly recorded; item count serves as the baseline " +
   "responsibility signal for unmeasured items without fabricating false precision.";
 
+export const WORKLOAD_HEAVIER_RATIO = 1.4;
+export const WORKLOAD_HEAVIER_MIN_DELTA = 3;
+export const WORKLOAD_LIGHT_RATIO = 0.6;
+export const WORKLOAD_LIGHT_MIN_DELTA = 3;
+
 // -----------------------------------------------------------------------------
 // PURE UTILITIES
 // -----------------------------------------------------------------------------
@@ -419,9 +424,15 @@ export function calculateHouseholdWorkload(
     } else if (adultMembers.length <= 1) {
       mw.qualitativeLoad = mw.assignedCount > 10 ? "heavier" : "balanced";
     } else if (!mw.isChild) {
-      if (mw.assignedCount > avgAdultAssigned * 1.4 && mw.assignedCount - avgAdultAssigned >= 3) {
+      if (
+        mw.assignedCount > avgAdultAssigned * WORKLOAD_HEAVIER_RATIO &&
+        mw.assignedCount - avgAdultAssigned >= WORKLOAD_HEAVIER_MIN_DELTA
+      ) {
         mw.qualitativeLoad = "heavier";
-      } else if (mw.assignedCount < avgAdultAssigned * 0.6 && avgAdultAssigned - mw.assignedCount >= 3) {
+      } else if (
+        mw.assignedCount < avgAdultAssigned * WORKLOAD_LIGHT_RATIO &&
+        avgAdultAssigned - mw.assignedCount >= WORKLOAD_LIGHT_MIN_DELTA
+      ) {
         mw.qualitativeLoad = "light";
       } else {
         mw.qualitativeLoad = "balanced";
@@ -587,6 +598,14 @@ export function filterWorkloadForChild(
 ): HouseholdWorkloadSummary {
   const childMember = summary.members.find((m) => m.memberId === childMemberId);
 
+  const childAssignedCount = childMember ? childMember.assignedCount : 0;
+  const childAssignedMinutes = childMember ? childMember.assignedMinutesKnown : 0;
+  const childRoutineSteps = childMember ? childMember.routineStepCount : 0;
+  const childEvents = childMember ? childMember.eventCount : 0;
+  const childCompleted = childMember ? childMember.completedCount : 0;
+  const childOverdue = childMember ? childMember.overdueCount : 0;
+  const childConflicts = childMember ? childMember.conflictCount : 0;
+
   // Return a child-appropriate view with gentle, positive messaging
   return {
     ...summary,
@@ -596,9 +615,17 @@ export function filterWorkloadForChild(
       }
       return {
         ...m,
+        assignedCount: 0,
         assignedTasksCount: 0,
         assignedMinutesKnown: 0,
+        hasUnmeasuredDuration: false,
+        routineStepCount: 0,
+        eventCount: 0,
+        completedCount: 0,
         overdueCount: 0,
+        completionRate: 100,
+        qualitativeLoad: "balanced",
+        conflictCount: 0,
       };
     }),
     fairness: {
@@ -609,9 +636,15 @@ export function filterWorkloadForChild(
         : "Family routines are underway.",
     },
     householdTotal: {
-      ...summary.householdTotal,
+      totalAssigned: childAssignedCount,
+      totalAssignedMinutesKnown: childAssignedMinutes,
+      totalRoutineSteps: childRoutineSteps,
+      totalEvents: childEvents,
+      totalCompleted: childCompleted,
+      totalOverdue: childOverdue,
+      unassignedCount: 0,
       unassignedMinutesKnown: 0,
-      totalAssignedMinutesKnown: 0,
     },
+    conflictsCount: childConflicts,
   };
 }

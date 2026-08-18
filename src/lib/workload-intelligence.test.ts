@@ -4,6 +4,10 @@ import {
   calculateHouseholdWorkload,
   generateWorkloadInsights,
   filterWorkloadForChild,
+  WORKLOAD_HEAVIER_RATIO,
+  WORKLOAD_HEAVIER_MIN_DELTA,
+  WORKLOAD_LIGHT_RATIO,
+  WORKLOAD_LIGHT_MIN_DELTA,
   type WorkloadCalculationInput,
 } from "./workload-intelligence";
 import { type FamilyMember } from "./family-model";
@@ -203,7 +207,7 @@ describe("Wave 2.0-D — Household Workload & Fairness Intelligence", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 7. FAIRNESS SKEW DETECTION (NO LEADERBOARDS / NO RANKING)
+  // 7. FAIRNESS SKEW DETECTION & THRESHOLDS
   // ---------------------------------------------------------------------------
   test("Fairness Signal — identifies skewed load without ranking or scores", () => {
     // Ameen has 8 tasks, Fatima has 1 task
@@ -234,13 +238,71 @@ describe("Wave 2.0-D — Household Workload & Fairness Intelligence", () => {
     assert.equal("scores" in summary, false);
   });
 
+  test("Workload Thresholds — verifies WORKLOAD_HEAVIER_RATIO and WORKLOAD_HEAVIER_MIN_DELTA behavior", () => {
+    assert.equal(WORKLOAD_HEAVIER_RATIO, 1.4);
+    assert.equal(WORKLOAD_HEAVIER_MIN_DELTA, 3);
+    assert.equal(WORKLOAD_LIGHT_RATIO, 0.6);
+    assert.equal(WORKLOAD_LIGHT_MIN_DELTA, 3);
+
+    // Case A: Ameen has 8, Fatima has 2. Avg = 5.
+    // 8 > 5 * 1.4 (= 7.0) AND 8 - 5 >= 3 -> Heavier
+    const tasksHeavier: TaskRecord[] = [
+      ...Array.from({ length: 8 }).map((_, i) => ({
+        id: `t_h_am_${i}`,
+        title: `Task A ${i}`,
+        date: "2026-08-18",
+        assignedTo: "mem_ameen",
+      })),
+      ...Array.from({ length: 2 }).map((_, i) => ({
+        id: `t_h_fat_${i}`,
+        title: `Task F ${i}`,
+        date: "2026-08-18",
+        assignedTo: "mem_fatima",
+      })),
+    ];
+    const summaryHeavier = calculateHouseholdWorkload({
+      dates: currentWeek,
+      members: [sampleMembers[0]!, sampleMembers[1]!], // 2 adults
+      tasks: tasksHeavier,
+      todayIso: testDate,
+    });
+    assert.equal(summaryHeavier.members.find((m) => m.memberId === "mem_ameen")?.qualitativeLoad, "heavier");
+    assert.equal(summaryHeavier.members.find((m) => m.memberId === "mem_fatima")?.qualitativeLoad, "light");
+
+    // Case B: Ameen has 5, Fatima has 2. Avg = 3.5.
+    // 5 > 3.5 * 1.4 (= 4.9), BUT delta 5 - 3.5 = 1.5 (< 3 min delta) -> Balanced
+    const tasksBelowMinDelta: TaskRecord[] = [
+      ...Array.from({ length: 5 }).map((_, i) => ({
+        id: `t_b_am_${i}`,
+        title: `Task B ${i}`,
+        date: "2026-08-18",
+        assignedTo: "mem_ameen",
+      })),
+      ...Array.from({ length: 2 }).map((_, i) => ({
+        id: `t_b_fat_${i}`,
+        title: `Task BF ${i}`,
+        date: "2026-08-18",
+        assignedTo: "mem_fatima",
+      })),
+    ];
+    const summaryBelowDelta = calculateHouseholdWorkload({
+      dates: currentWeek,
+      members: [sampleMembers[0]!, sampleMembers[1]!],
+      tasks: tasksBelowMinDelta,
+      todayIso: testDate,
+    });
+    assert.equal(summaryBelowDelta.members.find((m) => m.memberId === "mem_ameen")?.qualitativeLoad, "balanced");
+  });
+
   // ---------------------------------------------------------------------------
   // 8. PRIVACY & CHILD FILTERING
   // ---------------------------------------------------------------------------
-  test("Child Privacy — sanitized workload view for children", () => {
+  test("Child Privacy — sanitized workload view for children completely masks adult totals", () => {
     const tasks: TaskRecord[] = [
       { id: "t1", title: "Adult Financial Audit", date: "2026-08-18", assignedTo: "mem_ameen", durationMinutes: 120 },
-      { id: "t2", title: "Yusuf Quran Revision", date: "2026-08-18", assignedTo: "mem_yusuf", durationMinutes: 20 },
+      { id: "t2", title: "Adult Overdue Task", date: "2026-08-17", assignedTo: "mem_ameen", done: false, durationMinutes: 60 },
+      { id: "t3", title: "Fatima Project", date: "2026-08-18", assignedTo: "mem_fatima", durationMinutes: 45 },
+      { id: "t4", title: "Yusuf Quran Revision", date: "2026-08-18", assignedTo: "mem_yusuf", durationMinutes: 20 },
     ];
 
     const summary = calculateHouseholdWorkload({
@@ -250,14 +312,39 @@ describe("Wave 2.0-D — Household Workload & Fairness Intelligence", () => {
       todayIso: testDate,
     });
 
+    // Verify adult summary has skewed state and adult totals
+    assert.equal(summary.householdTotal.totalAssigned, 4);
+    assert.equal(summary.householdTotal.totalOverdue, 1);
+    assert.equal(summary.householdTotal.totalAssignedMinutesKnown, 245);
+
+    // Apply child filtering
     const childSafeSummary = filterWorkloadForChild(summary, "mem_yusuf");
-    const adultInChildView = childSafeSummary.members.find((m) => m.memberId === "mem_ameen")!;
+    const adult1InChildView = childSafeSummary.members.find((m) => m.memberId === "mem_ameen")!;
+    const adult2InChildView = childSafeSummary.members.find((m) => m.memberId === "mem_fatima")!;
     const childInChildView = childSafeSummary.members.find((m) => m.memberId === "mem_yusuf")!;
 
-    assert.equal(adultInChildView.assignedTasksCount, 0, "Adult detailed task count sanitized");
-    assert.equal(adultInChildView.assignedMinutesKnown, 0, "Adult duration sanitized");
+    // Adult individual metrics are completely masked
+    assert.equal(adult1InChildView.assignedCount, 0, "Adult assigned count is 0");
+    assert.equal(adult1InChildView.assignedTasksCount, 0, "Adult detailed task count sanitized");
+    assert.equal(adult1InChildView.assignedMinutesKnown, 0, "Adult duration sanitized");
+    assert.equal(adult1InChildView.overdueCount, 0, "Adult overdue sanitized");
+    assert.equal(adult1InChildView.qualitativeLoad, "balanced");
+
+    assert.equal(adult2InChildView.assignedCount, 0);
+    assert.equal(adult2InChildView.assignedTasksCount, 0);
+    assert.equal(adult2InChildView.assignedMinutesKnown, 0);
+
+    // Child sees their own responsibility
     assert.equal(childInChildView.assignedCount, 1, "Child sees their own responsibility");
+    assert.equal(childInChildView.assignedMinutesKnown, 20);
     assert.ok(childSafeSummary.fairness.headline.includes("Great progress, Yusuf"));
+    assert.equal(childSafeSummary.fairness.status, "balanced", "Fairness disparities not exposed to child");
+
+    // Household aggregates match ONLY the child perspective (adult workload is not inferable)
+    assert.equal(childSafeSummary.householdTotal.totalAssigned, 1, "Household total assigned equals child count only");
+    assert.equal(childSafeSummary.householdTotal.totalAssignedMinutesKnown, 20, "Household minutes equals child minutes only");
+    assert.equal(childSafeSummary.householdTotal.totalOverdue, 0, "Adult overdue items masked from household total");
+    assert.equal(childSafeSummary.householdTotal.unassignedCount, 0, "Unassigned count masked");
   });
 
   // ---------------------------------------------------------------------------

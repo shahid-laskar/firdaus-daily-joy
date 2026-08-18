@@ -23,6 +23,8 @@ import {
   type WeeklyPlanInput,
   type WeeklyPlanProposal,
 } from "./weekly-planning";
+import { detectScheduleConflicts } from "./conflict-detector";
+import { calculateHouseholdWorkload } from "./workload-intelligence";
 import type { TaskRecord, CalEventRecord } from "./daily-surface";
 import type { Routine } from "./routine-engine";
 import type { FamilyMember } from "./family-model";
@@ -293,6 +295,51 @@ describe("Wave 2.0-E: Family Weekly Planning Engine", () => {
       assert.equal(plan.unassignedTasks.length, 1);
       assert.equal(plan.unassignedTasks[0]?.id, "t-2");
     });
+
+    test("buildWeeklyPlan accurately distinguishes completedRoutineStepsCount from completedTasksCount in previous week summary", () => {
+      const tasks: TaskRecord[] = [
+        // 2 completed tasks in previous week (2026-08-10 to 2026-08-16)
+        { id: "t-done-1", title: "Clean car", date: "2026-08-11", done: true, assignedTo: "parent-1" },
+        { id: "t-done-2", title: "Mow lawn", date: "2026-08-13", done: true, assignedTo: "parent-2" },
+        // 1 overdue/uncompleted task in previous week
+        { id: "t-pending", title: "Fix door", date: "2026-08-12", done: false, assignedTo: "parent-1" },
+        // 1 task in current planning week (2026-08-17 to 2026-08-23)
+        { id: "t-curr", title: "Current week task", date: "2026-08-18", done: true, assignedTo: "parent-1" },
+      ];
+
+      const routines: Routine[] = [
+        {
+          id: "r-prev",
+          name: "Daily Routine",
+          enabled: true,
+          recur: { freq: "daily", start: "2026-08-01" },
+          steps: [
+            // Step 1 completed on 3 days of previous week
+            { id: "s-1", title: "Step 1", order: 1, assignedTo: "parent-1", completions: ["2026-08-10", "2026-08-11", "2026-08-12"] },
+            // Step 2 completed on 2 days of previous week
+            { id: "s-2", title: "Step 2", order: 2, assignedTo: "parent-2", completions: ["2026-08-10", "2026-08-14"] },
+          ],
+        },
+      ];
+
+      const plan = buildWeeklyPlan({
+        dates: ["2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-22", "2026-08-23"],
+        familyMembers: MOCK_FAMILY,
+        tasks,
+        events: [],
+        routines,
+        meals: {},
+        prayers: MOCK_PRAYERS,
+        todayIso: "2026-08-18",
+      });
+
+      const prev = plan.previousWeekSummary;
+      assert.equal(prev.completedTasksCount, 2, "Accurately counted 2 completed tasks");
+      assert.equal(prev.completedRoutineStepsCount, 5, "Accurately counted 5 routine step completions (3 + 2)");
+      assert.equal(prev.unresolvedTasksCount, 1, "Accurately counted 1 unresolved overdue task");
+      assert.equal(prev.workload.householdTotal.totalCompleted, 7, "Workload totalCompleted combines tasks (2) + routine steps (5)");
+      assert.ok(prev.reflectionNotice.includes("7 responsibilities"));
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -560,6 +607,242 @@ describe("Wave 2.0-E: Family Weekly Planning Engine", () => {
 
       const step8 = getWeeklyPlanningStepSummary("approval", plan);
       assert.equal(step8.stepNumber, 8);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // 8. Wave 2 Cross-Engine Integration Pipeline (E2E)
+  // ---------------------------------------------------------------------------
+  describe("Wave 2 Cross-Engine Integration Pipeline", () => {
+    const dates = ["2026-08-17", "2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-22", "2026-08-23"];
+    const adultFamily: FamilyMember[] = [
+      { id: "parent-1", name: "Rashid", role: "admin", chores: [] },
+      { id: "parent-2", name: "Amina", role: "parent", chores: [] },
+    ];
+
+    test("E2E Integration: Staging schedule changes surfaces and resolves conflicts across rhythm, conflict, and workload engines", () => {
+      // 1. Household with two adult members (Rashid & Amina)
+      // 2. Initial domain state: 1 event, 1 task, 1 daily routine
+      const initialEvents: CalEventRecord[] = [
+        { id: "ev-meeting", title: "Client Video Call", date: "2026-08-18", time: "14:00", durationMinutes: 60, assignedTo: "parent-1" },
+      ];
+      const initialTasks: TaskRecord[] = [
+        { id: "t-morning", title: "Morning Qur'an", date: "2026-08-18", time: "06:00", scheduleMode: "exactTime", durationMinutes: 30, assignedTo: "parent-1" },
+      ];
+      const initialRoutines: Routine[] = [
+        {
+          id: "r-winddown",
+          name: "Evening Wind Down",
+          enabled: true,
+          recur: { freq: "daily", start: "2026-08-17" },
+          steps: [
+            { id: "s-1", title: "Tidy living room", order: 1, durationMinutes: 15, assignedTo: "parent-1" },
+            { id: "s-2", title: "Review tomorrow calendar", order: 2, durationMinutes: 15, assignedTo: "parent-2" },
+          ],
+        },
+      ];
+
+      // 3. Create weekly proposal
+      let proposal = createWeeklyProposal("2026-08-17");
+
+      // 4. Stage a task that introduces a conflict with the 14:00-15:00 meeting
+      proposal = stageNewTask(proposal, {
+        id: "t-doc",
+        title: "Doctor Follow-up",
+        date: "2026-08-18",
+        time: "14:15",
+        scheduleMode: "exactTime",
+        durationMinutes: 30,
+        assignedTo: "parent-1",
+      });
+
+      // 5. Build the proposed week
+      const proposedWithConflict = buildWeeklyPlan({
+        dates,
+        familyMembers: adultFamily,
+        tasks: initialTasks,
+        events: initialEvents,
+        routines: initialRoutines,
+        meals: {},
+        prayers: MOCK_PRAYERS,
+        proposal,
+        todayIso: "2026-08-18",
+      });
+
+      // 6. Run conflict detection against proposed state
+      assert.equal(proposedWithConflict.conflicts.hasConflicts, true);
+      assert.equal(proposedWithConflict.conflicts.hardConflicts, 1);
+      assert.ok(proposedWithConflict.conflicts.conflicts[0]?.explanation.includes("Doctor Follow-up"));
+
+      // Verify standalone conflict detector agrees on Tuesday's proposed items
+      const tuesdayProposedTasks = proposedWithConflict.days.find((d) => d.date === "2026-08-18")!.tasks;
+      const standaloneConflicts = detectScheduleConflicts({
+        date: "2026-08-18",
+        tasks: tuesdayProposedTasks,
+        events: initialEvents,
+        routines: initialRoutines,
+        prayers: MOCK_PRAYERS,
+        familyMembers: adultFamily,
+      });
+      assert.equal(standaloneConflicts.length, 1);
+
+      // 7. Run workload intelligence against proposed state
+      assert.equal(proposedWithConflict.workload.householdTotal.unassignedCount, 0);
+      assert.equal(proposedWithConflict.workload.conflictsCount, 1);
+
+      // 8. Stage a schedule change to resolve the conflict (move to after Asr prayer)
+      proposal = stageTaskSchedule(proposal, "t-doc", {
+        date: "2026-08-18",
+        scheduleMode: "relativePrayer",
+        relativeAnchor: "afterAsr",
+      });
+
+      const proposedResolved = buildWeeklyPlan({
+        dates,
+        familyMembers: adultFamily,
+        tasks: initialTasks,
+        events: initialEvents,
+        routines: initialRoutines,
+        meals: {},
+        prayers: MOCK_PRAYERS,
+        proposal,
+        todayIso: "2026-08-18",
+      });
+
+      // Verify conflict resolved
+      assert.equal(proposedResolved.conflicts.hasConflicts, false);
+      assert.equal(proposedResolved.conflicts.hardConflicts, 0);
+
+      // 9. Commit the proposal
+      const committed = commitWeeklyPlanProposal(proposal, {
+        tasks: initialTasks,
+        routines: initialRoutines,
+        meals: {},
+      });
+
+      // 10. Verify resulting task/routine domain state
+      assert.equal(committed.tasks.length, 2);
+      const docTask = committed.tasks.find((t) => t.id === "t-doc")!;
+      assert.ok(docTask);
+      assert.equal(docTask.scheduleMode, "relativePrayer");
+      assert.equal(docTask.relativeAnchor, "afterAsr");
+      assert.equal(docTask.assignedTo, "parent-1");
+      assert.equal(committed.summary.tasksCreated, 1);
+
+      // 11. Verify second commit idempotency
+      const secondCommit = commitWeeklyPlanProposal(proposal, {
+        tasks: committed.tasks,
+        routines: committed.routines,
+        meals: committed.meals,
+      });
+      assert.equal(secondCommit.tasks.length, 2);
+      assert.equal(secondCommit.summary.tasksCreated, 0);
+      assert.deepEqual(secondCommit.tasks, committed.tasks);
+      assert.deepEqual(secondCommit.routines, committed.routines);
+    });
+
+    test("E2E Integration: Staging task and routine step reassignments rebalances skewed workload across all engines and commits cleanly", () => {
+      // 1. Household with two adult members (Rashid & Amina)
+      // 2. Initial state: Heavily skewed load (8 tasks assigned to Rashid, 0 to Amina)
+      const initialTasks: TaskRecord[] = Array.from({ length: 8 }).map((_, i) => ({
+        id: `t-skewed-${i}`,
+        title: `Work Project ${i}`,
+        date: "2026-08-18",
+        assignedTo: "parent-1",
+        durationMinutes: 30,
+      }));
+
+      const initialRoutines: Routine[] = [
+        {
+          id: "r-shared",
+          name: "Daily Household Reset",
+          enabled: true,
+          recur: { freq: "daily", start: "2026-08-17" },
+          steps: [
+            { id: "s-1", title: "Morning dishes", order: 1, assignedTo: "parent-1", durationMinutes: 15 },
+            { id: "s-2", title: "Evening sweep", order: 2, assignedTo: "parent-1", durationMinutes: 15 },
+          ],
+        },
+      ];
+
+      // Base unproposed plan: skewed
+      const basePlan = buildWeeklyPlan({
+        dates,
+        familyMembers: adultFamily,
+        tasks: initialTasks,
+        events: [],
+        routines: initialRoutines,
+        meals: {},
+        prayers: MOCK_PRAYERS,
+        todayIso: "2026-08-18",
+      });
+      assert.equal(basePlan.workload.fairness.status, "skewed");
+      assert.equal(basePlan.workload.fairness.heaviestMemberId, "parent-1");
+
+      // 3. Create weekly proposal
+      let proposal = createWeeklyProposal("2026-08-17");
+
+      // 4. Stage reassignments: Reassign 4 tasks and 1 routine step to Amina (parent-2)
+      proposal = stageTaskAssignment(proposal, "t-skewed-0", "parent-2");
+      proposal = stageTaskAssignment(proposal, "t-skewed-1", "parent-2");
+      proposal = stageTaskAssignment(proposal, "t-skewed-2", "parent-2");
+      proposal = stageTaskAssignment(proposal, "t-skewed-3", "parent-2");
+      proposal = stageRoutineStepAssignment(proposal, "r-shared", "s-2", "parent-2");
+
+      // 5. Build proposed week
+      const proposedPlan = buildWeeklyPlan({
+        dates,
+        familyMembers: adultFamily,
+        tasks: initialTasks,
+        events: [],
+        routines: initialRoutines,
+        meals: {},
+        prayers: MOCK_PRAYERS,
+        proposal,
+        todayIso: "2026-08-18",
+      });
+
+      // 6. Run conflict detection against proposed state
+      assert.equal(proposedPlan.conflicts.hasConflicts, false);
+
+      // 7. Run workload intelligence against proposed state
+      const rashidWorkload = proposedPlan.workload.members.find((m) => m.memberId === "parent-1")!;
+      const aminaWorkload = proposedPlan.workload.members.find((m) => m.memberId === "parent-2")!;
+
+      // Rashid: 4 tasks + 7 routine steps (s-1 * 7 days) = 11 items
+      // Amina: 4 tasks + 7 routine steps (s-2 * 7 days) = 11 items
+      assert.equal(rashidWorkload.assignedCount, 11);
+      assert.equal(aminaWorkload.assignedCount, 11);
+      assert.equal(rashidWorkload.qualitativeLoad, "balanced");
+      assert.equal(aminaWorkload.qualitativeLoad, "balanced");
+
+      // 8. Verify workload fairness signal updated to shared
+      assert.equal(proposedPlan.workload.fairness.status, "shared");
+
+      // 9. Commit proposal
+      const committed = commitWeeklyPlanProposal(proposal, {
+        tasks: initialTasks,
+        routines: initialRoutines,
+        meals: {},
+      });
+
+      // 10. Verify resulting task/routine domain state
+      assert.equal(committed.summary.tasksUpdated, 4);
+      assert.equal(committed.summary.routinesUpdated, 1);
+      assert.equal(committed.tasks.find((t) => t.id === "t-skewed-0")?.assignedTo, "parent-2");
+      assert.equal(committed.tasks.find((t) => t.id === "t-skewed-1")?.assignedTo, "parent-2");
+      assert.equal(committed.tasks.find((t) => t.id === "t-skewed-4")?.assignedTo, "parent-1");
+      assert.equal(committed.routines[0]?.steps.find((s) => s.id === "s-2")?.assignedTo, "parent-2");
+
+      // 11. Verify second commit idempotency
+      const secondCommit = commitWeeklyPlanProposal(proposal, {
+        tasks: committed.tasks,
+        routines: committed.routines,
+        meals: committed.meals,
+      });
+      assert.equal(secondCommit.summary.tasksCreated, 0);
+      assert.deepEqual(secondCommit.tasks, committed.tasks);
+      assert.deepEqual(secondCommit.routines, committed.routines);
     });
   });
 });
