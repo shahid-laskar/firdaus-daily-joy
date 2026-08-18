@@ -28,7 +28,7 @@ import {
   getTaskScheduleMode,
   normalizeRelativeAnchor,
 } from "./rhythm-engine";
-import type { FamilyMember } from "./family-model";
+import { type FamilyMember, getRoutineOwner, getRoutineStepAssignee } from "./family-model";
 import { isoDate } from "./intelligence";
 
 // -----------------------------------------------------------------------------
@@ -49,7 +49,8 @@ export interface RoutineStep {
   title: string;
   order: number;
   durationMinutes?: number | undefined;
-  assigneeId?: string | undefined; // family member ID
+  assigneeId?: string | undefined; // family member ID (legacy)
+  assignedTo?: string | undefined; // Wave 2.0-A primary assignment field
   note?: string | undefined;
   completions?: string[] | undefined; // ISO dates (YYYY-MM-DD) when step was completed
   skipped?: string[] | undefined; // ISO dates (YYYY-MM-DD) when step was skipped
@@ -66,7 +67,8 @@ export interface Routine {
   time?: string | undefined; // "HH:mm" if exact clock time
   relativeAnchor?: RelativePrayerAnchor | string | undefined; // e.g. "afterFajr", "afterMaghrib"
   recur?: Recurrence | undefined; // Recurrence rule (daily, weekly, weekdays, etc.)
-  memberId?: string | undefined; // Optional routine-level family member ownership (undefined = household)
+  memberId?: string | undefined; // Optional routine-level family member ownership (legacy)
+  assignedTo?: string | undefined; // Wave 2.0-A primary ownership field
   steps: RoutineStep[];
   createdAt?: string | undefined;
 }
@@ -80,6 +82,7 @@ export interface RoutineStepInstance {
   order: number;
   durationMinutes?: number | undefined;
   assigneeId?: string | undefined;
+  assignedTo?: string | undefined;
   assigneeName?: string | undefined;
   note?: string | undefined;
   isCompleted: boolean;
@@ -98,6 +101,7 @@ export interface RoutineDayInstance {
   targetPrayer?: PrayerId | undefined;
   approximateMinutes?: number | undefined;
   memberId?: string | undefined;
+  assignedTo?: string | undefined;
   memberName?: string | undefined;
   totalSteps: number;
   completedSteps: number;
@@ -148,6 +152,7 @@ export function createRoutine(
     relativeAnchor?: RelativePrayerAnchor | string | undefined;
     recur?: Recurrence | undefined;
     memberId?: string | undefined;
+    assignedTo?: string | undefined;
     steps?: (Partial<RoutineStep> & { title: string })[] | undefined;
     createdAt?: string | undefined;
   },
@@ -156,16 +161,20 @@ export function createRoutine(
   const routineId = input.id || generateId("rt");
   const rawSteps = input.steps || [];
 
-  const steps: RoutineStep[] = rawSteps.map((s, idx) => ({
-    id: s.id || generateId("step"),
-    title: (s.title || "").trim(),
-    order: typeof s.order === "number" ? s.order : idx + 1,
-    durationMinutes: typeof s.durationMinutes === "number" ? s.durationMinutes : undefined,
-    assigneeId: s.assigneeId,
-    note: s.note,
-    completions: Array.isArray(s.completions) ? [...s.completions] : [],
-    skipped: Array.isArray(s.skipped) ? [...s.skipped] : [],
-  }));
+  const steps: RoutineStep[] = rawSteps.map((s, idx) => {
+    const assignee = getRoutineStepAssignee(s);
+    return {
+      id: s.id || generateId("step"),
+      title: (s.title || "").trim(),
+      order: typeof s.order === "number" ? s.order : idx + 1,
+      durationMinutes: typeof s.durationMinutes === "number" ? s.durationMinutes : undefined,
+      assigneeId: assignee,
+      assignedTo: assignee,
+      note: s.note,
+      completions: Array.isArray(s.completions) ? [...s.completions] : [],
+      skipped: Array.isArray(s.skipped) ? [...s.skipped] : [],
+    };
+  });
 
   // Sort steps by order
   steps.sort((a, b) => a.order - b.order);
@@ -175,6 +184,8 @@ export function createRoutine(
     time: input.time,
     relativeAnchor: input.relativeAnchor,
   });
+
+  const owner = getRoutineOwner(input);
 
   return {
     id: routineId,
@@ -186,8 +197,9 @@ export function createRoutine(
     scheduleMode: mode,
     time: input.time,
     relativeAnchor: input.relativeAnchor,
-    recur: input.recur ?? { freq: "daily", start: todayIso },
-    memberId: input.memberId,
+    recur: input.recur ?? { freq: "daily", start: "2000-01-01" },
+    memberId: owner,
+    assignedTo: owner,
     steps,
     createdAt: input.createdAt || new Date().toISOString(),
   };
@@ -214,6 +226,7 @@ export function normalizeRoutine(raw: unknown, todayIso = isoDate()): Routine | 
       relativeAnchor: obj["relativeAnchor"],
       recur: obj["recur"],
       memberId: typeof obj["memberId"] === "string" ? obj["memberId"] : undefined,
+      assignedTo: typeof obj["assignedTo"] === "string" ? obj["assignedTo"] : undefined,
       steps: Array.isArray(obj["steps"]) ? obj["steps"] : [],
       createdAt: typeof obj["createdAt"] === "string" ? obj["createdAt"] : undefined,
     },
@@ -282,7 +295,8 @@ export function deriveRoutineDayInstance(
     if (m && m.id) memberMap.set(m.id, m.name);
   }
 
-  const routineMemberName = routine.memberId ? memberMap.get(routine.memberId) : undefined;
+  const routineOwner = getRoutineOwner(routine);
+  const routineMemberName = routineOwner ? memberMap.get(routineOwner) : undefined;
 
   let completedSteps = 0;
   let skippedSteps = 0;
@@ -296,7 +310,7 @@ export function deriveRoutineDayInstance(
     if (isCompleted) completedSteps++;
     else if (isSkipped) skippedSteps++;
 
-    const assigneeId = s.assigneeId || routine.memberId;
+    const assigneeId = getRoutineStepAssignee(s) || routineOwner;
     const assigneeName = assigneeId ? memberMap.get(assigneeId) : undefined;
 
     return {
@@ -306,6 +320,7 @@ export function deriveRoutineDayInstance(
       order: typeof s.order === "number" ? s.order : idx + 1,
       durationMinutes: s.durationMinutes,
       assigneeId,
+      assignedTo: assigneeId,
       assigneeName,
       note: s.note,
       isCompleted,
@@ -344,7 +359,8 @@ export function deriveRoutineDayInstance(
     targetBlock: schedule.blockId,
     targetPrayer: schedule.targetPrayer,
     approximateMinutes: schedule.approximateMinutes,
-    memberId: routine.memberId,
+    memberId: routineOwner,
+    assignedTo: routineOwner,
     memberName: routineMemberName,
     totalSteps,
     completedSteps,

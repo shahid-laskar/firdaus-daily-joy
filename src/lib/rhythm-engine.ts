@@ -25,6 +25,7 @@ import {
   type CalEventRecord,
 } from "./daily-surface";
 import { type Routine, getTodayRoutineInstances } from "./routine-engine";
+import { filterTasksForMember, filterRoutinesForMember, filterEventsForMember } from "./family-model";
 
 // -----------------------------------------------------------------------------
 // TYPES & DEFINITIONS
@@ -114,6 +115,26 @@ export const RHYTHM_BLOCK_DEFINITIONS: Record<RhythmBlockId, RhythmBlockDefiniti
 };
 
 export type PrayerAnchorStatus = "ontime" | "late" | "missed" | "pending" | "upcoming";
+
+export interface DayRhythmInput {
+  date?: string | undefined; // ISO string "YYYY-MM-DD"
+  now?: Date | undefined;
+  prayers: { id: string; name: string; time: string }[];
+  salahLog?: Record<string, Record<string, "ontime" | "late">> | undefined;
+  tasks?: TaskRecord[] | undefined;
+  events?: CalEventRecord[] | undefined;
+  meals?: Record<string, string> | undefined;
+  grocery?: { id: string; got: boolean; name?: string | undefined }[] | undefined;
+  habits?: { id: string; name: string; days: string[] }[] | undefined;
+  health?: Record<string, { water: number; sleep?: string | undefined }> | undefined;
+  checkins?: Record<string, string> | undefined;
+  hifzItems?: HifzItem[] | undefined;
+  isRamadan?: boolean | undefined;
+  ramadanDay?: number | null | undefined;
+  activeReminders?: ReminderSignal[] | undefined;
+  routines?: Routine[] | undefined;
+  memberId?: string | undefined; // Optional member context for filtered DayRhythm
+}
 
 // -----------------------------------------------------------------------------
 // PRAYER-AWARE TASK SCHEDULING VOCABULARY & MODELS (Wave 1.2)
@@ -1016,8 +1037,9 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
   }
 
   // 4. Calendar events
-  if (input.events) {
-    const todayEvents = input.events.filter((e) => isEventOnDate(e, dateStr));
+  const scopedEvents = filterEventsForMember(input.events ?? [], input.memberId);
+  if (scopedEvents.length > 0) {
+    const todayEvents = scopedEvents.filter((e) => isEventOnDate(e, dateStr));
     for (const ev of todayEvents) {
       const bId = inferBlockForItem({ title: ev.title, time: ev.time, category: "event" }, prayerMap);
       blockItemsMap[bId].push({
@@ -1035,8 +1057,9 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
   }
 
   // 5. Tasks due today
-  if (input.tasks) {
-    const dueTasks = input.tasks.filter((t) => isTaskDueOnDate(t, dateStr));
+  const scopedTasks = filterTasksForMember(input.tasks ?? [], input.memberId);
+  if (scopedTasks.length > 0) {
+    const dueTasks = scopedTasks.filter((t) => isTaskDueOnDate(t, dateStr));
 
     for (const t of dueTasks) {
       const done = isTaskRecordDone(t, dateStr);
@@ -1066,8 +1089,9 @@ export function buildDayRhythm(input: DayRhythmInput): DayRhythm {
   }
 
   // 5.5. Family Routines due today (Wave 1.3)
-  if (input.routines && input.routines.length > 0) {
-    const routineInstances = getTodayRoutineInstances(input.routines, dateStr, prayerMap);
+  const scopedRoutines = filterRoutinesForMember(input.routines ?? [], input.memberId);
+  if (scopedRoutines.length > 0) {
+    const routineInstances = getTodayRoutineInstances(scopedRoutines, dateStr, prayerMap);
     for (const inst of routineInstances) {
       const isDone = inst.status === "completed";
       const bId = inst.targetBlock;
@@ -1309,5 +1333,6 @@ export function buildDayRhythmFromSurfaceData(data: DailySurfaceData): DayRhythm
     ramadanDay: data.ramadanDay,
     activeReminders: data.activeReminders,
     routines: data.routines,
+    memberId: data.memberId,
   });
 }

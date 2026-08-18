@@ -25,6 +25,7 @@ export type CalEvent = {
   time?: string | undefined;
   recur?: Recurrence | undefined;
   assigneeId?: string;
+  assignedTo?: string;
 };
 
 type Task = {
@@ -37,6 +38,7 @@ type Task = {
   recur?: Recurrence;
   completions?: string[];
   assigneeId?: string;
+  assignedTo?: string;
 };
 
 const WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

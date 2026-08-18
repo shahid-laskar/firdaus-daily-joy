@@ -44,6 +44,7 @@ export type Task = {
   recur?: Recurrence;
   completions?: string[];
   assigneeId?: string;
+  assignedTo?: string;
   relativeAnchor?: RelativePrayerAnchor | string;
   scheduleMode?: ScheduleMode;
 };

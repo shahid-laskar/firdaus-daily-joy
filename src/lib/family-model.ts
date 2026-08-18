@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useStore } from "./store";
 
-export type FamilyRole = "parent" | "child" | "other";
+export type FamilyRole = "admin" | "member" | "child" | "parent" | "other";
+export type CanonicalFamilyRole = "admin" | "member" | "child";
 
 export interface Chore {
   id: string;
@@ -15,10 +16,180 @@ export interface FamilyMember {
   id: string;
   name: string;
   role: FamilyRole;
-  age?: string;
-  color?: string;
-  avatar?: string;
+  age?: string | undefined;
+  color?: string | undefined;
+  avatar?: string | undefined;
   chores: Chore[]; // kept for backward compatibility with current routine workflows
+}
+
+/**
+ * Normalizes legacy and product roles to the canonical set: "admin" | "member" | "child".
+ * Defaults safely to "member" if unspecified, or maps "parent" -> "admin".
+ */
+export function getCanonicalFamilyRole(role?: string | null): CanonicalFamilyRole {
+  if (!role) return "member";
+  const r = role.toLowerCase().trim();
+  if (r === "admin" || r === "parent") return "admin";
+  if (r === "child") return "child";
+  return "member";
+}
+
+/**
+ * Extracts the authoritative assignee ID for a task, preferring `assignedTo` over legacy `assigneeId`.
+ */
+export function getTaskAssignee(task: { assignedTo?: string | undefined; assigneeId?: string | undefined } | null | undefined): string | undefined {
+  if (!task) return undefined;
+  return task.assignedTo ?? task.assigneeId ?? undefined;
+}
+
+/**
+ * Extracts the authoritative owner ID for a routine, preferring `assignedTo` over `memberId`.
+ */
+export function getRoutineOwner(routine: { assignedTo?: string | undefined; memberId?: string | undefined } | null | undefined): string | undefined {
+  if (!routine) return undefined;
+  return routine.assignedTo ?? routine.memberId ?? undefined;
+}
+
+/**
+ * Extracts the authoritative assignee ID for a routine step, preferring `assignedTo` over `assigneeId`.
+ */
+export function getRoutineStepAssignee(step: { assignedTo?: string | undefined; assigneeId?: string | undefined } | null | undefined): string | undefined {
+  if (!step) return undefined;
+  return step.assignedTo ?? step.assigneeId ?? undefined;
+}
+
+/**
+ * Checks if a task is unassigned / household-wide.
+ */
+export function isTaskHousehold(task: { assignedTo?: string | undefined; assigneeId?: string | undefined }): boolean {
+  return getTaskAssignee(task) === undefined;
+}
+
+/**
+ * Checks if a task is assigned to a specific family member.
+ */
+export function isTaskAssignedTo(
+  task: { assignedTo?: string | undefined; assigneeId?: string | undefined },
+  memberId?: string | undefined
+): boolean {
+  const assignee = getTaskAssignee(task);
+  if (!memberId) {
+    return assignee === undefined;
+  }
+  return assignee === memberId;
+}
+
+export interface MemberFilterOptions {
+  includeUnassigned?: boolean | undefined;
+}
+
+/**
+ * Filters a list of tasks for a given member perspective:
+ * - If memberId is undefined: returns all tasks (household aggregate view).
+ * - If memberId is provided: returns tasks assigned to that member + unassigned/household tasks (if includeUnassigned is true, default true).
+ */
+export function filterTasksForMember<T extends { assignedTo?: string | undefined; assigneeId?: string | undefined }>(
+  tasks: T[],
+  memberId?: string | undefined,
+  options?: MemberFilterOptions | undefined
+): T[] {
+  if (!memberId) return [...tasks];
+  const includeUnassigned = options?.includeUnassigned ?? true;
+
+  return tasks.filter((t) => {
+    const assignee = getTaskAssignee(t);
+    if (assignee === memberId) return true;
+    if (includeUnassigned && assignee === undefined) return true;
+    return false;
+  });
+}
+
+/**
+ * Filters a list of routines for a given member perspective:
+ * - If memberId is undefined: returns all routines (household aggregate view).
+ * - If memberId is provided: returns routines owned by that member, or with steps assigned to that member,
+ *   or unassigned household routines (if includeUnassigned is true, default true).
+ */
+export function filterRoutinesForMember<
+  T extends {
+    assignedTo?: string | undefined;
+    memberId?: string | undefined;
+    steps?: { assignedTo?: string | undefined; assigneeId?: string | undefined }[] | undefined;
+  }
+>(
+  routines: T[],
+  memberId?: string | undefined,
+  options?: MemberFilterOptions | undefined
+): T[] {
+  if (!memberId) return [...routines];
+  const includeUnassigned = options?.includeUnassigned ?? true;
+
+  return routines.filter((r) => {
+    const owner = getRoutineOwner(r);
+    if (owner === memberId) return true;
+
+    const hasStepAssigned = (r.steps ?? []).some((s) => getRoutineStepAssignee(s) === memberId);
+    if (hasStepAssigned) return true;
+
+    // Household routine with no owner and no steps explicitly owned by other specific members
+    if (includeUnassigned && owner === undefined) {
+      const allStepsUnassignedOrSelf = (r.steps ?? []).every((s) => {
+        const stepAssignee = getRoutineStepAssignee(s);
+        return stepAssignee === undefined || stepAssignee === memberId;
+      });
+      if (allStepsUnassignedOrSelf) return true;
+    }
+
+    return false;
+  });
+}
+
+/**
+ * Filters calendar events for a member perspective.
+ */
+export function filterEventsForMember<T extends { assignedTo?: string | undefined; assigneeId?: string | undefined }>(
+  events: T[],
+  memberId?: string | undefined,
+  options?: MemberFilterOptions | undefined
+): T[] {
+  if (!memberId) return [...events];
+  const includeUnassigned = options?.includeUnassigned ?? true;
+
+  return events.filter((e) => {
+    const assignee = getTaskAssignee(e);
+    if (assignee === memberId) return true;
+    if (includeUnassigned && assignee === undefined) return true;
+    return false;
+  });
+}
+
+/** Returns only unassigned household tasks */
+export function getHouseholdTasks<T extends { assignedTo?: string | undefined; assigneeId?: string | undefined }>(tasks: T[]): T[] {
+  return tasks.filter(isTaskHousehold);
+}
+
+/** Returns tasks strictly assigned to a specific member */
+export function getMemberTasks<T extends { assignedTo?: string | undefined; assigneeId?: string | undefined }>(tasks: T[], memberId: string): T[] {
+  return tasks.filter((t) => getTaskAssignee(t) === memberId);
+}
+
+/** Returns only unassigned household routines */
+export function getHouseholdRoutines<T extends { assignedTo?: string | undefined; memberId?: string | undefined }>(routines: T[]): T[] {
+  return routines.filter((r) => getRoutineOwner(r) === undefined);
+}
+
+/** Returns routines owned by or with steps assigned to a specific member */
+export function getMemberRoutines<
+  T extends {
+    assignedTo?: string | undefined;
+    memberId?: string | undefined;
+    steps?: { assignedTo?: string | undefined; assigneeId?: string | undefined }[] | undefined;
+  }
+>(routines: T[], memberId: string): T[] {
+  return routines.filter((r) => {
+    if (getRoutineOwner(r) === memberId) return true;
+    return (r.steps ?? []).some((s) => getRoutineStepAssignee(s) === memberId);
+  });
 }
 
 /**

@@ -12,6 +12,7 @@ import { isoDate } from "./intelligence";
 import type { ReminderSignal } from "./reminder-engine";
 import { type Routine, generateRoutineSignals } from "./routine-engine";
 import { buildDayRhythmFromSurfaceData, type DayRhythm } from "./rhythm-engine";
+import { filterEventsForMember } from "./family-model";
 
 export type DailyThreadItemCategory =
   | "prayer"
@@ -50,6 +51,7 @@ export interface TaskRecord {
   completions?: string[] | undefined;
   list?: string | undefined;
   assigneeId?: string | undefined;
+  assignedTo?: string | undefined; // Wave 2.0-A primary assignment field
   relativeAnchor?: any;
   scheduleMode?: "exactTime" | "relativePrayer" | "unscheduled" | undefined;
 }
@@ -61,6 +63,7 @@ export interface CalEventRecord {
   date: string;
   recur?: Recurrence | undefined;
   assigneeId?: string | undefined;
+  assignedTo?: string | undefined;
 }
 
 export interface DailySurfaceData {
@@ -83,6 +86,7 @@ export interface DailySurfaceData {
   limits: Record<string, number>;
   activeReminders?: ReminderSignal[] | undefined;
   routines?: Routine[] | undefined;
+  memberId?: string | undefined; // Optional member context for filtered Daily Surface
 }
 
 export function isTaskRecordDone(t: TaskRecord, todayIso = isoDate()): boolean {
@@ -223,7 +227,8 @@ export function buildDailyThread(
   }
 
   // 5. Calendar Events for Today
-  const todayEvents = data.events.filter((e) => isEventOnDate(e, today));
+  const eventsForScope = filterEventsForMember(data.events, data.memberId);
+  const todayEvents = eventsForScope.filter((e) => isEventOnDate(e, today));
   for (const ev of todayEvents) {
     items.push({
       id: `event-${ev.id}`,
