@@ -15,6 +15,7 @@ import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as DeenRouteImport } from './routes/deen'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ReviewRouteImport } from './routes/review'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReviewRoute = ReviewRouteImport.update({
   id: '/review',
   path: '/review',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/deen': typeof DeenRoute
   '/me': typeof MeRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
   '/review': typeof ReviewRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/deen': typeof DeenRoute
   '/me': typeof MeRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
   '/review': typeof ReviewRoute
 }
 export interface FileRoutesById {
@@ -79,14 +87,30 @@ export interface FileRoutesById {
   '/deen': typeof DeenRoute
   '/me': typeof MeRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
   '/review': typeof ReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/budget' | '/deen' | '/me' | '/onboarding' | '/review'
+    | '/'
+    | '/auth'
+    | '/budget'
+    | '/deen'
+    | '/me'
+    | '/onboarding'
+    | '/plan'
+    | '/review'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/budget' | '/deen' | '/me' | '/onboarding' | '/review'
+  to:
+    | '/'
+    | '/auth'
+    | '/budget'
+    | '/deen'
+    | '/me'
+    | '/onboarding'
+    | '/plan'
+    | '/review'
   id:
     | '__root__'
     | '/'
@@ -95,6 +119,7 @@ export interface FileRouteTypes {
     | '/deen'
     | '/me'
     | '/onboarding'
+    | '/plan'
     | '/review'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +130,7 @@ export interface RootRouteChildren {
   DeenRoute: typeof DeenRoute
   MeRoute: typeof MeRoute
   OnboardingRoute: typeof OnboardingRoute
+  PlanRoute: typeof PlanRoute
   ReviewRoute: typeof ReviewRoute
 }
 
@@ -152,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/review': {
       id: '/review'
       path: '/review'
@@ -169,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeenRoute: DeenRoute,
   MeRoute: MeRoute,
   OnboardingRoute: OnboardingRoute,
+  PlanRoute: PlanRoute,
   ReviewRoute: ReviewRoute,
 }
 export const routeTree = rootRouteImport

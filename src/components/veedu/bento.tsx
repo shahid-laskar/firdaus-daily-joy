@@ -19,7 +19,7 @@ export type Tone =
   | "money"
   | "self";
 
-type LinkTo = "/deen" | "/me" | "/budget" | "/review" | "/";
+type LinkTo = "/deen" | "/me" | "/budget" | "/review" | "/plan" | "/";
 
 /** A tonal bento tile. Becomes a link when `to` is given. */
 export function Tile({

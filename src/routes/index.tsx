@@ -634,7 +634,8 @@ function VibrantToday({
           <QuickAction to="/deen" tone="habit" icon={BookOpen} label="Quran" />
           <QuickAction to="/me" tone="self" icon={Droplets} label="Water" />
           <QuickAction to="/budget" tone="money" icon={Wallet} label="Add expense" />
-          <QuickAction to="/review" tone="kids" icon={CalendarDays} label="Weekly review" />
+          <QuickAction to="/plan" tone="kids" icon={CalendarDays} label="Plan the week" />
+          <QuickAction to="/review" tone="task" icon={CalendarDays} label="Weekly review" />
         </div>
       </nav>
 
@@ -882,7 +883,7 @@ function QuickAction({
   icon: Icon,
   label,
 }: {
-  to: "/deen" | "/me" | "/budget" | "/review";
+  to: "/deen" | "/me" | "/budget" | "/review" | "/plan";
   tone: Tone;
   icon: ComponentType<{ className?: string; strokeWidth?: number }>;
   label: string;
